@@ -1,6 +1,6 @@
 {
- "name": "זריקות טריק",
- "short_name": "טריק שוט",
+ "name": "Sharp Shooter",
+ "short_name": "Sharp Shooter",
  "lang": "he",
  "dir": "rtl",
  "start_url": "./",
@@ -11,8 +11,8 @@
   "standalone"
  ],
  "orientation": "landscape",
- "background_color": "#0a6fc2",
- "theme_color": "#0a6fc2",
+ "background_color": "#160a3a",
+ "theme_color": "#160a3a",
  "icons": [
   {
    "src": "icon-192.png",
