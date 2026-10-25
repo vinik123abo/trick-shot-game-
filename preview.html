@@ -977,7 +977,7 @@ const NEON={};['play','modes','locker','set'].forEach(k=>NEON[k]=neonSVG(k));
 function tiles(list){return '<div class="hg">'+list.map(([k,ic,t,s,f,c],i)=>`<button class="ht" style="--c:${c};background-image:url('${NEON[k]}');animation-delay:${i*.07}s" onclick="snd('click');${f}"><span class="hi">${ic}</span><span class="hx"><b>${t}</b><small>${s}</small></span></button>`).join('')+'</div>'}
 // ---- home ----
 menu=function(){try{ambientSound(0)}catch(e){}lv=null;cel=sad=0;RUN=null;MODE='classic';showLB(0);ui.className='ov home';ui.style.removeProperty('--wb');
- let h='<div id="home"></div><h1 class="ss">SHARP SHOOTER</h1><h2 class="ver">גרסה 18.3.2 · '+L.length+' שלבים</h2>';
+ let h='<div id="home"></div><h1 class="ss">SHARP SHOOTER</h1><h2 class="ver">גרסה 18.3.3 · '+L.length+' שלבים</h2>';
  h+=tiles([['play','🏀','שחק','עולמות ושלבים',"MODE='classic';worldsMenu()",'#ff7a1a'],['modes','⏱','מצבי משחק','שעון, חברים, אתגרים','modesMenu()','#18e8ff'],['locker','🎽','לוקר','דמויות, בגדים וגלימות','lockerMenu()','#d04bff'],['set','⚙️','הגדרות','תאורה, שפה, צליל','settingsMenu()','#b6ff1a']]);
  ui.innerHTML=h+(showFsBtn()&&!isFS()?'<button class="b fsb" onclick="fsBtn()">⛶ מסך מלא</button>':'');setTimeout(()=>iosHint(0),600)};
 function modesMenu(){MODE='classic';ui.className='ov home';ui.innerHTML='<h1 class="ss sm">🎮 מצבי משחק</h1>'+tiles([['play','🎯','בחירת שלב','בחר שלב ושבור שיא זמן',"MODE='sr';worldsMenu()",'#ff7a1a'],['modes','⏱','נגד השעון','30 שנ׳ עד 10 דק׳ · אתה בוחר','taMenu()','#18e8ff'],['locker','👥','תחרות חברים','כל אחד בטלפון שלו, בזמן אמת','friendsMenu()','#d04bff'],['set','📲','הזמן חברים','שלח קישור למשחק','invite()','#b6ff1a']])+'<div class="row"><button class="b" onclick="snd(\'click\');menu()">◀ ראשי</button></div>'}
@@ -4422,800 +4422,130 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
 })();
 
 
-/* ===== Sharp Shooter v18.3 — locker premium + daily + invite ===== */
+/* ===== Sharp Shooter v18.3.3 — classic locker + light neon upgrade ===== */
 (function(){
-  const VER='18.3.2';
+  const VER = '18.3.3';
 
-  // ---------- CSS: neon locker chrome, rarity, big tiles, daily, invite ----------
+  // Light chrome only: bigger tiles, sharper previews, bold neon — classic lockerMenu/lkLoop untouched
   const css = document.createElement('style');
-  css.id='v183-css';
+  css.id = 'v1833-locker-neon';
   css.textContent = `
-  /* Locker chrome */
-  .lkx .lk4{gap:12px;padding:10px max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left));
-    background:radial-gradient(ellipse at 20% 0%,rgba(120,40,255,.25),transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(24,232,255,.12),transparent 45%)}
-  .lkx .lkL{flex:0 0 34%;max-width:340px;border-radius:22px;
-    background:linear-gradient(160deg,rgba(80,30,160,.7),rgba(10,5,35,.92));
-    border:2px solid #d04bff;box-shadow:0 0 28px #7a2bff88,0 0 40px #18e8ff33 inset,0 8px 24px #0008}
-  .lkx .lkN{font:900 18px Arial;letter-spacing:.3px;
-    text-shadow:0 0 10px #ff3fd8,0 0 18px #18e8ff88,0 2px 0 #000a}
-  .lkx .lkH h1{text-shadow:0 0 12px #d04bff,0 0 24px #18e8ff55}
-  .lkx .lks span{font:bold 12px Arial!important;padding:4px 8px;border-radius:10px;
-    background:linear-gradient(180deg,#3a1a6acc,#1a0a35cc);border:1px solid #b070ff88;
-    box-shadow:0 0 8px #7a2bff44}
-  .lkx .lks span.coin{border-color:#ffd21f;box-shadow:0 0 10px #ffd21f66;color:#ffe08a}
-  .lkx .lkt4{gap:6px;padding:6px 0}
-  .lkx .lkt4 button{font:bold 13px Arial!important;padding:8px 12px!important;border-radius:12px;
-    border:1.5px solid #b070ff77;background:linear-gradient(180deg,#4a2080aa,#1a0a30cc);color:#fff;
-    box-shadow:0 0 10px #7a2bff33}
-  .lkx .lkt4 button.on{border-color:#18e8ff;background:linear-gradient(180deg,#5a30b0,#2a1060);
-    box-shadow:0 0 16px #18e8ff88,0 0 8px #ff3fd866}
+  /* Bigger, clearer tiles */
+  .lkx .lkg4{
+    grid-template-columns:repeat(auto-fill,minmax(112px,1fr))!important;
+    gap:9px!important;align-content:start!important;flex:1!important;min-height:0!important;
+  }
+  .lkx .lk5{
+    padding:6px 5px 8px!important;border-radius:16px!important;border:2.5px solid #c89cff!important;
+    background:linear-gradient(165deg,rgba(90,30,170,.82),rgba(12,4,36,.92))!important;
+    box-shadow:0 0 0 1px #18e8ff55,0 0 14px #7a2bff66,0 4px 12px #0008!important;
+    overflow:visible!important;min-height:min-content!important;transform:none!important;
+  }
+  .lkx .lk5:hover,.lkx .lk5:focus{
+    border-color:#18e8ff!important;
+    box-shadow:0 0 0 2px #18e8ffaa,0 0 18px #18e8ff88,0 0 28px #ff3fd866!important;
+  }
+  .lkx .lk5.eq{
+    border-color:#5dff9a!important;
+    box-shadow:0 0 0 2px #5dff9a,0 0 16px #5dff9a99,0 0 22px #18e8ff55!important;
+  }
+  .lkx .lk5.lkl{filter:none!important;opacity:.92}
+  .lkx .lkp5{
+    position:relative!important;height:88px!important;max-height:88px!important;
+    display:flex!important;align-items:center;justify-content:center;overflow:hidden!important;
+  }
+  .lkx .lkp5 canvas,.lkx .lkp5 img{
+    position:static!important;width:100%!important;height:88px!important;max-height:88px!important;
+    object-fit:contain!important;display:block!important;transform:none!important;
+    image-rendering:auto!important;
+  }
+  .lkx .lkl .lkp5 canvas,.lkx .lkl .lkp5 img{filter:grayscale(.75) brightness(.5)}
+  .lkx .lkn{
+    font:800 12px/1.15 Arial!important;margin-top:4px!important;color:#f4eeff!important;
+    text-shadow:0 0 6px #7a2bff,0 1px 0 #000!important;
+  }
+  .lkx .lkc{font:bold 10px Arial!important;color:#c8b8ff!important}
 
-  /* v18.3.2 locker layout — neon ok, heads/tiles must not break */
-  .lkx .lk4{overflow:hidden}
-  .lkx .lkR{flex:1;min-width:0;min-height:0;overflow:hidden}
-  .lkx .lkL{overflow:hidden}
-  .lkx .lkg4{flex:1!important;min-height:0!important;display:grid!important;
-    grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;
-    gap:7px!important;padding:2px 2px 10px!important;overflow-x:hidden!important;overflow-y:auto!important;
-    align-content:start!important;touch-action:pan-y;-webkit-overflow-scrolling:touch}
-  .lkx .lk5{padding:4px 4px 6px!important;border-radius:14px!important;border-width:2px!important;
-    min-height:min-content!important;max-width:100%;box-sizing:border-box;overflow:visible!important;
-    transition:box-shadow .15s;transform:none!important;
-    background:linear-gradient(rgba(60,20,120,.75),rgba(15,5,40,.85))!important;
-    /* overflow must stay visible so CSS grid does not collapse row height around .lkp5 */}
-  .lkx .lk5:hover,.lkx .lk5:focus{transform:none!important}
-  .lkx .lkp5{position:relative!important;height:72px!important;max-height:72px!important;
-    display:flex!important;align-items:center;justify-content:center;overflow:hidden!important}
-  .lkx .lkp5 canvas,.lkx .lkp5 img{position:static!important;width:100%!important;height:72px!important;
-    max-height:72px!important;object-fit:contain!important;display:block!important;
-    transform:none!important;filter:none}
-  .lkx .lkl .lkp5 canvas,.lkx .lkl .lkp5 img{filter:grayscale(.85) brightness(.45)}
-  .lkx .lkc{font:bold 10px Arial!important;opacity:1}
-  .lkx .favSec,.lkx .shopSec{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:4px 0 2px;
-    font:900 14px Arial;color:#ffd21f;text-shadow:0 0 8px #ffd21f88}
-  .lkx .shopSec{color:#18e8ff;text-shadow:0 0 8px #18e8ff88}
+  /* Tabs — bold neon */
+  .lkx .lkt4{
+    gap:6px!important;padding:4px 0 8px!important;
+  }
+  .lkx .lkt4 button{
+    border:2px solid #9b6cff!important;border-radius:999px!important;
+    background:linear-gradient(180deg,#3a1878,#1a0a40)!important;color:#eee8ff!important;
+    font:800 12px Arial!important;padding:7px 12px!important;
+    box-shadow:0 0 10px #7a2bff55!important;
+  }
+  .lkx .lkt4 button.on{
+    border-color:#18e8ff!important;color:#fff!important;
+    background:linear-gradient(180deg,#5a28b8,#2a1070)!important;
+    box-shadow:0 0 0 2px #18e8ff99,0 0 16px #18e8ffaa,0 0 22px #ff3fd888!important;
+  }
 
-.lkx .lk5.r-common{border-color:#8a9aaa!important;box-shadow:0 0 6px #8a9aaa33}
-  .lkx .lk5.r-rare{border-color:#3f8aff!important;box-shadow:0 0 14px #3f8aff88,inset 0 0 12px #3f8aff22}
-  .lkx .lk5.r-epic{border-color:#b070ff!important;box-shadow:0 0 16px #b070ffaa,inset 0 0 14px #b070ff33}
-  .lkx .lk5.r-legendary{border-color:#ffd21f!important;box-shadow:0 0 18px #ffd21fcc,0 0 8px #ff7a1a88,inset 0 0 16px #ffd21f22}
-  .lkx .lk5.r-mythic{border-color:#ff3fd8!important;
-    box-shadow:0 0 22px #ff3fd8ee,0 0 12px #18e8ffaa,inset 0 0 18px #ff3fd833;
-    animation:mythPulse 2.2s ease-in-out infinite}
-  @keyframes mythPulse{0%,100%{box-shadow:0 0 18px #ff3fd8cc,0 0 8px #18e8ff88}50%{box-shadow:0 0 28px #ff3fd8,0 0 16px #18e8ff}}
-  .lkx .lk5.eq{outline:2px solid #7dff7a;outline-offset:1px}
-  .lkx .rb{position:absolute;top:4px;left:4px;font:900 9px Arial;padding:2px 6px;border-radius:8px;
-    text-transform:uppercase;letter-spacing:.4px;z-index:2;pointer-events:none}
-  .lkx .rb.common{background:#5a6a7a;color:#e8eef4}
-  .lkx .rb.rare{background:linear-gradient(90deg,#1d4fd8,#3f8aff);color:#fff}
-  .lkx .rb.epic{background:linear-gradient(90deg,#5a20b0,#d04bff);color:#fff}
-  .lkx .rb.legendary{background:linear-gradient(90deg,#a06a00,#ffd21f);color:#2a1a00}
-  .lkx .rb.mythic{background:linear-gradient(90deg,#c02080,#ff3fd8,#18e8ff);color:#fff}
-
-  /* Favorites */
-  .lkx .favb{position:absolute;top:4px;right:4px;z-index:3;width:28px;height:28px;border-radius:50%;
-    border:1.5px solid #ffd21f88;background:#1a0a30cc;color:#ffd21f;font-size:14px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;padding:0}
-  .lkx .favb.on{background:#ffd21f;color:#2a1a00;box-shadow:0 0 10px #ffd21fcc}
-  .lkx .favSec{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:4px 0 2px;
-    font:900 14px Arial;color:#ffd21f;text-shadow:0 0 8px #ffd21f88}
-  .lkx .favSec::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,#ffd21f88,transparent);border-radius:2px}
-  .lkx .shopSec{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:8px 0 2px;
-    font:900 14px Arial;color:#18e8ff;text-shadow:0 0 8px #18e8ff88}
-  .lkx .shopSec::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,#18e8ff88,transparent)}
-  .lkx .lk5.shop .lkprice{font:900 12px Arial;color:#ffd21f;margin-top:2px}
-  .lkx .orbitHint{font:11px Arial;color:#c8b0ff;opacity:.85;margin-top:-2px}
-
-  /* Daily */
-  .dailyWrap{max-width:860px;margin:0 auto;padding:8px 12px 20px}
-  .dailyHead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .dailyHead h1{margin:0}
-  .dailyMeta{font:bold 13px Arial;color:#c8b0ff}
-  .dailyGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-  .dcard{border-radius:18px;padding:14px 14px 12px;border:2px solid #b070ff99;
-    background:linear-gradient(160deg,rgba(70,25,140,.85),rgba(15,5,40,.92));
-    box-shadow:0 0 18px #7a2bff55;position:relative;overflow:hidden}
-  .dcard.done{border-color:#7dff7a;opacity:.92}
-  .dcard .dico{font-size:28px;filter:drop-shadow(0 0 8px #ff3fd888)}
-  .dcard h3{margin:6px 0 4px;font:900 16px Arial;color:#fff}
-  .dcard p{margin:0 0 8px;font:13px Arial;color:#d0c0f0;line-height:1.35}
-  .dcard .drew{font:900 13px Arial;color:#ffd21f}
-  .dcard .dst{position:absolute;top:10px;left:10px;font:900 11px Arial;padding:3px 8px;border-radius:8px;
-    background:#1a0a30cc;border:1px solid #b070ff88}
-  .dcard.done .dst{border-color:#7dff7a;color:#7dff7a}
-  .dprog{height:8px;border-radius:6px;background:#1a0a30;margin:8px 0 4px;overflow:hidden;border:1px solid #b070ff55}
-  .dprog>i{display:block;height:100%;background:linear-gradient(90deg,#18e8ff,#ff3fd8);border-radius:6px}
-
-  /* Invite / modes polish */
-  .invHero{max-width:720px;margin:0 auto 14px;padding:16px 18px;border-radius:20px;
-    background:linear-gradient(135deg,rgba(80,30,180,.75),rgba(20,80,140,.65));
-    border:2px solid #18e8ff99;box-shadow:0 0 24px #18e8ff44,0 0 16px #d04bff33}
-  .invHero h2{margin:0 0 6px;font:900 20px Arial;color:#fff;text-shadow:0 0 10px #18e8ff}
-  .invHero p{margin:0;font:14px Arial;color:#d8e8ff;line-height:1.4}
-  .invCode{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px 0}
-  .invCode .bigCode{font:900 36px ui-monospace,Menlo,monospace;letter-spacing:6px;padding:10px 18px;
-    border-radius:14px;background:#0a1020;border:2px solid #ffd21f;color:#ffd21f;
-    box-shadow:0 0 20px #ffd21f66;text-transform:uppercase}
-  .modesGrid .wc{min-height:110px}
+  /* Preview panel neon */
+  .lkx .lkL{
+    flex:0 0 33%!important;max-width:320px!important;
+    border:2.5px solid #b070ff!important;border-radius:22px!important;
+    background:linear-gradient(160deg,rgba(80,28,160,.75),rgba(10,4,32,.92))!important;
+    box-shadow:0 0 20px #7a2bff66,inset 0 0 30px #18e8ff18!important;
+  }
+  .lkx .lkcw{
+    border-radius:16px!important;border:2px solid #18e8ff88!important;
+    box-shadow:0 0 18px #18e8ff44,inset 0 0 20px #ff3fd822!important;
+    background:radial-gradient(ellipse at 50% 70%,#2a1460 0%,#0a0618 70%)!important;
+  }
+  .lkx .lkN{
+    font:900 15px Arial!important;color:#fff!important;
+    text-shadow:0 0 10px #18e8ff,0 0 18px #ff3fd8,0 2px 0 #000!important;
+  }
+  .lkx .lk4{
+    gap:12px!important;
+    background:radial-gradient(ellipse at 18% 0%,rgba(120,40,255,.28),transparent 48%),
+               radial-gradient(ellipse at 85% 100%,rgba(24,232,255,.14),transparent 42%)!important;
+  }
+  .lkx .lkH h1.ss{
+    text-shadow:0 0 12px #ff3fd8,0 0 22px #7a2bff!important;
+  }
+  .lkx .lks span{
+    border:1.5px solid #9b6cff88!important;border-radius:999px!important;
+    background:#12082aee!important;box-shadow:0 0 8px #7a2bff44!important;
+  }
+  .lkx .eqb{
+    background:#1aff7a!important;color:#003!important;
+    box-shadow:0 0 10px #1aff7aaa!important;
+  }
+  .lkx .nwb{
+    box-shadow:0 0 10px #ff3fd8aa!important;
+  }
+  /* Color swatches pop */
+  .lkx .lksw button{
+    box-shadow:0 0 8px #18e8ff55!important;border:2px solid #fff8!important;
+  }
+  .lkx .lksw button.on{
+    box-shadow:0 0 0 2px #fff,0 0 14px #18e8ff!important;
+  }
   `;
-  document.head.appendChild(css);
+  document.documentElement.appendChild(css);
 
-  // ---------- Favorites + coin shop state ----------
-  let FAV = {};
-  try{ FAV = JSON.parse(localStorage.tsFav||'{}')||{} }catch(e){ FAV={} }
-  function saveFav(){ try{ localStorage.tsFav=JSON.stringify(FAV) }catch(e){} }
-  window.FAV = FAV;
-  function favKey(it){ return (it.t||'')+'/'+(it.id||'') }
-  function isFav(it){ return !!FAV[favKey(it)] }
-  function toggleFav(t,id,ev){
-    if(ev){ ev.stopPropagation(); ev.preventDefault(); }
-    const k=t+'/'+id; FAV[k]=!FAV[k]; if(!FAV[k]) delete FAV[k];
-    saveFav(); snd('click'); lockerMenu(typeof LKT!=='undefined'?LKT:undefined);
-  }
-  window.toggleFav = toggleFav;
-
-  // Ensure COINS exists (may already be bridged from mission IIFE)
-  function refreshCoins(){
-    try{
-      const fromLS = +(localStorage.tsCoin||0)||0;
-      if(typeof COINS==='undefined'){ window.COINS = fromLS; }
-      else if((COINS|0) !== fromLS && fromLS > (COINS|0)){ COINS = fromLS; }
-      else if((COINS|0) === 0 && fromLS){ COINS = fromLS; }
-    }catch(e){ if(typeof COINS==='undefined') window.COINS = 0; }
-  }
-  refreshCoins();
-  function saveCoins(){
-    try{
-      localStorage.tsCoin=String(COINS|0);
-      if(typeof saveMiss==='function') saveMiss();
-    }catch(e){}
-  }
-  window.refreshCoins = refreshCoins;
-  window.addCoins = function(n, why){
-    refreshCoins();
-    COINS = (COINS|0) + (n|0); saveCoins();
-    try{ toast('🪙 +'+n+(why?' · '+why:'')) }catch(e){}
-  };
-
-  // ---------- Rarity system ----------
-  const RARITY_HE = {common:'רגיל',rare:'נדיר',epic:'אפי',legendary:'אגדי',mythic:'מיתי'};
-  const RARITY_ORDER = {common:0,rare:1,epic:2,legendary:3,mythic:4};
-
-  function inferRarity(it){
-    if(it.rarity) return it.rarity;
-    if(it.shop) return it.rarity||'mythic';
-    if(!it.c) return 'common';
-    let n = it.c[1]|0, k=it.c[0];
-    if(n>=120 || (k==='stars'&&n>=100)) return 'legendary';
-    if(n>=70 || (k==='stars'&&n>=60)) return 'epic';
-    if(n>=20 || (k==='sc'&&n>=5) || (k==='streak'&&n>=6)) return 'rare';
-    if(n>=8) return 'rare';
-    return 'common';
-  }
-
-  // Tag existing ITEMS with rarity
+  // Bump version label on home (wins over earlier 18.2 wrap)
   try{
-    for(const it of ITEMS){
-      if(!it.rarity) it.rarity = inferRarity(it);
-    }
-  }catch(e){}
-
-  // ---------- New rare / mythic cosmetics (original) ----------
-  const NEW_PARTS = {
-    aura: [
-      ['prism','הילת פריזמה',['stars',95],null,null,'legendary'],
-      ['void','הילת חלל ריק',['trick',30],null,null,'legendary'],
-      ['pulse','הילת פעימה',['combo',12],null,null,'epic'],
-      ['orbit','הילת מסלול', null, null, null, 'mythic'], // shop
-      ['phoenix','הילת עוף החול', null, null, null, 'mythic']
-    ],
-    back: [
-      ['birdpet','ציפור כיס', null, '#18e8ff', null, 'mythic'], // pet
-      ['stardust','גלימת אבק כוכבים',['stars',85],'#d04bff',null,'legendary'],
-      ['holowing','כנפי הולוגרמה',['streak',10],'#18e8ff',null,'epic'],
-      ['neonbag','תיק ניאון',['levels',25],'#ff3fd8',null,'rare']
-    ],
-    neck: [
-      ['neonchain','שרשרת ניאון',['combo',10],'#18e8ff',null,'epic'],
-      ['mythmedal','מדליית מיתוס', null,'#ffd21f',null,'mythic']
-    ],
-    face: [
-      ['visorx','ויזור סייבר',['sc',14],null,null,'legendary'],
-      ['hearts','משקפי לבבות',['swish',20],null,null,'epic']
-    ]
-  };
-
-  // Shop-only mythics (buy with neon coins)
-  const SHOP_ITEMS = [
-    {t:'aura',id:'orbit',n:'הילת מסלול',rarity:'mythic',shop:120, desc:'חלקיקי מסלול סביב הדמות'},
-    {t:'aura',id:'phoenix',n:'הילת עוף החול',rarity:'mythic',shop:150, desc:'להבות זהובות עולות'},
-    {t:'back',id:'birdpet',n:'ציפור כיס',rarity:'mythic',shop:100, desc:'ציפור קטנה ליד התיק'},
-    {t:'neck',id:'mythmedal',n:'מדליית מיתוס',rarity:'mythic',shop:80, desc:'מדליה זוהרת בלעדית'},
-    {t:'bb',id:'prism',n:'כדור פריזמה',rarity:'mythic',shop:140,tr:'prism',rb:1, desc:'שובל פריזמה צבעוני'},
-    {t:'bb',id:'void',n:'כדור חלל',rarity:'mythic',shop:130,tr:'void', desc:'שובל חלל סגול'},
-    {t:'sb',id:'prism',n:'כדורגל פריזמה',rarity:'mythic',shop:120,tr:'prism',col:['#1a0a30','#ff3fd8'], desc:'שובל פריזמה'},
-    {t:'ar',id:'phoenix',n:'חץ עוף החול',rarity:'mythic',shop:110,tr:'phoenix',col:['#3a1a10','#ffd21f'], desc:'שובל אש זהובה'}
-  ];
-
-  // Register PARTS additions into ITEMS (skip if already there)
-  function ensureItem(it){
-    if(ITEMS.some(x=>x.t===it.t && x.id===it.id)) return;
-    ITEMS.push(it);
-  }
-  try{
-    for(const[slot, list] of Object.entries(NEW_PARTS)){
-      for(const row of list){
-        const [id,n,c,col,hair,rarity] = row;
-        const it = {t:slot, id, n, rarity: rarity||'rare'};
-        if(c) it.c = c;
-        if(col) it.col = col;
-        if(hair) it.hair = 1;
-        if(!c && (rarity==='mythic')){
-          const shop = SHOP_ITEMS.find(s=>s.t===slot && s.id===id);
-          if(shop){ it.shop = shop.shop; it.desc = shop.desc; }
-        }
-        ensureItem(it);
-      }
-    }
-    for(const s of SHOP_ITEMS){
-      const ex = ITEMS.find(x=>x.t===s.t && x.id===s.id);
-      if(ex){ Object.assign(ex, s); }
-      else ensureItem(Object.assign({}, s));
-    }
-  }catch(e){ console.warn('v18.3 items', e); }
-
-  // ---------- Enhanced AURAS draw ----------
-  try{
-    if(typeof AURAS==='object'){
-      AURAS.prism = {
-        b(c,t){ let g=c.createRadialGradient(0,-50,8,0,-50,90); g.addColorStop(0,'rgba(255,63,216,.35)'); g.addColorStop(.5,'rgba(24,232,255,.2)'); g.addColorStop(1,'rgba(255,210,31,0)'); c.fillStyle=g; c.fillRect(-100,-150,200,160); },
-        f(c,t){ c.save(); c.globalCompositeOperation='lighter';
-          for(let k=0;k<16;k++){ let a=t/20+k*.4, x0=Math.cos(a)*28, y0=-40+Math.sin(a*1.3)*50;
-            c.fillStyle=`hsla(${(t*3+k*40)%360},100%,65%,.7)`; c.beginPath(); c.arc(x0,y0,3+Math.sin(t/8+k),0,7); c.fill(); }
-          c.restore(); }
-      };
-      AURAS.void = {
-        b(c,t){ let g=c.createRadialGradient(0,-40,5,0,-40,85); g.addColorStop(0,'rgba(80,20,140,.5)'); g.addColorStop(1,'rgba(10,0,30,0)'); c.fillStyle=g; c.fillRect(-95,-140,190,155); },
-        f(c,t){ c.save(); c.globalCompositeOperation='lighter';
-          for(let k=0;k<12;k++){ let ph=(t*.01+k/12)%1; c.fillStyle=`rgba(180,100,255,${.6*(1-ph)})`;
-            c.beginPath(); c.arc((Math.sin(k*2.1)-.5)*40, -10-ph*100, 2+ph*3, 0,7); c.fill(); }
-          c.restore(); }
-      };
-      AURAS.pulse = {
-        b(c,t){ let p=.5+.5*Math.sin(t/10); c.save(); c.globalCompositeOperation='lighter';
-          c.strokeStyle=`rgba(24,232,255,${.35+p*.4})`; c.lineWidth=3; c.beginPath(); c.ellipse(0,-20,32+p*10,14+p*4,0,0,7); c.stroke(); c.restore(); },
-        f(c,t){}
-      };
-      AURAS.orbit = {
-        b(c,t){},
-        f(c,t){ c.save(); c.globalCompositeOperation='lighter';
-          for(let k=0;k<3;k++){ let a=t/25+k*2.1; let x0=Math.cos(a)*36, y0=-35+Math.sin(a)*18;
-            c.fillStyle=k===1?'#ff3fd8':'#18e8ff'; c.shadowColor=c.fillStyle; c.shadowBlur=10;
-            c.beginPath(); c.arc(x0,y0,4,0,7); c.fill(); }
-          c.strokeStyle='rgba(24,232,255,.35)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(0,-35,36,18,0,0,7); c.stroke();
-          c.restore(); }
-      };
-      AURAS.phoenix = {
-        b(c,t){ let g=c.createRadialGradient(0,-60,10,0,-60,95); g.addColorStop(0,'rgba(255,210,31,.4)'); g.addColorStop(.5,'rgba(255,100,20,.25)'); g.addColorStop(1,'rgba(255,40,0,0)'); c.fillStyle=g; c.fillRect(-100,-160,200,170); },
-        f(c,t){ c.save(); c.globalCompositeOperation='lighter';
-          for(let k=0;k<20;k++){ let ph=(t*.015+k*.05)%1; let x0=(Math.sin(k*1.7)-.5)*50, y0=-8-ph*130;
-            c.fillStyle=ph<.3?'rgba(255,240,180,.85)':(ph<.6?'rgba(255,160,40,.7)':'rgba(255,60,20,.45)');
-            c.beginPath(); c.ellipse(x0,y0,3*(1-ph)+1,5*(1-ph)+1,0,0,7); c.fill(); }
-          c.restore(); }
-      };
-      AURAS.shadow = AURAS.shadow || {
-        b(c,t){ c.fillStyle='rgba(20,0,40,.35)'; c.beginPath(); c.ellipse(0,5,40,12,0,0,7); c.fill(); },
-        f(c,t){ c.save(); c.globalCompositeOperation='source-over'; c.fillStyle='rgba(40,0,60,.15)';
-          for(let k=0;k<8;k++){ c.beginPath(); c.arc(Math.sin(t/20+k)*20, -30-k*8, 10, 0,7); c.fill(); } c.restore(); }
+    const _hm = typeof home === 'function' ? home : null;
+    if(_hm){
+      home = function(){
+        _hm.apply(this, arguments);
+        try{
+          const v = document.querySelector('h2.ver');
+          if(v) v.textContent = v.textContent.replace(/גרסה\s*[\d.]+[a-z]?/, 'גרסה ' + VER);
+        }catch(e){}
       };
     }
   }catch(e){}
 
-  // ---------- Cooler ball trails ----------
-  const _skinTrail0 = typeof skinTrail==='function' ? skinTrail : null;
-  skinTrail = function(){
-    if(_skinTrail0) _skinTrail0();
-    try{
-      if(!ball || !ball.fly) return;
-      let t = lv.s=='b'?'bb':lv.s=='f'?'sb':lv.bow?'ar':'dt';
-      let it = typeof eqItem==='function' ? eqItem(t) : null;
-      if(!it || !it.tr) return;
-      if(it.tr==='prism'){
-        P_({x:ball.x,y:ball.y,vx:(Math.random()-.5)*1.2,vy:(Math.random()-.5)*1.2,l:22,
-            c:`hsl(${(T*12)%360},100%,65%)`,sp:1,r:4+Math.random()*2});
-      } else if(it.tr==='void'){
-        P_({x:ball.x+(Math.random()-.5)*8,y:ball.y+(Math.random()-.5)*8,vx:-ball.vx*.08,vy:-ball.vy*.08,
-            l:24,c:Math.random()<.5?'#b070ff':'#4a1080',sp:1,r:3+Math.random()*3});
-      } else if(it.tr==='phoenix'){
-        P_({x:ball.x,y:ball.y,vx:(Math.random()-.5)*.8,vy:-1-Math.random(),l:26,
-            c:Math.random()<.5?'#ffd21f':'#ff5a1a',fire:1,r:5+Math.random()*3});
-      } else if(it.tr==='neon'){
-        // denser neon sparkle
-        if(T%2===0) P_({x:ball.x,y:ball.y,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,l:18,c:'#7ef9ff',sp:1,r:2.5});
-      }
-    }catch(e){}
-  };
+  // Slightly sharper locker thumbs (higher effective paint scale via CSS size only —
+  // thObserve/draw paths unchanged; bigger lkp5 already improves clarity)
 
-  // ---------- Pet bird draw (when back=birdpet) ----------
-  function drawPetBird(g, t, s){
-    // small bird near bag/shoulder — modular 2D
-    let bx = 28, by = -70 + Math.sin(t/18)*3;
-    g.save(); g.translate(bx*s, by*s); g.scale(s,s);
-    // body
-    g.fillStyle='#18e8ff'; g.beginPath(); g.ellipse(0,0,7,5,0,0,7); g.fill();
-    g.fillStyle='#ff3fd8'; g.beginPath(); g.moveTo(-2,-1); g.quadraticCurveTo(-10,-6,-4,2); g.quadraticCurveTo(-2,1,-2,-1); g.fill(); // wing
-    g.fillStyle='#ffd21f'; g.beginPath(); g.moveTo(7,0); g.lineTo(11,-1); g.lineTo(7,2); g.fill(); // beak
-    g.fillStyle='#fff'; g.beginPath(); g.arc(3,-1.5,1.6,0,7); g.fill();
-    g.fillStyle='#111'; g.beginPath(); g.arc(3.3,-1.5,.7,0,7); g.fill();
-    // soft glow
-    g.globalCompositeOperation='lighter'; g.fillStyle='rgba(24,232,255,.35)';
-    g.beginPath(); g.arc(0,0,12,0,7); g.fill();
-    g.restore();
-  }
-
-  // ---------- Orbit / 360 preview ----------
-  LKA.orbit = 0;       // continuous yaw angle
-  LKA.auto = 1;        // auto-rotate
-  LKA.drag = null;     // {x, yaw0}
-  LKA.light = 0;       // light angle offset
-
-  const _lkLoop0 = lkLoop;
-  lkLoop = function(){
-    let cv=document.getElementById('lkcv');
-    if(!cv){ LKA.raf=0; return; }
-    LKA.raf=requestAnimationFrame(lkLoop);
-    let r=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
-    if(!w||!h) return;
-    if(cv.width!=Math.round(w*r)||cv.height!=Math.round(h*r)){ cv.width=Math.round(w*r); cv.height=Math.round(h*r); }
-    let g=cv.getContext('2d'), t=++LKA.t;
-    g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,cv.width,cv.height); g.scale(r,r);
-
-    // soft neon stage (non-destructive)
-    let gl=g.createRadialGradient(w/2,h*.55,10,w/2,h*.55,h*.6);
-    gl.addColorStop(0,'rgba(176,112,255,.35)'); gl.addColorStop(1,'rgba(176,112,255,0)');
-    g.fillStyle=gl; g.fillRect(0,0,w,h);
-
-    let s=Math.min(h/205,w/150), fx=w/2, fy=h-14;
-    // floor rings
-    g.save(); g.translate(fx,fy); g.globalCompositeOperation='lighter';
-    for(let i=0;i<3;i++){
-      g.strokeStyle=`rgba(${i?'255,63,216':'24,232,255'},${.55-i*.15})`;
-      g.lineWidth=2;
-      if(typeof vEl==='function'){ vEl(g,0,0,(46+i*9+Math.sin(t/14+i)*2)*s,(9+i*2)*s); g.stroke(); }
-      else { g.beginPath(); g.ellipse(0,0,(46+i*9+Math.sin(t/14+i)*2)*s,(9+i*2)*s,0,0,7); g.stroke(); }
-    }
-    g.restore();
-
-    // auto-orbit: reuse original sx=cos path (no asymmetric shade / facing warp)
-    if(LKA.auto && LKA.spin<0 && !LKA.drag){
-      if(!LKA._orbitWait) LKA._orbitWait = 0;
-      LKA._orbitWait++;
-      if(LKA._orbitWait > 240){ LKA.spin = 0; LKA._orbitWait = 0; }
-    }
-
-    let C=t%700, O, sp=curSpec();
-    if(C<170) O={pose:'idle',t,held:true};
-    else if(C<300){ let u=(C-170)/130,m=Math.min(1,u*1.6)*(u<.8?1:0); O={pose:'throw',t,m,drag:u<.8,sport:'b',hand:[52-m*14,-126+m*10],ball:u<.8,thrown:u>=.8}; }
-    else if(C<400){ let e=C-300,m=e<40?e/40:0,th=6,kn=-3; if(e<40){th=-55*m;kn=-70*m} else{let k=e-40;if(k<4){let q=k/4;th=-40+70*q;kn=-60*(1-q)}else if(k<14){let q=(k-4)/10;th=30+50*q;kn=-10*q}else if(k<34){let q=(k-14)/20;th=6+74*(1-q);kn=-3-7*(1-q)}}
-      let bx=e<44?40:40+(e-44)*9,by=e<44?-14:-14-(e-44)*3.5; O={pose:'throw',t,sport:'f',kick:{th,kn},drag:e<40,m,ballX:bx<170?bx:null,ballY:by}; }
-    else if(C<540){ let e=C-400,m=Math.min(1,e/70)*(e<110?1:0); O={pose:'throw',t,sport:'d',bow:1,m,drag:e<110,hand:[52,-126],str:[52-Math.cos(-.3)*(5+m*26),-126-Math.sin(-.3)*(5+m*26)]}; }
-    else { let e=C-540,j=Math.abs(Math.sin(e/8))*22; O={pose:'cel',t,jump:j>3?j:0}; fy-=j*s; }
-    if(sp.sprite && O.pose=='throw') O.ball = O.sport=='b';
-
-    let sx=1;
-    if(LKA.spin>=0){ LKA.spin++; sx=Math.cos(LKA.spin/50*Math.PI*2); if(LKA.spin>=50) LKA.spin=-1; }
-
-    g.save();
-    g.translate(fx-8*s, fy);
-    g.scale(s*sx, s);
-    let sh=g.createRadialGradient(0,2,2,0,2,30);
-    sh.addColorStop(0,'rgba(0,0,0,.45)'); sh.addColorStop(1,'rgba(0,0,0,0)');
-    g.fillStyle=sh; if(typeof vEl==='function'){ vEl(g,0,2,30,6); g.fill(); }
-    else { g.beginPath(); g.ellipse(0,2,30,6,0,0,7); g.fill(); }
-    try{ drawLook(g, sp, O); }
-    catch(e){ console.warn(e); }
-    // pet bird accessory (tasteful, only if equipped) — draw in look space
-    try{
-      if(sp.acc && sp.acc.back==='birdpet' && typeof drawPetBird==='function') drawPetBird(g, t, 1);
-    }catch(e){}
-    g.restore();
-
-    let nm=document.getElementById('lkN');
-    if(nm) try{ nm.textContent = (typeof lkCurName==='function'?lkCurName():''); }catch(e){}
-  };
-
-  // Drag-to-orbit on preview canvas
-  function bindOrbitDrag(){
-    const cv=document.getElementById('lkcv'); if(!cv || cv._orbitBound) return;
-    cv._orbitBound=1; cv.style.touchAction='none'; cv.style.cursor='grab';
-    const down = (e)=>{
-      LKA.auto=0; LKA.drag={x:(e.touches?e.touches[0]:e).clientX, yaw0:LKA.orbit};
-      cv.style.cursor='grabbing';
-    };
-    const move = (e)=>{
-      if(!LKA.drag) return;
-      const x=(e.touches?e.touches[0]:e).clientX;
-      LKA.orbit = LKA.drag.yaw0 + (x-LKA.drag.x)*0.012;
-      e.preventDefault();
-    };
-    const up = ()=>{ LKA.drag=null; cv.style.cursor='grab'; setTimeout(()=>{ if(!LKA.drag) LKA.auto=1; }, 2200); };
-    cv.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
-    cv.addEventListener('touchstart', down, {passive:true}); cv.addEventListener('touchmove', move, {passive:false}); cv.addEventListener('touchend', up);
-  }
-
-  // ---------- Shop buy ----------
-  window.lkBuy = function(t, id){
-    const it = ITEMS.find(i=>i.t===t && i.id===id);
-    if(!it || !it.shop) return;
-    if(isUnlShop(it)){ return lkEquip(t,id); }
-    if((COINS|0) < it.shop){ snd('miss'); return toast('אין מספיק 🪙 ניאון ('+it.shop+' נדרש)'); }
-    COINS -= it.shop; saveCoins();
-    // mark unlocked via UNL
-    try{
-      UNL[IK(it)] = 1;
-      localStorage.tsUnl = JSON.stringify(UNL);
-    }catch(e){}
-    it._bought = 1;
-    snd('cheer'); buzz(30); toast('🛍️ נפתח: '+it.n+'!');
-    try{ lkEquip(t,id); }catch(e){ lockerMenu(); }
-  };
-
-  function isUnlShop(it){
-    if(!it.shop) return typeof isUnl==='function' ? isUnl(it) : true;
-    try{ return !!(UNL && UNL[IK(it)]); }catch(e){ return !!it._bought; }
-  }
-
-  // Patch isUnl to respect shop purchases
-  const _isUnl0 = isUnl;
-  isUnl = function(it){
-    if(!it) return false;
-    if(it.def) return true;
-    if(it.shop) return isUnlShop(it);
-    return _isUnl0(it);
-  };
-
-  // ---------- Enhanced lockerMenu ----------
-  const _lockerMenu0 = lockerMenu;
-  lockerMenu = function(tab){
- try{ if(typeof refreshCoins==='function') refreshCoins(); }catch(e){}
- if(typeof LKA==='object'){ if(LKA.auto==null) LKA.auto=0; if(LKA.spin==null) LKA.spin=-1; if(LKA.drag==null) LKA.drag=0; }
- if(tab)LKT=tab;else if(typeof LKT=='undefined')LKT='ch';const _TABS=(SLOTUI||[]).concat([['fav','⭐','מועדפים'],['shop','🛍️','חנות']]); if(!_TABS.some(q=>q[0]==LKT))LKT='ch';snd('click');lv=null;ui.className='ov home lkx';let g0=ui.querySelector('.lkg4'),keepScroll=!tab&&g0?g0.scrollTop:0;
- let st=[['⭐',totStars()],['🏁',lvDone()],['🧱',STATS.bank],['⚡',STATS.sc],['🔥',STATS.streak],['🪙',(typeof COINS!=='undefined'?COINS:0)|0]];
- let tabs=_TABS.map(([k,i,n])=>{let nw=(k==='fav'||k==='shop')?false:ITEMS.some(it=>it.t==k&&SEEN[IK(it)]===0);return `<button class="${LKT==k?'on':''}" onclick="lockerMenu('${k}')">${i} ${n}${nw?'<i class="nw"></i>':''}</button>`}).join('');
- let sw='';if(SL16.includes(LKT)){let sp=curSpec(),cur=curOf(LKT);let can=cur&&cur!='none'&&!noCol16(LKT,cur);
-  if(can){let pal=LKT=='head'&&(HD2[sp.head]||{}).skin=='col'?SKINC.concat(['#ece4f4','#e85a4a','#6aa84a','#8ac878','#fff4ec']):SWC16,cc=sp.col[LKT];sw+=`<div class="lksw"><span>🎨</span>`+pal.map(q=>`<button style="--c:${q}" class="${cc==q?'on':''}" onclick="lkCol('${LKT}','${q}')"></button>`).join('')+`<button class="rs" onclick="lkCol('${LKT}',null)">↺</button></div>`}
-  if(PATSL16.includes(LKT)&&cur&&cur!='none'&&cur!='bald'){let cp=PAT[LKT]||'',dp=sp.pat[LKT]||'plain';sw+=`<div class="lksw lkpt"><span>🧵</span>`+PATS16.map(([id,he])=>{let okp=patOK(id),on=(cp?cp==id:dp==id);return `<button class="pt${on?' on':''}${okp?'':' lk'}" onclick="lkPat('${LKT}','${id}')"><canvas class="ptc" data-p="${id}"></canvas><b>${esc(he)}${okp?'':' 🔒'}</b></button>`}).join('')+`<button class="rs" onclick="lkPat('${LKT}',null)">↺</button></div>`}}
- let items, cards='';
- if(LKT==='shop'){
-  items=ITEMS.filter(i=>i.shop).sort((a,b)=>(a.shop|0)-(b.shop|0));
-  cards=`<div class="shopSec">🛍️ חנות ניאון · יש לך ${(typeof COINS!=='undefined'?COINS:0)|0} 🪙</div>`;
- } else if(LKT==='fav'){
-  items=ITEMS.filter(it=>typeof isFav==='function'&&isFav(it));
-  cards=`<div class="favSec">⭐ המועדפים שלך</div>`;
-  if(!items.length) cards+=`<div class="shopSec" style="color:#c8b0ff">לחצו ☆ על פריט כדי להוסיף למועדפים</div>`;
- } else {
-  items=['bb','sb','dt','ar'].includes(LKT)?ITEMS.filter(i=>i.t==LKT):lkItems(LKT);
- }
- cards += items.map((it,j)=>{let u=it.def||isUnl(it),eq=lkIsEq(it),nw=SEEN[IK(it)]===0,v=it.c?Math.min(statVal(it.c[0]),it.c[1]):0,from=it.from&&CHR[it.from]?`<div class="lkf">🧍 ${esc(CHR[it.from].n)}</div>`:'';
-  let rar=(it.rarity||(typeof inferRarity==='function'?inferRarity(it):'common'));
-  let fav=(typeof isFav==='function'&&isFav(it));
-  let favBtn=`<span class="favb${fav?' on':''}" onclick="event.stopPropagation();toggleFav('${it.t}','${it.id}',event)" title="מועדף">${fav?'★':'☆'}</span>`;
-  let rarBadge=(typeof RARITY_HE!=='undefined')?`<span class="rb ${rar}">${RARITY_HE[rar]||rar}</span>`:'';
-  let act, extra='';
-  if(it.shop&&!u){ act=`lkBuy('${it.t}','${it.id}')`; extra=`<div class="lkprice">🪙 ${it.shop}</div>`; }
-  else if(u) act=`lkEquip('${it.t}','${it.id}')`;
-  else act=`snd('miss');toast('${esc(condTxt(it))}')`;
-  let old=['bb','sb','dt','ar'].includes(it.t);
-  return `<button class="lk5 r-${rar}${u?'':' lkl'}${eq?' eq':''}${it.shop?' shop':''}" style="animation-delay:${Math.min(j,20)*.025}s" onclick="${act}"><div class="lkp5">${old?`<img src="${prv(it)}">`:`<canvas class="lkth" data-t="${it.t}" data-id="${it.id}"></canvas>`}${u?'':'<span class="lko">🔒</span>'}${nw?'<span class="nwb">חדש!</span>':''}${eq?'<span class="eqb">✔</span>':''}${favBtn}${rarBadge}</div><div class="lkn">${esc(it.n)}</div>`+(u?'':`<div class="lkc">${condTxt(it)}</div><div class="lkbar"><i style="width:${(v/(it.c&&it.c[1]||1)*100).toFixed(0)}%"></i></div>`)+extra+(u?'':from)+'</button>'}).join('');
- let cnt=(LKT!=='shop'&&LKT!=='fav'&&typeof SL16!=='undefined'&&SL16.includes(LKT))?`<span class="lkcnt">${items.filter(i=>!i.def&&isUnl(i)).length}/${items.filter(i=>!i.def).length}</span>`:'';
- ui.innerHTML=`<div class="lk4"><div class="lkL"><div class="lkcw"><canvas id="lkcv"></canvas></div><div class="lkN" id="lkN">${esc(lkCurName())}</div><div class="lkB"><button class="b" onclick="lkRandom()">🎲 תלבושת אקראית</button><button class="b sq" onclick="lkSpin()" title="סובב">🔄</button><button class="b sq" onclick="LKA.auto=!LKA.auto;toast(LKA.auto?'סיבוב אוטומטי ✓':'סיבוב ידני')" title="אוטו">🌐</button></div></div>
- <div class="lkR"><div class="lkH"><button class="b sq" onclick="snd('click');menu()">◀</button><h1 class="ss sm">🎽 לוקר</h1>${cnt}<div class="lks">${st.map(([i,v])=>`<span>${i} <b>${v}</b></span>`).join('')}</div></div>
- <div class="lkt4">${tabs}</div>${sw}<div class="lkg4">${cards}</div></div></div>`;
- let g=ui.querySelector('.lkg4');if(keepScroll)g.scrollTop=keepScroll;let tb=ui.querySelector('.lkt4 .on');if(tb)tb.scrollIntoView({inline:'center',block:'nearest'});let pon=ui.querySelector('.lkpt .on');if(pon)pon.scrollIntoView({inline:'center',block:'nearest'});
- let pc=curSpec().col[LKT]||((CAT16[LKT]||[]).find(e=>e[0]==curOf(LKT))||[])[3]||'#e8262c';ui.querySelectorAll('canvas.ptc').forEach(cv=>{try{ptSwatch(cv,cv.dataset.p,pc)}catch(e){console.warn(e)}});
- requestAnimationFrame(()=>thObserve(g));
- items.forEach(it=>{if(SEEN[IK(it)]===0)SEEN[IK(it)]=1});localStorage.tsSeen=JSON.stringify(SEEN);
- if(!LKA.raf)LKA.raf=requestAnimationFrame(lkLoop)};
-
-  function itemsSafeSeen(){
-    try{
-      let items = LKT==='shop'?ITEMS.filter(i=>i.shop):LKT==='fav'?ITEMS.filter(isFav):(['bb','sb','dt','ar'].includes(LKT)?ITEMS.filter(i=>i.t==LKT):lkItems(LKT));
-      items.forEach(it=>{ if(SEEN[IK(it)]===0) SEEN[IK(it)]=1; });
-      localStorage.tsSeen=JSON.stringify(SEEN);
-    }catch(e){}
-  }
-
-  // ---------- PHASE 6: Daily challenges ----------
-  const DAILY_POOL = [
-    {id:'swish3', n:'סווישים היום', d:'קלע 3 סווישים (בלי לוח)', ico:'✨', need:3, key:'swish', reward:{coins:40}, rarity:'rare'},
-    {id:'bank2', n:'בנקאי יומי', d:'בצע 2 קליעות בנק', ico:'🧱', need:2, key:'bank', reward:{coins:35}, rarity:'rare'},
-    {id:'stars5', n:'צייד כוכבים', d:'אסוף 5 כוכבים היום', ico:'⭐', need:5, key:'stars', reward:{coins:45}, rarity:'epic'},
-    {id:'levels2', n:'מסלול יומי', d:'סיים 2 שלבים', ico:'🏁', need:2, key:'levels', reward:{coins:30}, rarity:'common'},
-    {id:'trick2', n:'טריק יומי', d:'בצע 2 זריקות טריק', ico:'🎯', need:2, key:'trick', reward:{coins:50}, rarity:'epic'},
-    {id:'sc1', n:'קיצור דרך', d:'אסוף יעד בונוס אחד', ico:'⚡', need:1, key:'sc', reward:{coins:55}, rarity:'legendary'},
-    {id:'combo', n:'רצף לוהט', d:'הגע לרצף של 3', ico:'🔥', need:3, key:'streak', reward:{coins:60}, rarity:'legendary'},
-    {id:'goal2', n:'מלך השער', d:'הבקע 2 גולים', ico:'⚽', need:2, key:'goal', reward:{coins:40}, rarity:'rare'},
-    {id:'long1', n:'זריקה ארוכה', d:'קלע זריקה ארוכה אחת', ico:'📏', need:1, key:'long', reward:{coins:35}, rarity:'rare'},
-    {id:'win3', n:'שלושה ניצחונות', d:'נצח ב־3 שלבים', ico:'🏆', need:3, key:'wins', reward:{coins:70, unlockShop:'orbit'}, rarity:'mythic'}
-  ];
-
-  function dayKey(d){
-    d = d || new Date();
-    // Asia/Jerusalem calendar day
-    try{
-      return new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Jerusalem', year:'numeric', month:'2-digit', day:'2-digit'}).format(d);
-    }catch(e){
-      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    }
-  }
-
-  function loadDaily(){
-    let raw; try{ raw=JSON.parse(localStorage.tsDaily||'null'); }catch(e){ raw=null; }
-    const today = dayKey();
-    if(!raw || raw.date!==today){
-      // pick 3 deterministic from pool by date hash
-      let h=0; for(const ch of today) h=(h*33+ch.charCodeAt(0))|0;
-      const pool=[...DAILY_POOL];
-      const picks=[];
-      for(let i=0;i<3;i++){ let idx=Math.abs(h+i*97)%pool.length; picks.push(pool.splice(idx,1)[0]); }
-      raw = {date:today, quests:picks.map(q=>({id:q.id,n:q.n,d:q.d,ico:q.ico,need:q.need,key:q.key,reward:q.reward,rarity:q.rarity,prog:0,done:0,claimed:0}))};
-      localStorage.tsDaily=JSON.stringify(raw);
-    }
-    return raw;
-  }
-
-  function saveDaily(D){ try{ localStorage.tsDaily=JSON.stringify(D); }catch(e){} }
-
-  function dailyProgress(key, amt){
-    const D=loadDaily(); let changed=0;
-    for(const q of D.quests){
-      if(q.claimed || q.key!==key) continue;
-      q.prog = Math.min(q.need, (q.prog|0)+(amt||1));
-      if(q.prog>=q.need && !q.done){ q.done=1; changed=1; }
-    }
-    saveDaily(D);
-    if(changed) try{ toast('📅 אתגר יומי הושלם! אספו את הפרס בלוח היומי'); }catch(e){}
-  }
-  window.dailyProgress = dailyProgress;
-
-  window.claimDaily = function(id){
-    const D=loadDaily();
-    const q=D.quests.find(x=>x.id===id);
-    if(!q || !q.done || q.claimed) return;
-    q.claimed=1; saveDaily(D);
-    const coins = (q.reward&&q.reward.coins)||25;
-    addCoins(coins, 'אתגר יומי');
-    if(q.reward && q.reward.unlockShop){
-      const it = ITEMS.find(i=>i.id===q.reward.unlockShop && i.shop);
-      if(it){ try{ UNL[IK(it)]=1; localStorage.tsUnl=JSON.stringify(UNL); toast('🔓 נפתח בחנות: '+it.n); }catch(e){} }
-    }
-    snd('win'); buzz(40); dailyMenu();
-  };
-
-  window.dailyMenu = function(){
-    try{ refreshCoins(); }catch(e){}
-    snd('click'); lv=null; ui.className='ov home';
-    const D=loadDaily();
-    const left = D.quests.filter(q=>!q.claimed).length;
-    let cards = D.quests.map(q=>{
-      const pct = Math.min(100, ((q.prog|0)/q.need*100))|0;
-      const st = q.claimed?'✓ נאסף':(q.done?'🎁 מוכן!':`${q.prog|0}/${q.need}`);
-      const btn = q.claimed?'':(q.done?`<button class="b" onclick="claimDaily('${q.id}')">אסוף פרס</button>`:'');
-      return `<div class="dcard${q.done||q.claimed?' done':''}">
-        <span class="dst">${st}</span>
-        <div class="dico">${q.ico||'📅'}</div>
-        <h3>${esc(q.n)}</h3>
-        <p>${esc(q.d)}</p>
-        <div class="dprog"><i style="width:${pct}%"></i></div>
-        <div class="drew">🎁 ${q.reward.coins||25} 🪙 ניאון בלעדי ליומי</div>
-        ${btn}
-      </div>`;
-    }).join('');
-    ui.innerHTML = `<div class="dailyWrap">
-      <div class="dailyHead">
-        <h1 class="ss sm">📅 אתגרים יומיים</h1>
-        <div class="dailyMeta">מתרענן כל יום · ${D.date} · נשארו ${left}</div>
-      </div>
-      <p style="text-align:center;color:#c8b0ff;font:14px Arial;margin:0 0 12px">פרסים בלעדיים מהיומיים — לא זמינים במקום אחר. יש לך ${COINS|0} 🪙</p>
-      <div class="dailyGrid">${cards}</div>
-      <div class="row" style="margin-top:14px">
-        <button class="b" onclick="snd('click');menu()">◀ ראשי</button>
-        <button class="b" onclick="snd('click');lockerMenu('shop')">🛍️ חנות ניאון</button>
-      </div>
-    </div>`;
-  };
-
-  // Hook finish / stats to daily progress
-  const _finishD = finish;
-  finish = function(win){
-    const stBefore = typeof sv==='function' && lv ? sv(lv.i) : 0;
-    const r = _finishD.apply(this, arguments);
-    try{
-      if(win){
-        dailyProgress('wins', 1);
-        dailyProgress('levels', 1);
-        // stars gained
-        const stAfter = typeof sv==='function' && lv ? sv(lv.i) : 0;
-        const gained = Math.max(0, stAfter - stBefore);
-        if(gained) dailyProgress('stars', gained);
-        if(lv && lv.s==='f') dailyProgress('goal', 1);
-      }
-    }catch(e){}
-    return r;
-  };
-
-  // Hook score kinds for bank/swish/etc — wrap the stats bump if possible
-  try{
-    const _checkUnl = checkUnl;
-    // Also listen via STATS deltas on finish path already; add wrappers on crowd/score events
-    const origPop = typeof scored==='function'?scored:null;
-  }catch(e){}
-
-  // Wrap saveStats consumers: when STATS fields increase during play
-  let _statSnap = null;
-  function snapStats(){ _statSnap = Object.assign({}, STATS); }
-  const _startD = start;
-  start = function(i){
-    try{ snapStats(); }catch(e){}
-    return _startD.apply(this, arguments);
-  };
-
-  // After known trick events — patch stinger/score path
-  // Find where STATS.swish++ etc happen and also call dailyProgress
-  const _saveStats0 = saveStats;
-  saveStats = function(){
-    try{
-      if(_statSnap){
-        for(const k of ['swish','bank','trick','sc','streak','long','goal','combo']){
-          const a=_statSnap[k]|0, b=STATS[k]|0;
-          if(b>a) dailyProgress(k==='combo'?'streak':k, b-a);
-        }
-        _statSnap = Object.assign({}, STATS);
-      }
-    }catch(e){}
-    return _saveStats0.apply(this, arguments);
-  };
-
-  // Mission rewards already add COINS via awardMission — ensure toast mentions shop
-  const _award0 = typeof window.awardMission==='function' ? window.awardMission
-    : (typeof awardMission==='function' ? awardMission : null);
-  if(_award0){
-    window.awardMission = function(l, ok){
-      const before = (typeof COINS!=='undefined'?COINS:0)|0;
-      _award0(l, ok);
-      try{ refreshCoins(); }catch(e){}
-      if(((typeof COINS!=='undefined'?COINS:0)|0)>before){
-        try{ dailyProgress('wins', 0); }catch(e){}
-      }
-    };
-    try{ awardMission = window.awardMission; }catch(e){}
-  }
-
-  // ---------- Modes hub + invite polish ----------
-  modesMenu = function(){
-    MODE='classic'; ui.className='ov home';
-    ui.innerHTML = `<h1 class="ss sm">🎮 מצבי משחק</h1>
-      <div class="invHero"><h2>שחקו ביחד או נגד השעון</h2>
-        <p>בחרו מצב, הזמינו חברים עם קוד ברור, או פתחו את האתגרים היומיים לפרסים בלעדיים.</p></div>
-      <div class="modesGrid">`+
-      tiles([
-        ['play','🎯','בחירת שלב','שברו שיא זמן בכל שלב',"MODE='sr';worldsMenu()",'#ff7a1a'],
-        ['modes','⏱','נגד השעון','30 שנ׳ עד 10 דק׳ · אתם בוחרים','taMenu()','#18e8ff'],
-        ['locker','👥','תחרות חברים','קוד חדר · עד 8 שחקנים בזמן אמת','friendsMenu()','#d04bff'],
-        ['set','📅','אתגרים יומיים','פרסים בלעדיים שמתרעננים כל יום','dailyMenu()','#ffd21f'],
-        ['set','📲','הזמן חברים','קוד + קישור מוכנים להעתקה','inviteMenu()','#b6ff1a']
-      ])+`</div>
-      <div class="row"><button class="b" onclick="snd('click');menu()">◀ ראשי</button></div>`;
-  };
-
-  window.inviteMenu = function(){
-    snd('click'); lv=null; ui.className='ov home';
-    const code = (typeof MP!=='undefined' && MP && MP.code) ? MP.code : '';
-    ui.innerHTML = `<div style="max-width:640px;margin:0 auto;padding:10px">
-      <h1 class="ss sm">📲 הזמן חברים</h1>
-      <div class="invHero">
-        <h2>שחקו יחד ב־Sharp Shooter</h2>
-        <p>צרו חדר, העתיקו את הקוד, ושלחו לחברים. כל אחד בטלפון שלו — הניקוד מתעדכן חי.</p>
-      </div>
-      <div class="invCode">
-        ${code?`<span class="bigCode">${esc(code)}</span><button class="b" onclick="copyCode('${esc(code)}')">📋 העתק קוד</button>`:
-          `<button class="b" onclick="setName((document.getElementById('nmInv')||{}).value||NAME);if(!NAME){toast('כתבו שם קודם');return}mpHost()">🏠 צרו חדר וקבלו קוד</button>`}
-      </div>
-      <div class="row" style="margin:10px 0">
-        <input id="nmInv" placeholder="השם שלך" maxlength="14" value="${esc(NAME||'')}" style="min-width:160px"
-          oninput="setName(this.value)">
-      </div>
-      <div class="fg" style="max-width:640px;margin:0 auto">
-        <div class="fc"><div class="fh">🔑 יש לכם קוד?</div>
-          <input id="rcInv" class="codein" placeholder="לדוגמה: A7K2M" maxlength="5" autocapitalize="characters">
-          <button class="b fb" onclick="setName((nmInv||{}).value||NAME);if(!NAME)return toast('כתבו את השם שלכם');mpJoin(rcInv.value)">הצטרפו לחדר ▶</button>
-        </div>
-        <div class="fc"><div class="fh">🔗 שליחת קישור</div>
-          <div class="fd">מעתיק קישור למשחק עם הודעה מזמינה בעברית.</div>
-          <button class="b fb" onclick="inviteNice()">📲 שלחו הזמנה</button>
-        </div>
-        <div class="fc"><div class="fh">📱 טלפון אחד</div>
-          <div class="fd">תורות על אותו מכשיר — מושלם לספה בסלון.</div>
-          <button class="b fb" onclick="snd('click');ppMenu()">התחילו Pass & Play</button>
-        </div>
-      </div>
-      <div class="row"><button class="b" onclick="snd('click');modesMenu()">◀ מצבים</button>
-        <button class="b" onclick="snd('click');menu()">ראשי</button></div>
-    </div>`;
-  };
-
-  window.inviteNice = function(){
-    snd('click');
-    const msg = 'בוא נשחק Sharp Shooter! 🏀🎯⚽ משחק טריקים מטורף — כנסו לקישור והצטרפו אליי';
-    shareLink(GAME_URL, msg);
-  };
-  // keep old invite() working but nicer
-  invite = function(){ inviteNice(); };
-
-  friendsMenu = function(){
-    MODE='classic'; lv=null; ui.className='ov home';
-    ui.innerHTML=`<h1 class="ss sm">👥 תחרות חברים</h1>
-      <div class="invHero"><h2>חדר פרטי עם קוד ברור</h2>
-        <p>כתבו שם, צרו חדר, שלחו את הקוד לחברים. עד 8 שחקנים — כל אחד בטלפון שלו, ניקוד חי.</p></div>
-      <div class="fg">
-        <div class="fc"><div class="fh">👤 השם שלך</div>
-          <div class="frow">${avatar(NAME||'?',1)}<input id="nm" placeholder="איך קוראים לך?" maxlength="14" value="${esc(NAME)}" oninput="setName(this.value)"></div>
-        </div>
-        <div class="fc"><div class="fh">🏠 צרו חדר</div>
-          <div class="fd">תקבלו קוד קצר להעתקה. חברים מצטרפים איתו תוך שניות.</div>
-          <button class="b fb" onclick="setName(nm.value);if(!NAME)return toast('כתבו את השם שלכם');mpHost()">🏠 צרו חדר + קוד</button>
-        </div>
-        <div class="fc"><div class="fh">🔑 הצטרפו עם קוד</div>
-          <input id="rc" class="codein" placeholder="הדביקו קוד חדר" maxlength="5" autocapitalize="characters">
-          <button class="b fb" onclick="setName(nm.value);if(!NAME)return toast('כתבו את השם שלכם');mpJoin(rc.value)">הצטרפו ▶</button>
-        </div>
-        <div class="fc"><div class="fh">📲 הזמנה מהירה</div>
-          <div class="frow"><button class="b fb" onclick="inviteMenu()">קישור / קוד מפורט</button>
-            <button class="b fb" onclick="snd('click');ppMenu()">📱 טלפון אחד</button></div>
-        </div>
-      </div>
-      <div class="row"><button class="b" onclick="snd('click');modesMenu()">◀ מצבים</button>
-        <button class="b" onclick="snd('click');menu()">ראשי</button></div>`;
-  };
-
-  // ---------- Home: add daily tile ----------
-  const _menu0 = menu;
-  menu = function(){
-    _menu0.apply(this, arguments);
-    try{
-      // bump version label
-      const v=document.querySelector('h2.ver');
-      if(v) v.textContent=v.textContent.replace(/גרסה\s*[\d.]+[a-z]?/,'גרסה '+VER);
-      // inject daily button into home row if missing
-      if(!document.getElementById('dailyHomeBtn')){
-        const row = ui.querySelector('.row') || ui;
-        // Prefer adding via tiles — patch innerHTML if classic home
-        const h = ui.querySelector('h1.ss');
-        if(h && /SHARP SHOOTER/i.test(h.textContent||'')){
-          // append a daily chip near modes
-          const bar = document.createElement('div');
-          bar.style.cssText='display:flex;justify-content:center;gap:8px;margin-top:8px;flex-wrap:wrap';
-          bar.innerHTML = `<button class="b" id="dailyHomeBtn" onclick="dailyMenu()">📅 אתגרים יומיים</button>
-            <button class="b" onclick="inviteMenu()">📲 הזמן חברים</button>`;
-          const ver = ui.querySelector('h2.ver');
-          if(ver && ver.parentNode) ver.parentNode.insertBefore(bar, ver.nextSibling);
-          else ui.appendChild(bar);
-        }
-      }
-    }catch(e){}
-  };
-
-  // Refresh daily on enter
-  try{ loadDaily(); }catch(e){}
-
-  // Version string in home template
-  try{
-    // already handled in menu wrap; also replace 18.2 label if present in source-generated home
-  }catch(e){}
-
-  console.log('[v18.3.2] locker heads fixed + daily + invite ready (char restored) · coins', COINS|0);
+  console.log('[v18.3.3] classic locker restored + light neon/bigger tiles');
 })();
-
 
 
 boot();requestAnimationFrame(loop);
