@@ -120,7 +120,7 @@ html[dir=ltr] input{direction:ltr}
 .lksw::-webkit-scrollbar{display:none}
 .lksw span{font-size:15px}
 .lksw button{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid #fff6;background:var(--c);box-shadow:0 0 0 1px #000a inset;padding:0}
-.lksw button.on{border-color:#fff;box-shadow:0 0 0 2px #ff3fd8,0 0 10px #ff3fd8;transform:scale(1.15)}
+.lksw button.on{border-color:#fff;box-shadow:0 0 0 2px #ff3fd8,0 0 10px #ff3fd8;transform:scale(1)}
 .lksw button.rs{background:#2a1a50;color:#fff;font:bold 13px Arial;width:26px}
 .lknote{font:bold 11px Arial;color:#ffd21f;padding:0 4px 4px}
 .lkg4{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px;align-content:start;padding:2px 2px 10px}
@@ -977,7 +977,7 @@ const NEON={};['play','modes','locker','set'].forEach(k=>NEON[k]=neonSVG(k));
 function tiles(list){return '<div class="hg">'+list.map(([k,ic,t,s,f,c],i)=>`<button class="ht" style="--c:${c};background-image:url('${NEON[k]}');animation-delay:${i*.07}s" onclick="snd('click');${f}"><span class="hi">${ic}</span><span class="hx"><b>${t}</b><small>${s}</small></span></button>`).join('')+'</div>'}
 // ---- home ----
 menu=function(){try{ambientSound(0)}catch(e){}lv=null;cel=sad=0;RUN=null;MODE='classic';showLB(0);ui.className='ov home';ui.style.removeProperty('--wb');
- let h='<div id="home"></div><h1 class="ss">SHARP SHOOTER</h1><h2 class="ver">גרסה 18.3.1 · '+L.length+' שלבים</h2>';
+ let h='<div id="home"></div><h1 class="ss">SHARP SHOOTER</h1><h2 class="ver">גרסה 18.3.2 · '+L.length+' שלבים</h2>';
  h+=tiles([['play','🏀','שחק','עולמות ושלבים',"MODE='classic';worldsMenu()",'#ff7a1a'],['modes','⏱','מצבי משחק','שעון, חברים, אתגרים','modesMenu()','#18e8ff'],['locker','🎽','לוקר','דמויות, בגדים וגלימות','lockerMenu()','#d04bff'],['set','⚙️','הגדרות','תאורה, שפה, צליל','settingsMenu()','#b6ff1a']]);
  ui.innerHTML=h+(showFsBtn()&&!isFS()?'<button class="b fsb" onclick="fsBtn()">⛶ מסך מלא</button>':'');setTimeout(()=>iosHint(0),600)};
 function modesMenu(){MODE='classic';ui.className='ov home';ui.innerHTML='<h1 class="ss sm">🎮 מצבי משחק</h1>'+tiles([['play','🎯','בחירת שלב','בחר שלב ושבור שיא זמן',"MODE='sr';worldsMenu()",'#ff7a1a'],['modes','⏱','נגד השעון','30 שנ׳ עד 10 דק׳ · אתה בוחר','taMenu()','#18e8ff'],['locker','👥','תחרות חברים','כל אחד בטלפון שלו, בזמן אמת','friendsMenu()','#d04bff'],['set','📲','הזמן חברים','שלח קישור למשחק','invite()','#b6ff1a']])+'<div class="row"><button class="b" onclick="snd(\'click\');menu()">◀ ראשי</button></div>'}
@@ -4424,7 +4424,7 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
 
 /* ===== Sharp Shooter v18.3 — locker premium + daily + invite ===== */
 (function(){
-  const VER='18.3.1';
+  const VER='18.3.2';
 
   // ---------- CSS: neon locker chrome, rarity, big tiles, daily, invite ----------
   const css = document.createElement('style');
@@ -4450,20 +4450,32 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
   .lkx .lkt4 button.on{border-color:#18e8ff;background:linear-gradient(180deg,#5a30b0,#2a1060);
     box-shadow:0 0 16px #18e8ff88,0 0 8px #ff3fd866}
 
-  /* Bigger eye-catching tiles */
-  .lkx .lkg4{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(118px,1fr))!important;
-    gap:10px!important;padding:6px 2px 18px;overflow:auto}
-  .lkx .lk5{padding:6px 6px 8px!important;border-radius:16px!important;border-width:2.5px!important;
-    min-height:132px;transition:transform .15s,box-shadow .15s;
-    background:linear-gradient(165deg,rgba(70,25,140,.85),rgba(12,5,30,.92))!important}
-  .lkx .lk5:hover,.lkx .lk5:focus{transform:translateY(-2px) scale(1.02)}
-  .lkx .lkp5{height:92px!important}
-  .lkx .lkp5 canvas,.lkx .lkp5 img{transform:scale(1.15);transform-origin:center bottom}
-  .lkx .lkn{font:900 13px Arial!important;margin-top:4px;line-height:1.15}
-  .lkx .lkc{font:11px Arial!important;opacity:.85}
+  /* v18.3.2 locker layout — neon ok, heads/tiles must not break */
+  .lkx .lk4{overflow:hidden}
+  .lkx .lkR{flex:1;min-width:0;min-height:0;overflow:hidden}
+  .lkx .lkL{overflow:hidden}
+  .lkx .lkg4{flex:1!important;min-height:0!important;display:grid!important;
+    grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;
+    gap:7px!important;padding:2px 2px 10px!important;overflow-x:hidden!important;overflow-y:auto!important;
+    align-content:start!important;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+  .lkx .lk5{padding:4px 4px 6px!important;border-radius:14px!important;border-width:2px!important;
+    min-height:min-content!important;max-width:100%;box-sizing:border-box;overflow:visible!important;
+    transition:box-shadow .15s;transform:none!important;
+    background:linear-gradient(rgba(60,20,120,.75),rgba(15,5,40,.85))!important;
+    /* overflow must stay visible so CSS grid does not collapse row height around .lkp5 */}
+  .lkx .lk5:hover,.lkx .lk5:focus{transform:none!important}
+  .lkx .lkp5{position:relative!important;height:72px!important;max-height:72px!important;
+    display:flex!important;align-items:center;justify-content:center;overflow:hidden!important}
+  .lkx .lkp5 canvas,.lkx .lkp5 img{position:static!important;width:100%!important;height:72px!important;
+    max-height:72px!important;object-fit:contain!important;display:block!important;
+    transform:none!important;filter:none}
+  .lkx .lkl .lkp5 canvas,.lkx .lkl .lkp5 img{filter:grayscale(.85) brightness(.45)}
+  .lkx .lkc{font:bold 10px Arial!important;opacity:1}
+  .lkx .favSec,.lkx .shopSec{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:4px 0 2px;
+    font:900 14px Arial;color:#ffd21f;text-shadow:0 0 8px #ffd21f88}
+  .lkx .shopSec{color:#18e8ff;text-shadow:0 0 8px #18e8ff88}
 
-  /* Rarity borders */
-  .lkx .lk5.r-common{border-color:#8a9aaa!important;box-shadow:0 0 6px #8a9aaa33}
+.lkx .lk5.r-common{border-color:#8a9aaa!important;box-shadow:0 0 6px #8a9aaa33}
   .lkx .lk5.r-rare{border-color:#3f8aff!important;box-shadow:0 0 14px #3f8aff88,inset 0 0 12px #3f8aff22}
   .lkx .lk5.r-epic{border-color:#b070ff!important;box-shadow:0 0 16px #b070ffaa,inset 0 0 14px #b070ff33}
   .lkx .lk5.r-legendary{border-color:#ffd21f!important;box-shadow:0 0 18px #ffd21fcc,0 0 8px #ff7a1a88,inset 0 0 16px #ffd21f22}
@@ -4751,24 +4763,6 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
   lkLoop = function(){
     let cv=document.getElementById('lkcv');
     if(!cv){ LKA.raf=0; return; }
-    // auto orbit
-    if(LKA.auto && LKA.spin<0 && !LKA.drag){ LKA.orbit += 0.012; }
-    if(LKA.spin>=0){ /* existing spin flip still handled in original — we also nudge orbit */ }
-
-    // Call original but intercept scale sx via wrapping drawRig temporarily is hard.
-    // Instead: monkey-patch by running original then... can't easily.
-    // Re-implement light orbit by setting LKA.spin cycle soft and using transform after.
-
-    // Simpler approach: wrap the scale in original by temporarily adjusting LKA and calling original,
-    // then draw pet on top.
-    // The original uses: sx=Math.cos(LKA.spin/50*Math.PI*2) when spinning.
-    // We'll hijack by setting a fake continuous spin visual via CSS perspective on canvas parent... no.
-
-    // Patch: replace requestAnimationFrame chain — call original body by extracting.
-    // Easiest reliable path: run original lkLoop, but BEFORE it, set LKA.spin to encode orbit.
-    // Actually original spin is one-shot 0..50. For continuous orbit, modify the drawing after original.
-
-    // We'll re-call a customized loop:
     LKA.raf=requestAnimationFrame(lkLoop);
     let r=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
     if(!w||!h) return;
@@ -4776,26 +4770,29 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
     let g=cv.getContext('2d'), t=++LKA.t;
     g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,cv.width,cv.height); g.scale(r,r);
 
-    // neon stage
-    let gl=g.createRadialGradient(w/2,h*.55,10,w/2,h*.55,h*.65);
-    gl.addColorStop(0,'rgba(176,112,255,.4)'); gl.addColorStop(.6,'rgba(24,232,255,.12)'); gl.addColorStop(1,'rgba(10,0,30,0)');
+    // soft neon stage (non-destructive)
+    let gl=g.createRadialGradient(w/2,h*.55,10,w/2,h*.55,h*.6);
+    gl.addColorStop(0,'rgba(176,112,255,.35)'); gl.addColorStop(1,'rgba(176,112,255,0)');
     g.fillStyle=gl; g.fillRect(0,0,w,h);
-    // floor ring
-    g.save(); g.translate(w/2, h-10); g.globalCompositeOperation='lighter';
-    for(let i=0;i<3;i++){ g.strokeStyle=`rgba(${i?'255,63,216':'24,232,255'},${.5-i*.12})`; g.lineWidth=2;
-      g.beginPath(); g.ellipse(0,0,(48+i*10+Math.sin(t/14+i)*2),(10+i*2),0,0,7); g.stroke(); }
+
+    let s=Math.min(h/205,w/150), fx=w/2, fy=h-14;
+    // floor rings
+    g.save(); g.translate(fx,fy); g.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){
+      g.strokeStyle=`rgba(${i?'255,63,216':'24,232,255'},${.55-i*.15})`;
+      g.lineWidth=2;
+      if(typeof vEl==='function'){ vEl(g,0,0,(46+i*9+Math.sin(t/14+i)*2)*s,(9+i*2)*s); g.stroke(); }
+      else { g.beginPath(); g.ellipse(0,0,(46+i*9+Math.sin(t/14+i)*2)*s,(9+i*2)*s,0,0,7); g.stroke(); }
+    }
     g.restore();
 
-    let s=Math.min(h/200,w/145), fx=w/2, fy=h-14;
-    // orbit yaw → faux 3D scale X + lighting
-    let yaw = LKA.orbit + (LKA.spin>=0 ? Math.cos(LKA.spin/50*Math.PI*2)*0 : 0);
-    if(LKA.spin>=0){ LKA.spin++; yaw = Math.cos(LKA.spin/50*Math.PI*2)*Math.PI; if(LKA.spin>=50) LKA.spin=-1; }
-    let sx = Math.cos(yaw);
-    let facing = sx>=0?1:-1;
-    // light from side based on yaw
-    LKA.light = yaw;
+    // auto-orbit: reuse original sx=cos path (no asymmetric shade / facing warp)
+    if(LKA.auto && LKA.spin<0 && !LKA.drag){
+      if(!LKA._orbitWait) LKA._orbitWait = 0;
+      LKA._orbitWait++;
+      if(LKA._orbitWait > 240){ LKA.spin = 0; LKA._orbitWait = 0; }
+    }
 
-    // Pose cycle (keep lively)
     let C=t%700, O, sp=curSpec();
     if(C<170) O={pose:'idle',t,held:true};
     else if(C<300){ let u=(C-170)/130,m=Math.min(1,u*1.6)*(u<.8?1:0); O={pose:'throw',t,m,drag:u<.8,sport:'b',hand:[52-m*14,-126+m*10],ball:u<.8,thrown:u>=.8}; }
@@ -4803,34 +4800,28 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
       let bx=e<44?40:40+(e-44)*9,by=e<44?-14:-14-(e-44)*3.5; O={pose:'throw',t,sport:'f',kick:{th,kn},drag:e<40,m,ballX:bx<170?bx:null,ballY:by}; }
     else if(C<540){ let e=C-400,m=Math.min(1,e/70)*(e<110?1:0); O={pose:'throw',t,sport:'d',bow:1,m,drag:e<110,hand:[52,-126],str:[52-Math.cos(-.3)*(5+m*26),-126-Math.sin(-.3)*(5+m*26)]}; }
     else { let e=C-540,j=Math.abs(Math.sin(e/8))*22; O={pose:'cel',t,jump:j>3?j:0}; fy-=j*s; }
+    if(sp.sprite && O.pose=='throw') O.ball = O.sport=='b';
+
+    let sx=1;
+    if(LKA.spin>=0){ LKA.spin++; sx=Math.cos(LKA.spin/50*Math.PI*2); if(LKA.spin>=50) LKA.spin=-1; }
 
     g.save();
-    g.translate(fx, fy);
-    // orbit scale + flip
-    g.scale(s*Math.max(0.22, Math.abs(sx))*facing, s);
-    // side lighting shadow tint
-    let shade = 0.15 + 0.25*(1-Math.abs(sx));
+    g.translate(fx-8*s, fy);
+    g.scale(s*sx, s);
+    let sh=g.createRadialGradient(0,2,2,0,2,30);
+    sh.addColorStop(0,'rgba(0,0,0,.45)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=sh; if(typeof vEl==='function'){ vEl(g,0,2,30,6); g.fill(); }
+    else { g.beginPath(); g.ellipse(0,2,30,6,0,0,7); g.fill(); }
+    try{ drawLook(g, sp, O); }
+    catch(e){ console.warn(e); }
+    // pet bird accessory (tasteful, only if equipped) — draw in look space
     try{
-      // aura behind
-      let auraId = (sp.acc&&sp.acc.aura)||'none';
-      if(auraId && auraId!=='none' && AURAS[auraId] && AURAS[auraId].b) AURAS[auraId].b(g,t);
-      try{ drawLook(g, sp, O); }
-      catch(e){
-        try{ if(typeof drawRig==='function') drawRig(g, sp, O); }
-        catch(e2){ if(ok('idle')){ let im=IMG.idle; g.drawImage(im, -im.width*.27, -im.height*.54, im.width*.54, im.height*.54); } }
-      }
-      if(auraId && auraId!=='none' && AURAS[auraId] && AURAS[auraId].f) AURAS[auraId].f(g,t);
-      // pet bird
-      if(sp.acc && sp.acc.back==='birdpet') drawPetBird(g, t, 1);
+      if(sp.acc && sp.acc.back==='birdpet' && typeof drawPetBird==='function') drawPetBird(g, t, 1);
     }catch(e){}
-    // lighting overlay (faux 3D)
-    g.fillStyle=`rgba(0,0,0,${shade})`;
-    g.globalCompositeOperation='source-atop';
-    g.fillRect(-80,-160, facing>0?40:80, 180);
     g.restore();
 
-    // update name
-    let nm=document.getElementById('lkN'); if(nm) try{ nm.textContent=lkCurName(); }catch(e){}
+    let nm=document.getElementById('lkN');
+    if(nm) try{ nm.textContent = (typeof lkCurName==='function'?lkCurName():''); }catch(e){}
   };
 
   // Drag-to-orbit on preview canvas
@@ -4886,105 +4877,45 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
   // ---------- Enhanced lockerMenu ----------
   const _lockerMenu0 = lockerMenu;
   lockerMenu = function(tab){
-    try{ refreshCoins(); }catch(e){}
-    if(tab) LKT=tab; else if(typeof LKT==='undefined') LKT='ch';
-    snd('click'); lv=null; ui.className='ov home lkx';
-    let g0=ui.querySelector('.lkg4'), keepScroll=!tab&&g0?g0.scrollTop:0;
-
-    let st=[['⭐',totStars()],['🏁',lvDone()],['🪙',COINS|0],['🧱',STATS.bank],['⚡',STATS.sc],['🔥',STATS.streak]];
-    // inject coin class later via string replace on span
-
-    let tabs = LTABS.map(([k,i,n])=>{
-      let nw=ITEMS.some(it=>it.t==k&&SEEN[IK(it)]===0);
-      return `<button class="${LKT==k?'on':''}" onclick="lockerMenu('${k}')">${i} ${n}${nw?'<i class="nw"></i>':''}</button>`;
-    }).join('') + `<button class="${LKT=='shop'?'on':''}" onclick="lockerMenu('shop')">🛍️ חנות</button>`
-      + `<button class="${LKT=='fav'?'on':''}" onclick="lockerMenu('fav')">⭐ מועדפים</button>`;
-
-    let sw='';
-    if(LKT!=='shop' && LKT!=='fav' && COLS[LKT]){
-      let sp=curSpec(), cur=(LKT=='back'||LKT=='neck'?sp.acc[LKT]:sp[LKT]);
-      let can=cur&&cur!='none'&&!NOCOL[cur];
-      if(can){ let pal=LKT=='head'&&(HD2[sp.head]||{}).skin=='col'?SKINC:SWC, cc=sp.col[LKT];
-        sw=`<div class="lksw"><span>🎨</span>`+pal.map(q=>`<button style="--c:${q}" class="${cc==q?'on':''}" onclick="lkCol('${LKT}','${q}')"></button>`).join('')+`<button class="rs" onclick="lkCol('${LKT}',null)">↺</button></div>`; }
-    }
-
-    function cardHTML(it,j){
-      let rar = it.rarity || inferRarity(it);
-      let u = it.def || isUnl(it);
-      let eq = typeof lkIsEq==='function' ? lkIsEq(it) : false;
-      let nw = SEEN[IK(it)]===0;
-      let v = it.c ? Math.min(statVal(it.c[0]), it.c[1]) : 0;
-      let from = it.from&&CHR[it.from]?`<div class="lkf">🧍 ${esc(CHR[it.from].n)}</div>`:'';
-      let fav = isFav(it);
-      let favBtn = `<button class="favb${fav?' on':''}" onclick="toggleFav('${it.t}','${it.id}',event)" title="מועדף">${fav?'★':'☆'}</button>`;
-      let rarBadge = `<span class="rb ${rar}">${RARITY_HE[rar]||rar}</span>`;
-      let act, extra='';
-      if(it.shop && !u){
-        act = `lkBuy('${it.t}','${it.id}')`;
-        extra = `<div class="lkprice">🪙 ${it.shop}</div>`;
-      } else if(u){
-        act = `lkEquip('${it.t}','${it.id}')`;
-      } else {
-        act = `snd('miss');toast('${esc(condTxt(it))}')`;
-      }
-      let old=['bb','sb','dt','ar'].includes(it.t);
-      let thumb = old?`<img src="${prv(it)}">`:`<canvas class="lkth" data-t="${it.t}" data-id="${it.id}"></canvas>`;
-      return `<button class="lk5 r-${rar}${u?'':' lkl'}${eq?' eq':''}${it.shop?' shop':''}" style="animation-delay:${Math.min(j,20)*.025}s" onclick="${act}">
-        ${rarBadge}${favBtn}
-        <div class="lkp5">${thumb}${u?'':'<span class="lko">🔒</span>'}${nw?'<span class="nwb">חדש!</span>':''}${eq?'<span class="eqb">✔</span>':''}</div>
-        <div class="lkn">${esc(it.n)}</div>
-        ${extra}
-        ${u?'':(it.shop?'':`<div class="lkc">${condTxt(it)}</div><div class="lkbar"><i style="width:${(v/(it.c&&it.c[1]||1)*100).toFixed(0)}%"></i></div>`)}
-        ${u?'':from}
-      </button>`;
-    }
-
-    let cards = '';
-    if(LKT==='shop'){
-      cards = `<div class="shopSec">🛍️ חנות ניאון · יש לך ${COINS|0} 🪙</div>`;
-      const shopList = ITEMS.filter(i=>i.shop).sort((a,b)=>(a.shop|0)-(b.shop|0));
-      cards += shopList.map((it,j)=>cardHTML(it,j)).join('');
-    } else if(LKT==='fav'){
-      cards = `<div class="favSec">⭐ המועדפים שלך</div>`;
-      const favs = ITEMS.filter(isFav);
-      if(!favs.length) cards += `<div class="shopSec" style="color:#c8b0ff">לחצו ☆ על פריט כדי להוסיף למועדפים</div>`;
-      else cards += favs.map((it,j)=>cardHTML(it,j)).join('');
-    } else {
-      let items = ['bb','sb','dt','ar'].includes(LKT)?ITEMS.filter(i=>i.t==LKT):lkItems(LKT);
-      // favorites of this tab first
-      const favs = items.filter(isFav);
-      const rest = items.filter(i=>!isFav(i));
-      // sort rest by rarity desc then name
-      rest.sort((a,b)=> (RARITY_ORDER[b.rarity||'common']-RARITY_ORDER[a.rarity||'common']) || String(a.n).localeCompare(String(b.n),'he'));
-      if(favs.length) cards += `<div class="favSec">⭐ מועדפים</div>` + favs.map((it,j)=>cardHTML(it,j)).join('');
-      cards += (favs.length?`<div class="shopSec">כל הפריטים</div>`:'') + rest.map((it,j)=>cardHTML(it,j+favs.length)).join('');
-    }
-
-    ui.innerHTML = `<div class="lk4"><div class="lkL"><div class="lkcw"><canvas id="lkcv"></canvas></div>
-      <div class="lkN" id="lkN">${esc(lkCurName())}</div>
-      <div class="orbitHint">גררו לסיבוב 360° · סיבוב אוטומטי</div>
-      <div class="lkB"><button class="b" onclick="lkRandom()">🎲 אקראי</button>
-        <button class="b sq" onclick="lkSpin()" title="סובב">🔄</button>
-        <button class="b sq" onclick="LKA.auto=!LKA.auto;toast(LKA.auto?'סיבוב אוטומטי ✓':'סיבוב ידני')" title="אוטו">🌐</button>
-      </div></div>
-      <div class="lkR"><div class="lkH"><button class="b sq" onclick="snd('click');menu()">◀</button>
-        <h1 class="ss sm">🎽 לוקר</h1>
-        <div class="lks">${st.map(([i,v],idx)=>`<span class="${idx===2?'coin':''}">${i} <b>${v}</b></span>`).join('')}</div>
-      </div>
-      <div class="lkt4">${tabs}</div>${sw}<div class="lkg4">${cards}</div></div></div>`;
-
-    let g=ui.querySelector('.lkg4'); if(keepScroll) g.scrollTop=keepScroll;
-    let tb=ui.querySelector('.lkt4 .on'); if(tb) tb.scrollIntoView({inline:'center',block:'nearest'});
-    requestAnimationFrame(()=>{
-      ui.querySelectorAll('canvas.lkth').forEach(cv=>{
-        let t=cv.dataset.t,id=cv.dataset.id, sp=lookSpec(eqWith(t,id),colWith(t),1);
-        lkThumb(cv,sp,TFR[t]||'full',{pose:'idle',t:40,held:t=='ch'});
-      });
-      bindOrbitDrag();
-    });
-    itemsSafeSeen();
-    if(!LKA.raf) LKA.raf=requestAnimationFrame(lkLoop);
-  };
+ try{ if(typeof refreshCoins==='function') refreshCoins(); }catch(e){}
+ if(typeof LKA==='object'){ if(LKA.auto==null) LKA.auto=0; if(LKA.spin==null) LKA.spin=-1; if(LKA.drag==null) LKA.drag=0; }
+ if(tab)LKT=tab;else if(typeof LKT=='undefined')LKT='ch';const _TABS=(SLOTUI||[]).concat([['fav','⭐','מועדפים'],['shop','🛍️','חנות']]); if(!_TABS.some(q=>q[0]==LKT))LKT='ch';snd('click');lv=null;ui.className='ov home lkx';let g0=ui.querySelector('.lkg4'),keepScroll=!tab&&g0?g0.scrollTop:0;
+ let st=[['⭐',totStars()],['🏁',lvDone()],['🧱',STATS.bank],['⚡',STATS.sc],['🔥',STATS.streak],['🪙',(typeof COINS!=='undefined'?COINS:0)|0]];
+ let tabs=_TABS.map(([k,i,n])=>{let nw=(k==='fav'||k==='shop')?false:ITEMS.some(it=>it.t==k&&SEEN[IK(it)]===0);return `<button class="${LKT==k?'on':''}" onclick="lockerMenu('${k}')">${i} ${n}${nw?'<i class="nw"></i>':''}</button>`}).join('');
+ let sw='';if(SL16.includes(LKT)){let sp=curSpec(),cur=curOf(LKT);let can=cur&&cur!='none'&&!noCol16(LKT,cur);
+  if(can){let pal=LKT=='head'&&(HD2[sp.head]||{}).skin=='col'?SKINC.concat(['#ece4f4','#e85a4a','#6aa84a','#8ac878','#fff4ec']):SWC16,cc=sp.col[LKT];sw+=`<div class="lksw"><span>🎨</span>`+pal.map(q=>`<button style="--c:${q}" class="${cc==q?'on':''}" onclick="lkCol('${LKT}','${q}')"></button>`).join('')+`<button class="rs" onclick="lkCol('${LKT}',null)">↺</button></div>`}
+  if(PATSL16.includes(LKT)&&cur&&cur!='none'&&cur!='bald'){let cp=PAT[LKT]||'',dp=sp.pat[LKT]||'plain';sw+=`<div class="lksw lkpt"><span>🧵</span>`+PATS16.map(([id,he])=>{let okp=patOK(id),on=(cp?cp==id:dp==id);return `<button class="pt${on?' on':''}${okp?'':' lk'}" onclick="lkPat('${LKT}','${id}')"><canvas class="ptc" data-p="${id}"></canvas><b>${esc(he)}${okp?'':' 🔒'}</b></button>`}).join('')+`<button class="rs" onclick="lkPat('${LKT}',null)">↺</button></div>`}}
+ let items, cards='';
+ if(LKT==='shop'){
+  items=ITEMS.filter(i=>i.shop).sort((a,b)=>(a.shop|0)-(b.shop|0));
+  cards=`<div class="shopSec">🛍️ חנות ניאון · יש לך ${(typeof COINS!=='undefined'?COINS:0)|0} 🪙</div>`;
+ } else if(LKT==='fav'){
+  items=ITEMS.filter(it=>typeof isFav==='function'&&isFav(it));
+  cards=`<div class="favSec">⭐ המועדפים שלך</div>`;
+  if(!items.length) cards+=`<div class="shopSec" style="color:#c8b0ff">לחצו ☆ על פריט כדי להוסיף למועדפים</div>`;
+ } else {
+  items=['bb','sb','dt','ar'].includes(LKT)?ITEMS.filter(i=>i.t==LKT):lkItems(LKT);
+ }
+ cards += items.map((it,j)=>{let u=it.def||isUnl(it),eq=lkIsEq(it),nw=SEEN[IK(it)]===0,v=it.c?Math.min(statVal(it.c[0]),it.c[1]):0,from=it.from&&CHR[it.from]?`<div class="lkf">🧍 ${esc(CHR[it.from].n)}</div>`:'';
+  let rar=(it.rarity||(typeof inferRarity==='function'?inferRarity(it):'common'));
+  let fav=(typeof isFav==='function'&&isFav(it));
+  let favBtn=`<span class="favb${fav?' on':''}" onclick="event.stopPropagation();toggleFav('${it.t}','${it.id}',event)" title="מועדף">${fav?'★':'☆'}</span>`;
+  let rarBadge=(typeof RARITY_HE!=='undefined')?`<span class="rb ${rar}">${RARITY_HE[rar]||rar}</span>`:'';
+  let act, extra='';
+  if(it.shop&&!u){ act=`lkBuy('${it.t}','${it.id}')`; extra=`<div class="lkprice">🪙 ${it.shop}</div>`; }
+  else if(u) act=`lkEquip('${it.t}','${it.id}')`;
+  else act=`snd('miss');toast('${esc(condTxt(it))}')`;
+  let old=['bb','sb','dt','ar'].includes(it.t);
+  return `<button class="lk5 r-${rar}${u?'':' lkl'}${eq?' eq':''}${it.shop?' shop':''}" style="animation-delay:${Math.min(j,20)*.025}s" onclick="${act}"><div class="lkp5">${old?`<img src="${prv(it)}">`:`<canvas class="lkth" data-t="${it.t}" data-id="${it.id}"></canvas>`}${u?'':'<span class="lko">🔒</span>'}${nw?'<span class="nwb">חדש!</span>':''}${eq?'<span class="eqb">✔</span>':''}${favBtn}${rarBadge}</div><div class="lkn">${esc(it.n)}</div>`+(u?'':`<div class="lkc">${condTxt(it)}</div><div class="lkbar"><i style="width:${(v/(it.c&&it.c[1]||1)*100).toFixed(0)}%"></i></div>`)+extra+(u?'':from)+'</button>'}).join('');
+ let cnt=(LKT!=='shop'&&LKT!=='fav'&&typeof SL16!=='undefined'&&SL16.includes(LKT))?`<span class="lkcnt">${items.filter(i=>!i.def&&isUnl(i)).length}/${items.filter(i=>!i.def).length}</span>`:'';
+ ui.innerHTML=`<div class="lk4"><div class="lkL"><div class="lkcw"><canvas id="lkcv"></canvas></div><div class="lkN" id="lkN">${esc(lkCurName())}</div><div class="lkB"><button class="b" onclick="lkRandom()">🎲 תלבושת אקראית</button><button class="b sq" onclick="lkSpin()" title="סובב">🔄</button><button class="b sq" onclick="LKA.auto=!LKA.auto;toast(LKA.auto?'סיבוב אוטומטי ✓':'סיבוב ידני')" title="אוטו">🌐</button></div></div>
+ <div class="lkR"><div class="lkH"><button class="b sq" onclick="snd('click');menu()">◀</button><h1 class="ss sm">🎽 לוקר</h1>${cnt}<div class="lks">${st.map(([i,v])=>`<span>${i} <b>${v}</b></span>`).join('')}</div></div>
+ <div class="lkt4">${tabs}</div>${sw}<div class="lkg4">${cards}</div></div></div>`;
+ let g=ui.querySelector('.lkg4');if(keepScroll)g.scrollTop=keepScroll;let tb=ui.querySelector('.lkt4 .on');if(tb)tb.scrollIntoView({inline:'center',block:'nearest'});let pon=ui.querySelector('.lkpt .on');if(pon)pon.scrollIntoView({inline:'center',block:'nearest'});
+ let pc=curSpec().col[LKT]||((CAT16[LKT]||[]).find(e=>e[0]==curOf(LKT))||[])[3]||'#e8262c';ui.querySelectorAll('canvas.ptc').forEach(cv=>{try{ptSwatch(cv,cv.dataset.p,pc)}catch(e){console.warn(e)}});
+ requestAnimationFrame(()=>thObserve(g));
+ items.forEach(it=>{if(SEEN[IK(it)]===0)SEEN[IK(it)]=1});localStorage.tsSeen=JSON.stringify(SEEN);
+ if(!LKA.raf)LKA.raf=requestAnimationFrame(lkLoop)};
 
   function itemsSafeSeen(){
     try{
@@ -5282,7 +5213,7 @@ console.log('[v18] worlds', WORLDS.length, 'levels', L.length, 'coins', COINS);
     // already handled in menu wrap; also replace 18.2 label if present in source-generated home
   }catch(e){}
 
-  console.log('[v18.3.1] locker premium + daily + invite ready (char restored) · coins', COINS|0);
+  console.log('[v18.3.2] locker heads fixed + daily + invite ready (char restored) · coins', COINS|0);
 })();
 
 
