@@ -1422,7 +1422,7 @@ lockerMenu=function(tab){if(tab)LTAB=tab;snd('click');lv=null;ui.className='ov h
  ui.innerHTML=h+'</div><div class="row"><button class="b" onclick="snd(\'click\');menu()">◀ ראשי</button></div>';
  ITEMS.filter(it=>it.t==LTAB).forEach(it=>{if(SEEN[IK(it)]===0)SEEN[IK(it)]=1});localStorage.tsSeen=JSON.stringify(SEEN);
  if([...ui.querySelectorAll('.lkp img')].some(i=>!i.getAttribute('src')))setTimeout(()=>{if(ui.querySelector('.lkg'))lockerMenu()},400)};
-function equip(t,id){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('swish');buzz(20);lockerMenu()}
+function equip(t,id){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('select');buzz(20);lockerMenu()}
 // ---- invite friends: organized cards ----
 function avatar(n,big){let s=0;for(const ch of String(n))s=(s*31+ch.charCodeAt(0))>>>0;let c=['#ff3fae','#18e8ff','#ffd21f','#7dff7a','#ff7a1a','#b070ff','#3f8aff','#ff5a5a'][s%8];return `<span class="av${big?' big':''}" style="--a:${c}">${esc([...String(n||'?')][0]||'?').toUpperCase()}</span>`}
 friendsMenu=function(){MODE='classic';lv=null;ui.className='ov home';ui.innerHTML=`<h1 class="ss sm">👥 משחק עם חברים</h1>
@@ -1948,13 +1948,13 @@ lockerMenu=function(tab){if(tab)LKT=tab;else if(typeof LKT=='undefined')LKT='ch'
  items.forEach(it=>{if(SEEN[IK(it)]===0)SEEN[IK(it)]=1});localStorage.tsSeen=JSON.stringify(SEEN);
  if(!LKA.raf)LKA.raf=requestAnimationFrame(lkLoop)};
 var LKT='ch';
-function lkEquip(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('swish');buzz(20);return lockerMenu()}
+function lkEquip(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('select');buzz(20);return lockerMenu()}
  if(t=='ch'){let prevP=CHR[EQ.ch];EQ.ch=id;for(const b of[...BODY,'hat']){EQ[b]=null;delete COL[b]}let P=CHR[id];if(P&&P.back&&partOK('back',P.back))EQ.back=P.back;else if(prevP&&prevP.back&&EQ.back==prevP.back)EQ.back='none';LKA.t=0}
  else if(BODY.includes(t)||t=='hat'){EQ[t]=id||null;delete COL[t];if(id&&(BODY.includes(t)||partItem('hat',id)?.hair)&&!itemOf('ch',EQ.ch).rig){EQ.ch='kid'}}
  else{EQ[t]=id||'none';delete COL[t]}
- saveLook();snd('swish');buzz(20);lockerMenu()}
+ saveLook();snd('select');buzz(20);lockerMenu()}
 function lkCol(s,c){if(c)COL[s]=c;else delete COL[s];saveLook();snd('click');lockerMenu()}
-function lkSpin(){LKA.spin=0;snd('swish')}
+function lkSpin(){LKA.spin=0;snd('select')}
 function lkRandom(){let pick=a=>a[Math.floor(Math.random()*a.length)];let chs=ITEMS.filter(i=>i.t=='ch'&&i.rig&&isUnl(i));EQ.ch=pick(chs).id;COL={};
  for(const b of[...BODY,'hat']){let a=ITEMS.filter(i=>i.t==b&&isUnl(i));EQ[b]=Math.random()<(b=='head'?.35:.55)&&a.length?pick(a).id:null}
  for(const b of['top','pants','shoes','hat'])if(Math.random()<.6)COL[b]=pick(SWC);
@@ -2545,10 +2545,10 @@ drawLook=function(c,sp,O){let key=O.pose=='cel'?'cel':O.pose=='idle'?'idle':'thr
 Object.assign(FR,{full:[-38,-142,84,148],head:[-24,-136,52,48],upper:[-30,-104,62,54],lower:[-30,-62,62,66],back:[-50,-146,104,152],hands:[-36,-120,92,90]});
 eqWith=function(t,id){let e=Object.assign({},EQ);if(t=='ch'){let pB=baseOf(e.ch);e.ch=id;for(const b of[...BODY,'hat'])e[b]=null;let B=baseOf(id);for(const s of['back','face','neck','aura']){if(B[s])e[s]=B[s];else if(pB[s]&&e[s]==pB[s])e[s]='none'}}else e[t]=id||(BODY.includes(t)||t=='hat'?null:'none');return e};
 colWith=function(t){let c=Object.assign({},COL);if(t=='ch'){for(const b of[...BODY,'hat','back','neck','face'])delete c[b]}else delete c[t];return c};
-lkEquip=function(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('swish');buzz(20);return lockerMenu()}
+lkEquip=function(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('select');buzz(20);return lockerMenu()}
  if(t=='ch'){let e=eqWith('ch',id);Object.assign(EQ,e);for(const b of[...BODY,'hat','back','neck','face'])delete COL[b];LKA.t=0}
  else if(BODY.includes(t)||t=='hat'){EQ[t]=id||null;delete COL[t]}else{EQ[t]=id||'none';delete COL[t]}
- saveLook();snd('swish');buzz(20);lockerMenu()};
+ saveLook();snd('select');buzz(20);lockerMenu()};
 lkRandom=function(){let pick=a=>a[Math.floor(Math.random()*a.length)];let chs=ITEMS.filter(i=>i.t=='ch'&&isUnl(i));Object.assign(EQ,eqWith('ch',pick(chs).id));COL={};
  for(const b of[...BODY,'hat']){let a=ITEMS.filter(i=>i.t==b&&isUnl(i));EQ[b]=Math.random()<(b=='head'?.3:.5)&&a.length?pick(a).id:null}
  for(const b of['top','pants','shoes','hat'])if(Math.random()<.55)COL[b]=pick(SWC);
@@ -3480,9 +3480,9 @@ lkIsEq=function(it){if(it.t=='ch')return EQ.ch==it.id&&isUnl(it);if(['bb','sb','
 eqWith=function(t,id){let e=Object.assign({},EQ);if(t=='ch'){e.ch=id;for(const s of SL16)e[s]=null}else e[t]=id||null;return e};
 colWith=function(t){let c=Object.assign({},COL);if(t=='ch'){for(const s of SL16)delete c[s]}else delete c[t];return c};
 function patWith(t){let p=Object.assign({},PAT);if(t=='ch'){for(const s of SL16)delete p[s]}return p}
-lkEquip=function(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('swish');buzz(20);return lockerMenu()}
+lkEquip=function(t,id){if(['bb','sb','dt','ar'].includes(t)){EQ[t]=id;localStorage.tsEq=JSON.stringify(EQ);if(t=='bb')applyBall();snd('select');buzz(20);return lockerMenu()}
  if(t=='ch'){Object.assign(EQ,eqWith('ch',id));for(const s of SL16){delete COL[s];delete PAT[s]}LKA.t=0}else{EQ[t]=id||null;delete COL[t]}
- saveLook();snd('swish');buzz(20);lockerMenu()};
+ saveLook();snd('select');buzz(20);lockerMenu()};
 lkCol=function(s,c){if(c)COL[s]=c;else delete COL[s];saveLook();snd('click');lockerMenu()};
 function lkPat(s,p){if(p&&p!='plain'){if(!patOK(p)){let L=PATLOCK[p];snd('miss');toast(condTxt({c:L}));return}PAT[s]=p}else if(p=='plain')PAT[s]='plain';else delete PAT[s];saveLook();snd('click');lockerMenu()}
 lkRandom=function(){let pick=a=>a[Math.floor(Math.random()*a.length)],R=Math.random;let chs=ITEMS.filter(i=>i.t=='ch'&&isUnl(i));Object.assign(EQ,eqWith('ch',pick(chs).id));COL={};PAT={};
@@ -3739,7 +3739,7 @@ thumbDraw=function(cv){
 {const le=lkEquip;
 lkEquip=function(t,id){
   if(t==='dance'||t==='makefx'){
-    EQ[t]=id||'classic';saveLook();snd('swish');buzz(20);return lockerMenu();
+    EQ[t]=id||'classic';saveLook();snd('select');buzz(20);return lockerMenu();
   }
   return le.apply(this,arguments);
 }}
@@ -3761,6 +3761,48 @@ lkRandom=function(){
 console.log('[DANCEFX_V1] dances + make FX ready');
 })();
 
+
+
+// locker select sound = cartoon splash #4
+{const __snd0=snd;
+snd=function(t){
+  if(t==='select'){
+    try{
+      AC=AC||new (window.AudioContext||webkitAudioContext)();
+      if(AC.state==='suspended')AC.resume();
+      const n=AC.currentTime, dest=AC.destination;
+      // descending cartoon tone
+      {let o=AC.createOscillator(),g=AC.createGain();
+       o.type='sine';
+       o.frequency.setValueAtTime(720,n);
+       o.frequency.exponentialRampToValueAtTime(120,n+0.22);
+       g.gain.setValueAtTime(0.5,n);
+       g.gain.exponentialRampToValueAtTime(0.001,n+0.28);
+       o.connect(g);g.connect(dest);o.start(n);o.stop(n+0.28)}
+      // water spray noise
+      {let len=Math.floor(AC.sampleRate*0.2),b=AC.createBuffer(1,len,AC.sampleRate),d=b.getChannelData(0);
+       for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.2);
+       let src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+       f.type='bandpass';f.frequency.value=1400;f.Q.value=0.7;
+       src.buffer=b;src.connect(f);f.connect(g);g.connect(dest);
+       g.gain.setValueAtTime(0.42,n);g.gain.exponentialRampToValueAtTime(0.001,n+0.2);
+       src.start(n)}
+      // bubble body
+      {let o=AC.createOscillator(),g=AC.createGain();
+       o.type='sine';o.frequency.value=180;
+       g.gain.setValueAtTime(0.32,n);g.gain.exponentialRampToValueAtTime(0.001,n+0.2);
+       o.connect(g);g.connect(dest);o.start(n);o.stop(n+0.2)}
+      // bright tip
+      {let o=AC.createOscillator(),g=AC.createGain();
+       o.type='sine';o.frequency.value=1800;
+       g.gain.setValueAtTime(0.2,n);g.gain.exponentialRampToValueAtTime(0.001,n+0.08);
+       o.connect(g);g.connect(dest);o.start(n);o.stop(n+0.08)}
+    }catch(e){}
+    return;
+  }
+  return __snd0(t);
+};
+}
 
 boot();requestAnimationFrame(loop);
 </script></body></html>
