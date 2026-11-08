@@ -34,6 +34,11 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # מטמון של Gradle והספריות – בנייה שנייה כבר לא מורידה הכל מחדש
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
       - name: Install
         run: npm ci
 
@@ -60,8 +65,14 @@ jobs:
         run: |
           chmod +x gradlew
           # הורדת Gradle לפעמים נכשלת זמנית (504) – מנסים שוב
-          for i in 1 2 3 4; do ./gradlew --no-daemon --version >/dev/null && break || { echo "retry $i"; sleep $((i*10)); }; done
-          ./gradlew --no-daemon assembleDebug assembleRelease bundleRelease
+          NET="-Dorg.gradle.internal.http.socketTimeout=180000 -Dorg.gradle.internal.http.connectionTimeout=180000 -Dorg.gradle.internal.repository.max.retries=6"
+          for i in 1 2 3 4; do ./gradlew --no-daemon $NET --version >/dev/null && break || { echo "retry $i"; sleep $((i*10)); }; done
+          # הורדות מהרשת לפעמים נתקעות – עד 3 ניסיונות לבנייה
+          for i in 1 2 3; do
+            if ./gradlew --no-daemon $NET assembleDebug assembleRelease bundleRelease; then exit 0; fi
+            echo "::warning::Gradle attempt $i failed – retrying"; sleep $((i*20))
+          done
+          exit 1
 
       - name: Collect outputs
         run: |
