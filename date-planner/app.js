@@ -67,7 +67,7 @@ function updateModeNote() {
 const PLAN_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "summary", "vibe_label", "duration", "budget_estimate", "image_prompt", "timeline", "restaurants", "outfit", "tips", "conversation_starters", "backup_plan", "pro_move"],
+  required: ["title", "summary", "vibe_label", "duration", "budget_estimate", "image_prompt", "timeline", "restaurants", "outfit", "tips", "conversation_starters", "backup_plan", "pro_move", "shopping_list"],
   properties: {
     title: { type: "string" },
     summary: { type: "string" },
@@ -112,6 +112,7 @@ const PLAN_SCHEMA = {
     conversation_starters: { type: "array", items: { type: "string" } },
     backup_plan: { type: "string" },
     pro_move: { type: "string" },
+    shopping_list: { type: "array", items: { type: "string" } },
   },
 };
 
@@ -125,7 +126,27 @@ const SYSTEM_PROMPT = `אתה "דייטון" – מתכנן דייטים מומ�
 - restaurants: 3 אפשרויות אוכל שמתאימות לתקציב ולאווירה, עם הסבר קצר למה זה מתאים ומחיר (₪/₪₪/₪₪₪ + הערכה לזוג).
 - image_prompt (בתוכנית ובכל תחנה): תיאור סצנה באנגלית בלבד למחולל תמונות – צילום קולנועי של זוג בדייט במקום ובתאורה המתאימים, בלי טקסט בתמונה.
 - tips: 3–5 טיפים קצרים ומעשיים שמתאימים לשלב הקשר. conversation_starters: 4 שאלות פתיחה טובות. outfit: מה ללבוש. backup_plan: מה עושים אם משהו משתבש (גשם, מקום סגור). pro_move: מחווה קטנה אחת שתעשה רושם.
+- shopping_list: אם הדייט (או חלק ממנו) בבית או כולל פיקניק – רשימת קניות מפורטת של מצרכים ודברים להביא/לקנות. אחרת רשימה ריקה.
+- אם נשלחה רשימת "מקומות מהמאגר" – תעדיף להשתמש בהם כשהם מתאימים, ותשלים מהידע שלך.
 - תתייחס לתקציב ברצינות. בדייט ראשון – מקום ציבורי, קצר יחסית, שמאפשר לדבר.`;
+
+function placesHint(input) {
+  const DP = window.DatePlaces;
+  if (!DP) return "";
+  const lines = [];
+  const anchor = input.anchorId ? DP.ALL.find((x) => x.id === input.anchorId) : null;
+  if (anchor) lines.push(`הדייט צריך להיבנות סביב המקום: ${anchor.n} (${anchor.area}, ${anchor.city}) – ${anchor.d}`);
+  if (input.homeId) {
+    const h = DP.HOME_DATES.find((x) => x.id === input.homeId);
+    if (h) lines.push(`זה דייט בבית בסגנון: ${h.t} – ${h.s}. תכלול רשימת קניות.`);
+  }
+  const city = anchor ? DP.CITIES[anchor.city] : DP.findCity(input.city);
+  if (city) {
+    lines.push(`מקומות מהמאגר ב${city.name}:`);
+    city.items.forEach((p) => lines.push(`- ${p.n} | ${DP.CATS[p.cat].l} | ${p.area} | ${"₪".repeat(p.price)}`));
+  }
+  return lines.join("\n");
+}
 
 let sdkPromise = null;
 function loadSdk() {
@@ -149,7 +170,8 @@ async function buildPlanWithClaude(input) {
 אווירה: ${vibes}
 תקציב: ${budget}
 מתי: ${DI.TIME[input.time]?.label || "ערב"}
-${input.variation ? "תן רעיון שונה מהקודם: " + input.variation : ""}`;
+${input.variation ? "תן רעיון שונה מהקודם: " + input.variation : ""}
+${placesHint(input)}`;
 
   const stream = client.beta.messages.stream({
     model: "claude-opus-5-5",
@@ -251,6 +273,7 @@ function renderPlan(plan) {
         <span class="step-time">${esc(s.time)}</span>
         <h4>${esc(s.emoji)} ${esc(s.title)}</h4>
         <p>${esc(s.description)}</p>
+        ${s.real_tip ? `<p class="real-tip">📍 ${esc(s.real_tip)}</p>` : ""}
         <div class="meta">
           <span>📍 ${esc(s.place_name)}</span>
           ${s.cost ? `<span>· כ-${esc(s.cost)} ₪</span>` : `<span>· חינם</span>`}
@@ -286,6 +309,12 @@ function renderPlan(plan) {
       <h3 class="section-title">🗓️ התוכנית שלך, שלב אחרי שלב</h3>
       <ol class="timeline">${steps}</ol>
 
+      ${(plan.shopping_list || []).length ? `
+      <h3 class="section-title">🛒 רשימת קניות</h3>
+      <div class="tip-box">${shopListHtml(plan.shopping_list, "plan")}
+        <div class="actions" style="margin-top:8px"><button class="btn small ghost" data-act="shop">📲 שלח את הרשימה בוואטסאפ</button></div>
+      </div>` : ""}
+
       <h3 class="section-title">🍽️ איפה לאכול</h3>
       <div class="food-grid">${foods}</div>
 
@@ -311,11 +340,24 @@ function renderPlan(plan) {
   wireImages($("#result"));
 }
 
+function shopListHtml(items, key) {
+  return `<ul class="shop-list">${items.map((x, i) => `
+    <li><label><input type="checkbox" data-shop="${esc(key)}-${i}" /> ${esc(x)}</label></li>`).join("")}</ul>`;
+}
+document.addEventListener("change", (e) => {
+  if (e.target.matches(".shop-list input")) e.target.parentElement.classList.toggle("done", e.target.checked);
+});
+function shareShopping(title, items) {
+  const text = `🛒 רשימת קניות – ${title}\n` + items.map((x) => "▫️ " + x).join("\n");
+  window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener");
+}
+
 function planToText(p) {
   const lines = [`💘 ${p.title}`, p.summary, `⏱️ ${p.duration} | 💰 ${p.budget_estimate}`, "", "🗓️ התוכנית:"];
   p.timeline.forEach((s) => lines.push(`${s.time} ${s.emoji} ${s.title} – ${s.place_name}${s.maps_url ? "\n" + s.maps_url : ""}`));
   lines.push("", "🍽️ אוכל:");
   (p.restaurants || []).forEach((r) => lines.push(`• ${r.name} (${r.price})`));
+  if ((p.shopping_list || []).length) lines.push("", "🛒 קניות: " + p.shopping_list.join(", "));
   lines.push("", "👕 " + p.outfit, "🏆 " + p.pro_move);
   return lines.join("\n");
 }
@@ -341,6 +383,8 @@ $("#result").addEventListener("click", async (e) => {
   } else if (act === "copy") {
     try { await navigator.clipboard.writeText(planToText(currentPlan)); toast("הועתק 📋"); }
     catch { toast("לא הצלחתי להעתיק"); }
+  } else if (act === "shop") {
+    shareShopping(currentPlan.title, currentPlan.shopping_list);
   } else if (act === "print") {
     window.print();
   }
@@ -427,5 +471,114 @@ $("#randomBtn").addEventListener("click", () => {
   build(input);
 });
 
+/* ---------- טאבים ---------- */
+function showTab(name) {
+  $$(".tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === name));
+  $$(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== name));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+$$(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
+
+/* ---------- מקומות ---------- */
+const DP = window.DatePlaces;
+const placesState = { city: Object.keys(DP.CITIES)[0], group: "all", near: null };
+
+$("#placeCity").innerHTML = `<option value="__near" hidden>📍 הכי קרובים אליי</option>` +
+  Object.values(DP.CITIES).map((c) => `<option value="${esc(c.name)}">${esc(c.name)} (${c.items.length})</option>`).join("");
+$("#placeCity").value = placesState.city;
+$("#pcatChips").innerHTML = DP.GROUPS.map(([k, l], i) => `<button data-v="${k}" class="${i ? "" : "on"}">${l}</button>`).join("");
+$("#pcatChips").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b) { placesState.group = b.dataset.v; renderPlaces(); }
+});
+$("#placeCity").addEventListener("change", (e) => {
+  if (e.target.value === "__near") return;
+  placesState.city = e.target.value;
+  placesState.near = null;
+  renderPlaces();
+});
+$("#nearMe").addEventListener("click", () => {
+  if (!navigator.geolocation) return toast("הדפדפן לא תומך במיקום");
+  $("#placesNote").textContent = "מאתר את המיקום שלך...";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      placesState.near = [pos.coords.latitude, pos.coords.longitude];
+      $("#placeCity").value = "__near";
+      renderPlaces();
+    },
+    () => { $("#placesNote").textContent = ""; toast("לא הצלחתי לקבל מיקום – בחר עיר מהרשימה"); },
+    { timeout: 10000 }
+  );
+});
+
+function fmtDist(d) {
+  if (d == null) return "";
+  return d < 1 ? " · פחות מקילומטר" : ` · כ-${Math.round(d)} ק"מ`;
+}
+
+function renderPlaces() {
+  let items;
+  if (placesState.near) {
+    items = DP.nearest(placesState.near, 400);
+    $("#placesNote").textContent = `ממוין לפי מרחק ממך · העיר הקרובה במאגר: ${DP.nearestCity(placesState.near).name}`;
+  } else {
+    items = DP.CITIES[placesState.city].items;
+    $("#placesNote").textContent = "";
+  }
+  if (placesState.group !== "all") items = items.filter((p) => DP.CATS[p.cat].g === placesState.group);
+  if (placesState.near) items = items.slice(0, 40);
+  $("#placesList").innerHTML = items.length ? items.map((p) => {
+    const c = DP.CATS[p.cat];
+    return `<div class="place">
+      <div class="ptop"><h5>${c.e} ${esc(p.n)}</h5><span class="badge">${c.l}</span></div>
+      <div class="pmeta">📍 ${esc(p.area)}${placesState.near ? " · " + esc(p.city) : ""} · ${p.price === 1 ? "זול / חינם" : "₪".repeat(p.price)}${fmtDist(p.dist)}</div>
+      <p>${esc(p.d)}</p>
+      <div class="prow">
+        <a class="btn small ghost" href="${esc(DP.mapsLink(p))}" target="_blank" rel="noopener">🗺️ במפה</a>
+        <button class="btn small primary" data-anchor="${esc(p.id)}">✨ בנה דייט כאן</button>
+      </div>
+    </div>`;
+  }).join("") : `<p class="hint">אין מקומות בקטגוריה הזו כאן עדיין – נסה קטגוריה אחרת.</p>`;
+}
+$("#placesList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-anchor]");
+  if (!b) return;
+  const p = DP.ALL.find((x) => x.id === b.dataset.anchor);
+  showTab("plan");
+  $("#city").value = DP.CITIES[p.city].alias[0];
+  $("#freeText").value = `דייט סביב ${p.n} (${p.area})`;
+  build(Object.assign(readForm(), { anchorId: p.id }));
+});
+
+/* ---------- דייט בבית ---------- */
+$("#homeList").innerHTML = DP.HOME_DATES.map((h) => `
+  <div class="home-card">
+    <span class="em">${h.e}</span>
+    <h5>${esc(h.t)}</h5>
+    <p class="sub">${esc(h.s)} · כ-${h.cost} ₪</p>
+    <details><summary>🛒 רשימת קניות (${h.shop.length})</summary>${shopListHtml(h.shop, h.id)}</details>
+    <details><summary>📋 איך עושים את זה</summary><ol>${h.steps.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></details>
+    <div class="prow">
+      <button class="btn small primary" data-home="${h.id}">✨ תוכנית מלאה</button>
+      <button class="btn small ghost" data-homeshop="${h.id}">📲 שלח רשימה</button>
+    </div>
+  </div>`).join("");
+$("#homeList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-home]");
+  const s = e.target.closest("[data-homeshop]");
+  if (s) {
+    const h = DP.HOME_DATES.find((x) => x.id === s.dataset.homeshop);
+    shareShopping(h.t, h.shop);
+  } else if (b) {
+    const h = DP.HOME_DATES.find((x) => x.id === b.dataset.home);
+    showTab("plan");
+    $("#freeText").value = `דייט בבית: ${h.t}`;
+    setChips("vibes", ["home"].concat(h.v.slice(0, 1)));
+    setChips("stage", "couple");
+    build(Object.assign(readForm(), { homeId: h.id }));
+  }
+});
+
+renderPlaces();
 updateModeNote();
 updateSavedCount();

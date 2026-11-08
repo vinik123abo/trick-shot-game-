@@ -134,6 +134,11 @@
     if ((ctx.stage === "anniversary" || ctx.stage === "surprise") && item.v.includes("romantic")) s += 2;
     if (item.tm && !item.tm.includes(ctx.time)) s -= 15;
     if (ctx.exclude.has(item.id)) s -= 100;
+    // בעיר שאין בה ים/מקום מתאים – מורידים עדיפות לפעילויות שדורשות אותו
+    if (ctx.cityObj && ACT_CAT[item.id]) {
+      const has = ctx.cityObj.items.some((p) => ACT_CAT[item.id].includes(p.cat) && (!REQUIRE_TAG[item.id] || p.tags.includes(REQUIRE_TAG[item.id])));
+      if (!has) s -= ["sunset-beach", "promenade", "kayak"].includes(item.id) ? 15 : 4;
+    }
     return s;
   }
 
@@ -187,6 +192,70 @@
     "תכין לה פתק קטן ותחביא אותו בתיק / במעיל שלה.",
   ];
 
+  // ---------- חיבור למאגר המקומות האמיתיים ----------
+  const DP = window.DatePlaces || null;
+  const ACT_CAT = {
+    "coffee-walk": ["cafe", "walk"], "sunset-beach": ["beach"], market: ["market"], viewpoint: ["view"],
+    bike: ["park", "walk"], museum: ["culture"], "wine-bar-start": ["bar", "winery"], picnic: ["park", "beach", "nature"],
+    hike: ["nature"], "chef-dinner": ["rest"], stargazing: ["activity", "view", "nature"], dessert: ["walk"], cocktail: ["bar"],
+    promenade: ["walk", "beach"], jazz: ["bar"], polaroid: ["view"], "breakfast-end": ["cafe"], kayak: ["activity", "beach"],
+  };
+  const REQUIRE_TAG = { stargazing: "stars" };
+  for (const k in ACT_CAT) ACT_CAT[k].key = k;
+  const FOOD_TAG = { sushi: "asian", seafood: "fish", streetfood: "street", brunch: "brunch" };
+  const PRICE_COST = [0, 80, 250, 600];
+  const HOME_IMG = {
+    pasta: "a couple making fresh pasta together in a cozy home kitchen with wine and candles",
+    sushi: "a couple rolling homemade sushi together at a kitchen table",
+    wine: "a home wine and cheese tasting board with three wine glasses and candles in a cozy living room",
+    pizza: "a couple making homemade pizzas together, flour on the counter, laughing",
+    fondue: "chocolate fondue with strawberries and candles on a cozy home table",
+    spa: "a cozy home spa evening with candles, towels, face masks and massage oils",
+    games: "a couple playing a board game on the living room floor with mojito cocktails",
+    paint: "a couple painting portraits of each other on canvases in a living room with wine",
+    picnic: "an indoor picnic on a living room floor with fairy lights, pillows and a cheese board",
+    cinema: "a cozy blanket fort in a living room with fairy lights, popcorn and a movie projector",
+    bake: "a couple baking chocolate chip cookies together in a warm home kitchen",
+    stars: "a couple lying on a blanket on a rooftop balcony stargazing with hot cocoa",
+  };
+  const MEAL_HOME = new Set(["pasta", "sushi", "pizza", "wine", "picnic"]);
+
+  function placeScore(p, ctx, wantTag) {
+    let s = Math.random() * 2;
+    for (const v of ctx.vibes) if (p.tags.includes(v)) s += 2;
+    if (wantTag && p.tags.includes(wantTag)) s += 8;
+    if (p.price > ctx.budget) s -= 5 * (p.price - ctx.budget);
+    if (ctx.usedPlaces.has(p.id)) s -= 100;
+    // מעדיפים מקומות קרובים לתחנה הקודמת, כדי שלא תבלו את הערב בפקקים
+    if (ctx.lastLL && DP) s -= Math.min(DP.distKm(ctx.lastLL, p.ll), 30) / 1.5;
+    return s;
+  }
+
+  function realPlace(cats, ctx, wantTag) {
+    if (!ctx.cityObj || !cats) return null;
+    const req = REQUIRE_TAG[cats.key];
+    const cands = ctx.cityObj.items.filter((p) => cats.includes(p.cat) && (!req || p.tags.includes(req)));
+    if (!cands.length) return null;
+    const best = cands.map((p) => [placeScore(p, ctx, wantTag), p]).sort((a, b) => b[0] - a[0])[0];
+    if (best[0] < -50) return null;
+    ctx.usedPlaces.add(best[1].id);
+    ctx.lastLL = best[1].ll;
+    return best[1];
+  }
+
+  function pickHomeDate(ctx) {
+    const forced = ctx.homeId && DP.HOME_DATES.find((h) => h.id === ctx.homeId);
+    if (forced) return forced;
+    return DP.HOME_DATES.map((h) => {
+      let s = Math.random() * 2;
+      for (const v of ctx.vibes) if (h.v.includes(v)) s += 2;
+      if (ctx.text.includes(h.t.split(" ")[1] || "@@")) s += 5;
+      for (const w of ctx.words) if (w.length > 2 && (h.t.includes(w) || h.s.includes(w))) s += 4;
+      if (ctx.exclude.has("home-" + h.id)) s -= 100;
+      return [s, h];
+    }).sort((a, b) => b[0] - a[0])[0][1];
+  }
+
   function buildPlanOffline(input) {
     const parsed = parseText((input.freeText || "") + " " + (input.herLikes || ""));
     const vibes = [...new Set([...(input.vibes || []), ...parsed.vibes])];
@@ -200,19 +269,37 @@
       exclude: new Set(input.exclude || []),
       words: parsed.words,
     };
-    ctx.isHome = ctx.vibes.includes("home") && ctx.vibes.length <= 2 || /בבית|בדירה|לא לצאת/.test(ctx.text);
+    ctx.isHome = ctx.vibes.includes("home") && ctx.vibes.length <= 2 || /בבית|בדירה|לא לצאת|בסלון|במרפסת/.test(ctx.text);
+    ctx.usedPlaces = new Set();
+    ctx.homeId = input.homeId;
+    if (input.homeId) ctx.isHome = true;
+
+    // מקום עוגן שנבחר מרשימת המקומות
+    const anchor = input.anchorId && DP ? DP.ALL.find((p) => p.id === input.anchorId) : null;
+    if (anchor) { ctx.city = ctx.city || anchor.city; ctx.isHome = false; ctx.usedPlaces.add(anchor.id); ctx.lastLL = anchor.ll; }
+    ctx.cityObj = DP ? (anchor ? DP.CITIES[anchor.city] : DP.findCity(ctx.city)) : null;
 
     // בחירת פעילויות
     const opens = ACTIVITIES.filter((a) => a.role === "open");
     const mains = ACTIVITIES.filter((a) => a.role === "main");
     const closes = ACTIVITIES.filter((a) => a.role === "close");
 
-    const main = pick(mains, ctx);
+    let main = pick(mains, ctx);
+    let homeDate = null;
+    if (anchor) {
+      const c = DP.CATS[anchor.cat];
+      main = { id: "place-" + anchor.id, e: c.e, t: anchor.n, d: anchor.d, v: anchor.tags, cost: PRICE_COST[anchor.price],
+        place: anchor.area, real: anchor, img: c.img, meal: anchor.cat === "rest" };
+    } else if (ctx.isHome && DP) {
+      homeDate = pickHomeDate(ctx);
+      main = { id: "home-" + homeDate.id, e: homeDate.e, t: homeDate.t, d: homeDate.s + ". " + homeDate.steps.join(" ← ") + ".",
+        v: homeDate.v, cost: homeDate.cost, place: "בבית", home: true, img: HOME_IMG[homeDate.id], meal: MEAL_HOME.has(homeDate.id) };
+    }
     ctx.exclude.add(main.id);
     const foodCtx = Object.assign({}, ctx, { exclude: new Set() });
     const foods = topN(FOODS, foodCtx, 3);
     const food = foods[0];
-    const mainIsMeal = main.id === "chef-dinner" || main.id === "cooking-class" || main.id === "home-cook" || main.id === "picnic";
+    const mainIsMeal = main.meal || main.id === "chef-dinner" || main.id === "cooking-class" || main.id === "home-cook" || main.id === "picnic";
 
     const steps = [];
     if (!ctx.isHome) {
@@ -223,26 +310,34 @@
     steps.push({ a: main, dur: main.cost > 300 ? 120 : 90 });
     if (!mainIsMeal) {
       steps.push({
-        a: { e: food.e, t: `ארוחה: ${food.c}`, d: food.d, cost: food.cost, place: `מסעדה – ${food.c}`, q: food.q, img: food.img, home: food.home },
+        a: { e: food.e, t: `ארוחה: ${food.c}`, d: food.d, cost: food.cost, place: `מסעדה – ${food.c}`, q: food.q, img: food.img, home: food.home, food },
         dur: 75,
       });
     }
     // בדייט ראשון שומרים על זה קצר – עד 3 תחנות
-    if (!(ctx.stage === "first" && steps.length >= 3) && (ctx.stage !== "first" || ctx.time !== "morning")) {
+    if (!((ctx.stage === "first" || ctx.time === "night") && steps.length >= 3) && (ctx.stage !== "first" || ctx.time !== "morning")) {
       const close = pick(closes, ctx);
       steps.push({ a: close, dur: 45 });
     }
 
     let t = TIME[ctx.time].start[0] * 60 + TIME[ctx.time].start[1];
     const timeline = steps.map(({ a, dur }) => {
+      // מחליפים "סוג מקום" במקום אמיתי מהמאגר כשיש כזה בעיר
+      let real = a.real || null;
+      if (!real && !a.home && ctx.cityObj) {
+        if (a.food) real = realPlace(["rest"], ctx, FOOD_TAG[a.food.id] || a.food.id);
+        else real = realPlace(ACT_CAT[a.id], ctx, a.id === "jazz" ? "jazz" : a.id === "chef-dinner" ? "chef" : null);
+      }
       const item = {
         time: fmtTime(t),
         _id: a.id,
         emoji: a.e,
         title: a.t,
         description: a.d,
-        place_name: a.place,
-        maps_url: a.home ? "" : mapsUrl(a.q, ctx.city),
+        place_name: real ? `${real.n} · ${real.area}` : a.place,
+        real_name: real ? real.n : "",
+        maps_url: a.home ? "" : real ? DP.mapsLink(real) : mapsUrl(a.q, ctx.city),
+        real_tip: real && real !== a.real ? real.d : "",
         cost: a.cost,
         image_prompt: imagePrompt(a.img, ctx),
       };
@@ -253,12 +348,19 @@
     const total = timeline.reduce((s, x) => s + (x.cost || 0), 0);
     const hours = Math.max(1, Math.round((t - (TIME[ctx.time].start[0] * 60 + TIME[ctx.time].start[1])) / 30) / 2);
 
-    const restaurants = foods.map((f) => ({
+    let restaurants = [];
+    if (ctx.cityObj && !ctx.isHome) {
+      const rs = ctx.cityObj.items.filter((p) => p.cat === "rest")
+        .map((p) => [placeScore(p, Object.assign({}, ctx, { usedPlaces: new Set() }), FOOD_TAG[food.id] || food.id), p])
+        .sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]);
+      restaurants = rs.map((p) => ({ name: `🍽️ ${p.n}`, why: `${p.area} – ${p.d}`, price: "₪".repeat(p.price), maps_url: DP.mapsLink(p) }));
+    }
+    restaurants = restaurants.concat(foods.slice(0, Math.max(0, 3 - restaurants.length)).map((f) => ({
       name: `${f.e} ${f.c}`,
       why: f.d,
       price: "₪".repeat(f.b) + ` · כ-${f.cost} ₪ לזוג`,
       maps_url: f.home ? "" : mapsUrl(f.q + (ctx.vibes.includes("romantic") ? " רומנטית" : ""), ctx.city),
-    }));
+    })));
 
     const vibeText = ctx.vibes.map((v) => VIBE_LABEL[v]).filter(Boolean).join(" · ");
     const titles = {
@@ -282,7 +384,7 @@
 
     return {
       title: tl[rnd(tl.length)],
-      summary: `${STAGE_LABEL[ctx.stage]} ב${TIME[ctx.time].label}${ctx.city ? " ב" + ctx.city : ""}: ${timeline.map((x) => x.title).join(" ← ")}.`,
+      summary: `${STAGE_LABEL[ctx.stage]} ב${TIME[ctx.time].label}${ctx.city ? " ב" + ctx.city : ""}: ${timeline.map((x) => x.real_name || x.title).join(" ← ")}.`,
       vibe_label: vibeText,
       duration: `כ-${hours} שעות`,
       budget_estimate: total === 0 ? "כמעט בחינם" : `כ-${Math.round(total / 10) * 10} ₪ לזוג`,
@@ -298,6 +400,7 @@
           ? "אם יורד גשם או חם מדי: מחליפים את החלק בחוץ בבית קפה מפנק או בחדר בריחה, ושומרים את הארוחה כמו שהיא."
           : "אם המקום מלא או סגור – שמור בטלפון מקום חלופי קרוב באותו סגנון. תבדוק שעות פתיחה ותזמין מראש.",
       pro_move: PRO_MOVES[rnd(PRO_MOVES.length)],
+      shopping_list: homeDate ? homeDate.shop : [],
       city: ctx.city,
       _source: "offline",
     };

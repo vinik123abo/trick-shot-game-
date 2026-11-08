@@ -28,7 +28,14 @@
     </div>
   </header>
 
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="plan">✨ תכנון דייט</button>
+    <button class="tab" data-tab="places">🗺️ מקומות לדייט</button>
+    <button class="tab" data-tab="home">🏠 דייט בבית</button>
+  </nav>
+
   <main>
+    <div class="tab-panel" data-panel="plan">
     <section class="card planner" id="planner">
       <h2>איזה דייט בא לך?</h2>
       <p class="hint">כתוב במילים פשוטות. לדוגמה: <em>"דייט שני, היא אוהבת ים ואוכל איטלקי, משהו רומנטי אבל לא יקר בתל אביב"</em></p>
@@ -106,6 +113,30 @@
       <p class="hint">אין לך כוח לפרט? לחץ על רעיון ונבנה ממנו דייט שלם.</p>
       <div class="quick-grid" id="quickGrid"></div>
     </section>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="places">
+      <section class="card">
+        <h2>מקומות לדייט לפי עיר 🗺️</h2>
+        <p class="hint">מסעדות, חופים, טבע, תצפיות, ברים ופעילויות. בחר עיר, או לחץ "קרוב אליי" כדי למיין לפי המרחק ממך.</p>
+        <div class="places-controls">
+          <select id="placeCity"></select>
+          <button class="btn small ghost" id="nearMe">📍 קרוב אליי</button>
+        </div>
+        <div class="chips single" data-name="pcat" id="pcatChips"></div>
+        <p class="mode-note" id="placesNote"></p>
+        <div class="places-grid" id="placesList"></div>
+        <p class="mode-note">💡 המאגר כולל מקומות מוכרים ומבוססים, אבל מקומות נפתחים ונסגרים – תמיד כדאי לבדוק במפה שעות פתיחה ולהזמין מראש.</p>
+      </section>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="home">
+      <section class="card">
+        <h2>דייטים בבית 🏠</h2>
+        <p class="hint">לא חייבים לצאת כדי שיהיה מושלם. בחר רעיון, קבל רשימת קניות ושלבים – ותהפוך את הסלון לדייט.</p>
+        <div class="home-grid" id="homeList"></div>
+      </section>
+    </div>
   </main>
 
   <footer class="foot">
@@ -143,6 +174,7 @@
 
   <div id="toast" class="toast"></div>
 
+  <script src="places.js"></script>
   <script src="ideas.js"></script>
   <script type="module" src="app.js"></script>
 </body>
