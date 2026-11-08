@@ -112,7 +112,7 @@ input[type="range"] { padding: 0; accent-color: var(--accent); background: trans
   .topbar { padding-inline: max(16px, calc((100% - 1180px) / 2 + 16px)); }
   .tab-panel[data-panel="plan"] { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: "planner quick" "result result"; align-items: start; }
   #planner { grid-area: planner; }
-  .tab-panel[data-panel="plan"] .quick { grid-area: quick; position: sticky; top: calc(var(--hdr, 64px) + 80px); }
+  .tab-panel[data-panel="plan"] .quick { grid-area: quick; }
   #result { grid-area: result; }
   .quick-grid { grid-template-columns: 1fr 1fr; }
   .tab-panel[data-panel="personal"] { grid-template-columns: 1fr 1fr; align-items: start; }
@@ -218,3 +218,6 @@ select { max-width: 100%; width: 100%; text-overflow: ellipsis; }
 /* ---------- הודעת עדכון ---------- */
 .update-bar { position: fixed; z-index: 70; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px;
   background: var(--dlg); border: 1px solid rgba(var(--glow-rgb), .5); box-shadow: 0 20px 40px -10px var(--shadow); backdrop-filter: blur(14px); font-weight: 700; animation: popIn .5s cubic-bezier(.3, 1.6, .5, 1); white-space: nowrap; }
+
+/* מסכים צרים מאוד: רק אייקון הלב בכותרת */
+@media (max-width: 360px) { .brand h1, .tagline { display: none; } .top-actions { gap: 4px; } }
