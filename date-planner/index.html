@@ -19,25 +19,30 @@
   <meta property="og:site_name" content="דייטון" />
   <meta property="og:title" content="דייטון – מתכנן הדייטים שלך 💘" />
   <meta property="og:description" content="כותבים במילים פשוטות איזה דייט רוצים, ומקבלים תוכנית מלאה: מקומות, אוכל, לו״ז, טיפים, כרטיס הזמנה וספירה לאחור." />
-  <meta property="og:image" content="og.png" />
+  <meta property="og:image" content="https://vinik123abo.github.io/trick-shot-game-/date-planner/og.png" />
+  <meta property="og:url" content="https://vinik123abo.github.io/trick-shot-game-/date-planner/" />
+  <link rel="canonical" href="https://vinik123abo.github.io/trick-shot-game-/date-planner/" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="דייטון – מתכנן הדייטים שלך 💘" />
-  <meta name="twitter:image" content="og.png" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"דייטון","alternateName":"Dateon","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"he","description":"מתכנן דייטים: תוכנית מלאה עם מקומות, אוכל, לו\"ז, רעיונות לדייט בבית, כרטיס הזמנה וספירה לאחור.","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"}}</script>
+  <meta name="twitter:image" content="https://vinik123abo.github.io/trick-shot-game-/date-planner/og.png" />
+  <meta name="twitter:description" content="כותבים במילים פשוטות איזה דייט רוצים, ומקבלים תוכנית מלאה: מקומות, אוכל, לו״ז, טיפים, כרטיס הזמנה וספירה לאחור." />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"דייטון","alternateName":"Dateon","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"he","description":"מתכנן דייטים: תוכנית מלאה עם מקומות, אוכל, לו\"ז, רעיונות לדייט בבית, כרטיס הזמנה וספירה לאחור.","url":"https://vinik123abo.github.io/trick-shot-game-/date-planner/","image":"https://vinik123abo.github.io/trick-shot-game-/date-planner/og.png","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"}}</script>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="fx.css" />
-  <link rel="stylesheet" href="themes.css" />
-  <link rel="stylesheet" href="games.css" />
-  <link rel="stylesheet" href="extras.css" />
-  <link rel="stylesheet" href="scroll.css" />
+  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="fx.css?v=11" />
+  <link rel="stylesheet" href="themes.css?v=11" />
+  <link rel="stylesheet" href="games.css?v=11" />
+  <link rel="stylesheet" href="extras.css?v=11" />
+  <link rel="stylesheet" href="scroll.css?v=11" />
+  <link rel="stylesheet" href="mobile.css?v=11" />
   <script>try { var t = localStorage.getItem("dt_theme") || "sunset"; document.documentElement.dataset.theme = t; if (t === "custom") { var v = JSON.parse(localStorage.getItem("dt_custom_vars") || "{}"); for (var k in v) document.documentElement.style.setProperty(k, v[k]); } } catch (e) {}</script>
+  <script>if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () {});</script>
 </head>
 <body>
   <div class="couple-bg" id="coupleBg" aria-hidden="true"><i></i></div>
@@ -83,11 +88,11 @@
 
   <nav class="tabs" role="tablist">
     <span class="tab-ink" aria-hidden="true"></span>
-    <button class="tab on" data-tab="plan">✨ תכנון</button>
-    <button class="tab" data-tab="places">🗺️ מקומות</button>
-    <button class="tab" data-tab="home">🏠 בבית</button>
-    <button class="tab" data-tab="surprise">🎡 הפתעה</button>
-    <button class="tab" data-tab="personal">💌 אישי</button>
+    <button class="tab on" data-tab="plan" role="tab"><i aria-hidden="true">✨</i><span>תכנון</span></button>
+    <button class="tab" data-tab="places" role="tab"><i aria-hidden="true">🗺️</i><span>מקומות</span></button>
+    <button class="tab" data-tab="home" role="tab"><i aria-hidden="true">🏠</i><span>בבית</span></button>
+    <button class="tab" data-tab="surprise" role="tab"><i aria-hidden="true">🎡</i><span>הפתעה</span></button>
+    <button class="tab" data-tab="personal" role="tab"><i aria-hidden="true">💌</i><span>אישי</span></button>
   </nav>
 
   <main>
@@ -349,6 +354,7 @@
     </details>
     <div class="sound-packs">
       <h4>🎵 סגנון צלילים</h4>
+      <label class="check sound-on"><input type="checkbox" id="soundOn" /> <span>צלילים פעילים</span></label>
       <div class="chips single" id="soundPacks"></div>
       <p class="mode-note">לחיצה משמיעה דוגמה. אפשר להשתיק בכפתור 🔊 למעלה.</p>
     </div>
@@ -398,12 +404,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="places.js"></script>
-  <script src="ideas.js"></script>
-  <script type="module" src="app.js"></script>
-  <script type="module" src="fx.js"></script>
-  <script type="module" src="games.js"></script>
-  <script type="module" src="extras.js"></script>
-  <script type="module" src="scrollfx.js"></script>
+  <script src="places.js?v=11"></script>
+  <script src="ideas.js?v=11"></script>
+  <script type="module" src="app.js?v=11"></script>
+  <script type="module" src="fx.js?v=11"></script>
+  <script type="module" src="games.js?v=11"></script>
+  <script type="module" src="extras.js?v=11"></script>
+  <script type="module" src="scrollfx.js?v=11"></script>
 </body>
 </html>

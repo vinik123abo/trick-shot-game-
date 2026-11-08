@@ -199,7 +199,17 @@ const Sound = {
 };
 function sound(name) { Sound.play(name); }
 const soundBtn = document.getElementById("soundBtn");
-function paintSoundBtn() { if (soundBtn) { soundBtn.textContent = Sound.on ? "🔊" : "🔇"; soundBtn.title = Sound.on ? "השתק צלילים" : "הפעל צלילים"; } }
+function paintSoundBtn() {
+  if (soundBtn) { soundBtn.textContent = Sound.on ? "🔊" : "🔇"; soundBtn.title = Sound.on ? "השתק צלילים" : "הפעל צלילים"; }
+  const box = document.getElementById("soundOn");
+  if (box) box.checked = Sound.on;
+}
+document.getElementById("soundOn")?.addEventListener("change", (e) => {
+  Sound.on = e.target.checked;
+  try { localStorage.setItem("dt_sound", Sound.on ? "1" : "0"); } catch { /* ignore */ }
+  paintSoundBtn();
+  if (Sound.on) sound("chime");
+});
 soundBtn?.addEventListener("click", () => {
   Sound.on = !Sound.on;
   try { localStorage.setItem("dt_sound", Sound.on ? "1" : "0"); } catch { /* ignore */ }
@@ -385,7 +395,11 @@ document.addEventListener("click", (e) => {
   const g = e.target.closest("[data-goto]");
   if (!g) return;
   document.querySelector(`.tab[data-tab="${g.dataset.goto}"]`)?.click();
-  setTimeout(() => document.querySelector(".tabs").scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  // בטלפון הלשוניות בתחתית – גוללים לתחילת התוכן
+  setTimeout(() => {
+    const mobile = matchMedia("(max-width: 640px)").matches;
+    (mobile ? document.querySelector("main") : document.querySelector(".tabs")).scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 60);
 });
 
 /* ---------- מונים ---------- */
@@ -423,7 +437,7 @@ async function initHero3D() {
     document.body.classList.add("no-3d");
     return;
   }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, matchMedia("(max-width: 640px)").matches ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
