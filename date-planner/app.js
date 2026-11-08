@@ -521,7 +521,9 @@ function showTab(name) {
   // אם גללנו מתחת להירו – חוזרים לראש התוכן, לא לראש הדף
   const hero = $(".hero3d");
   const contentTop = hero ? hero.offsetTop + hero.offsetHeight : 0;
-  if (window.scrollY > contentTop) window.scrollTo({ top: contentTop, behavior: "smooth" });
+  // בטלפון (סרגל לשוניות תחתון) תמיד קופצים לתוכן; במחשב – רק אם גללנו מתחת להירו
+  const mobile = matchMedia("(max-width: 640px)").matches;
+  if (mobile || window.scrollY > contentTop) window.scrollTo({ top: Math.max(0, contentTop - (mobile ? 8 : 0)), behavior: "smooth" });
 }
 $$(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
 

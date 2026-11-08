@@ -871,6 +871,18 @@ qi = -1; renderQuiz();
 $("#installBtn").addEventListener("click", doInstall);
 $("#installNow")?.addEventListener("click", doInstall);
 if (matchMedia("(display-mode: standalone)").matches) document.body.classList.add("standalone");
+// טיפ התקנה לאייפון (שם אין כפתור התקנה אוטומטי)
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+if (isIOS && !standalone && !LS.get("dt_ios_hint", false)) {
+  setTimeout(() => {
+    const tip = document.createElement("div");
+    tip.className = "ios-hint";
+    tip.innerHTML = `<span>📲 להתקנה כאפליקציה: לחצו על <b>שתף</b> ⬆️ ואז <b>"הוסף למסך הבית"</b></span><button aria-label="סגור">✕</button>`;
+    tip.querySelector("button").onclick = () => { tip.remove(); LS.set("dt_ios_hint", true); };
+    document.body.appendChild(tip);
+  }, 5000);
+}
 // קיצורי דרך מהאייקון (#plan, #surprise, #personal...)
 const hashTab = location.hash.slice(1);
 if (hashTab && $(`.tab[data-tab="${hashTab}"]`)) setTimeout(() => goTab(hashTab), 50);

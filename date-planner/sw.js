@@ -1,7 +1,7 @@
 // דייטון – Service Worker: עבודה בלי אינטרנט והתקנה כאפליקציה
-const VERSION = "dateon-v8";
+const VERSION = "dateon-v11";
 const SHELL = [
-  "./", "index.html", "style.css", "fx.css", "themes.css", "games.css", "extras.css", "scroll.css",
+  "./", "index.html", "style.css", "fx.css", "themes.css", "games.css", "extras.css", "scroll.css", "mobile.css",
   "places.js", "ideas.js", "app.js", "fx.js", "games.js", "extras.js", "scrollfx.js",
   "manifest.json", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png",
 ];
@@ -38,6 +38,17 @@ async function staleWhileRevalidate(req, cacheName) {
   return hit || (await net) || Response.error();
 }
 
+async function networkFirst(req) {
+  const cache = await caches.open(VERSION);
+  try {
+    const res = await fetch(req, { cache: "no-cache" });
+    if (res && res.ok) cache.put(req, res.clone());
+    return res;
+  } catch {
+    return (await cache.match(req)) || (await cache.match(req, { ignoreSearch: true })) || Response.error();
+  }
+}
+
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
@@ -45,13 +56,14 @@ self.addEventListener("fetch", (e) => {
 
   // ניווט – אם אין רשת, מגישים את האפליקציה מהמטמון
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).then((res) => {
+    e.respondWith(fetch(req, { cache: "no-cache" }).then((res) => {
       caches.open(VERSION).then((c) => c.put("index.html", res.clone()));
       return res;
     }).catch(() => caches.match("index.html")));
     return;
   }
-  if (url.origin === location.origin) { e.respondWith(staleWhileRevalidate(req, VERSION)); return; }
+  // קבצי האפליקציה: תמיד מהרשת (גרסה עדכנית), ומהמטמון רק כשאין אינטרנט
+  if (url.origin === location.origin) { e.respondWith(networkFirst(req)); return; }
   if (CDN_HOSTS.includes(url.hostname)) { e.respondWith(staleWhileRevalidate(req, "dateon-cdn")); return; }
   if (IMG_HOSTS.includes(url.hostname)) {
     e.respondWith(caches.open("dateon-img").then(async (c) => {
