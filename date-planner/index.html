@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>דייטון – מתכנן הדייטים שלך</title>
+  <meta name="description" content="תאר איזה דייט אתה רוצה, וקבל תוכנית מלאה: לו״ז, אוכל, מקומות, טיפים ותמונה של איך הדייט ייראה." />
+  <meta name="theme-color" content="#1a0f1f" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">💘</span>
+      <div>
+        <h1>דייטון</h1>
+        <p class="tagline">אתה מספר – אנחנו מתכננים את הדייט</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="savedBtn" title="דייטים שמורים">⭐ <span id="savedCount">0</span></button>
+      <button class="icon-btn" id="settingsBtn" title="הגדרות">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card planner" id="planner">
+      <h2>איזה דייט בא לך?</h2>
+      <p class="hint">כתוב במילים פשוטות. לדוגמה: <em>"דייט שני, היא אוהבת ים ואוכל איטלקי, משהו רומנטי אבל לא יקר בתל אביב"</em></p>
+
+      <textarea id="freeText" rows="3" placeholder="תאר את הדייט שאתה רוצה..."></textarea>
+
+      <div class="grid2">
+        <label class="field">
+          <span>עיר / אזור</span>
+          <input id="city" list="cities" placeholder="למשל: תל אביב" />
+          <datalist id="cities"></datalist>
+        </label>
+        <label class="field">
+          <span>מה היא אוהבת? (לא חובה)</span>
+          <input id="herLikes" placeholder="למשל: סושי, כלבים, הופעות" />
+        </label>
+      </div>
+
+      <div class="field">
+        <span>סוג הדייט</span>
+        <div class="chips single" data-name="stage">
+          <button data-v="first" class="on">דייט ראשון</button>
+          <button data-v="early">דייט שני-שלישי</button>
+          <button data-v="couple">אנחנו זוג</button>
+          <button data-v="anniversary">יום נישואין / אירוע</button>
+          <button data-v="surprise">הפתעה</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>אווירה (אפשר כמה)</span>
+        <div class="chips multi" data-name="vibes">
+          <button data-v="romantic">❤️ רומנטי</button>
+          <button data-v="adventure">⚡ הרפתקני</button>
+          <button data-v="chill">☕ רגוע</button>
+          <button data-v="creative">🎨 יצירתי</button>
+          <button data-v="nature">🌿 בטבע</button>
+          <button data-v="foodie">🍝 אוכל</button>
+          <button data-v="culture">🎭 תרבות</button>
+          <button data-v="home">🏠 בבית</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <span>תקציב</span>
+          <div class="chips single" data-name="budget">
+            <button data-v="1">💸 חסכוני</button>
+            <button data-v="2" class="on">💳 בינוני</button>
+            <button data-v="3">💎 מפנק</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>מתי?</span>
+          <div class="chips single" data-name="time">
+            <button data-v="morning">בוקר</button>
+            <button data-v="noon">צהריים</button>
+            <button data-v="evening" class="on">ערב</button>
+            <button data-v="night">לילה</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="buildBtn">✨ בנה לי את הדייט</button>
+        <button class="btn ghost" id="randomBtn">🎲 תפתיע אותי</button>
+      </div>
+      <p class="mode-note" id="modeNote"></p>
+    </section>
+
+    <section id="result" class="hidden"></section>
+
+    <section class="card quick">
+      <h2>רעיונות מהירים 💡</h2>
+      <p class="hint">אין לך כוח לפרט? לחץ על רעיון ונבנה ממנו דייט שלם.</p>
+      <div class="quick-grid" id="quickGrid"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    נבנה באהבה לכל מי שאי פעם שאל "אז... לאן הולכים?" 💘
+  </footer>
+
+  <!-- Settings -->
+  <dialog id="settingsDlg">
+    <form method="dialog" class="dlg">
+      <h3>הגדרות</h3>
+      <label class="field">
+        <span>מפתח Claude API (לא חובה)</span>
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        <small>עם מפתח – Claude מתכנן לך דייט מותאם אישית לגמרי מכל תיאור חופשי. בלי מפתח – האפליקציה עובדת עם מנוע הרעיונות המובנה. המפתח נשמר רק בדפדפן שלך.</small>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="imagesOn" checked />
+        <span>צור תמונות של הדייט (מחולל תמונות AI חינמי)</span>
+      </label>
+      <div class="actions">
+        <button class="btn primary" value="save" id="saveSettings">שמור</button>
+        <button class="btn ghost" value="cancel">ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Saved -->
+  <dialog id="savedDlg">
+    <div class="dlg">
+      <h3>הדייטים השמורים שלך ⭐</h3>
+      <div id="savedList"></div>
+      <div class="actions"><button class="btn ghost" id="closeSaved">סגור</button></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="ideas.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
