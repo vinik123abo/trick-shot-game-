@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.vinik123abo.dateon",
+  "appName": "דייטון",
+  "webDir": "www",
+  "backgroundColor": "#0d0612",
+  "ios": { "contentInset": "never", "backgroundColor": "#0d0612" },
+  "android": { "backgroundColor": "#0d0612" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 900, "launchAutoHide": true, "backgroundColor": "#0d0612", "showSpinner": false },
+    "LocalNotifications": { "iconColor": "#ff4f7b" }
+  }
+}

@@ -240,7 +240,7 @@ function setBusy(b) {
 
 /* ---------- תמונות ---------- */
 function imageUrl(prompt, w, h, seed) {
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${seed}`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&safe=true&seed=${seed}`;
 }
 
 function imageBlock(prompt, emoji, w, h, seed) {

@@ -1,0 +1,76 @@
+# דייטון – בניית אפליקציית אנדרואיד (לגלקסי סטור / גוגל פליי)
+# בכל דחיפה נבנים: APK לבדיקה בטלפון, ו-AAB/APK לחנות (חתומים אם הוגדרו סודות החתימה)
+name: Dateon Android
+
+on:
+  push:
+    paths: ["date-planner/**", "dateon-app/**", ".github/workflows/dateon-android.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: dateon-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dateon-app
+    env:
+      DATEON_VERSION_CODE: ${{ github.run_number }}
+      DATEON_VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dateon-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install
+        run: npm ci
+
+      - name: Copy web app and sync Android
+        run: npm run sync -- android
+
+      - name: Restore signing key (if configured)
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > android/app/release.keystore
+            echo "Signing: release key found"
+          else
+            echo "::notice::No ANDROID_KEYSTORE_BASE64 secret – release builds are unsigned (see dateon-app/STORE.md)"
+          fi
+
+      - name: Build
+        working-directory: dateon-app/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug assembleRelease bundleRelease
+
+      - name: Collect outputs
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk out/dateon-test-${{ github.run_number }}.apk
+          cp android/app/build/outputs/apk/release/*.apk out/ 2>/dev/null || true
+          cp android/app/build/outputs/bundle/release/*.aab out/ 2>/dev/null || true
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dateon-android-${{ github.run_number }}
+          path: dateon-app/out/
+          retention-days: 30

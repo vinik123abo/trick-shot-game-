@@ -1,9 +1,9 @@
 // דייטון – Service Worker: עבודה בלי אינטרנט והתקנה כאפליקציה
-const VERSION = "dateon-v11";
+const VERSION = "dateon-v12";
 const SHELL = [
   "./", "index.html", "style.css", "fx.css", "themes.css", "games.css", "extras.css", "scroll.css", "mobile.css",
-  "places.js", "ideas.js", "app.js", "fx.js", "games.js", "extras.js", "scrollfx.js",
-  "manifest.json", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png",
+  "places.js", "ideas.js", "native.js", "vendor/capacitor-core.js", "app.js", "fx.js", "games.js", "extras.js", "scrollfx.js",
+  "manifest.json", "privacy-policy.html", "icon.svg", "icon-192.png", "icon-512.png", "icon-maskable-512.png",
 ];
 const CDN_HOSTS = ["cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com"];
 const IMG_HOSTS = ["image.pollinations.ai"];
