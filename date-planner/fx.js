@@ -286,6 +286,7 @@ const hapticBox = document.getElementById("hapticOn");
 hapticBox.checked = store.get("dt_haptic", "1") === "1";
 hapticBox.addEventListener("change", () => store.set("dt_haptic", hapticBox.checked ? "1" : "0"));
 function buzz(pattern) {
+  if (hapticBox.checked && window.DateonNative?.haptic) { window.DateonNative.haptic(pattern); return; }
   if (hapticBox.checked && navigator.vibrate) { try { navigator.vibrate(pattern); } catch { /* ignore */ } }
 }
 

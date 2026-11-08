@@ -213,10 +213,11 @@ function initCountdown() {
     cd = { title: $("#cdTitle").value.trim() || "הדייט שלנו", when, place: $("#cdPlace").value.trim(), done: false };
     LS.set("dt_countdown", cd);
     renderCountdown(); drawInvite();
+    window.DateonNative?.scheduleDate?.(cd).then((ok) => ok && toast("נקבעו תזכורות: יום לפני ושעתיים לפני 🔔"));
     FX().burst(innerWidth / 2, innerHeight / 2, 20); FX().sound("chime");
     toast("הספירה התחילה ⏳");
   });
-  $("#cdClear").addEventListener("click", () => { cd = null; localStorage.removeItem("dt_countdown"); renderCountdown(); });
+  $("#cdClear").addEventListener("click", () => { window.DateonNative?.cancelDate?.(); cd = null; localStorage.removeItem("dt_countdown"); renderCountdown(); });
   $("#cdIcs").addEventListener("click", () => cd && downloadIcs(cd));
   $("#cdShare").addEventListener("click", () => {
     if (!cd) return;
@@ -610,6 +611,11 @@ function invText() {
 async function shareInvite() {
   await drawInvite();
   const cv = $("#invCanvas");
+  if (window.DateonNative?.shareImage) {
+    FX().sound("chime");
+    try { await window.DateonNative.shareImage(cv.toDataURL("image/png"), invText(), "invitation.png"); } catch { /* בוטל */ }
+    return;
+  }
   const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
   const file = new File([blob], "invitation.png", { type: "image/png" });
   FX().sound("chime");
@@ -653,6 +659,10 @@ function initInvite() {
   ["invWhen", "invPlace"].forEach((id) => $("#" + id).addEventListener("input", () => drawInvite()));
   $("#invDownload").addEventListener("click", async () => {
     await drawInvite();
+    if (window.DateonNative?.shareImage) { // באפליקציה אין "הורדות" – שומרים דרך תפריט השיתוף
+      try { await window.DateonNative.shareImage($("#invCanvas").toDataURL("image/png"), "", "invitation.png"); } catch { /* בוטל */ }
+      return;
+    }
     $("#invCanvas").toBlob((b) => downloadBlob(b, "invitation.png"), "image/png");
     FX().sound("pop");
   });
@@ -847,7 +857,7 @@ async function doInstall() {
 }
 addEventListener("appinstalled", () => { $("#installBtn").classList.add("hidden"); });
 
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+if (!window.DateonNative?.native && "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   // כשמגיעה גרסה חדשה – מציעים לרענן (אחרת המשתמש רואה את הישנה עד הביקור הבא)
   let hadController = !!navigator.serviceWorker.controller;
@@ -874,7 +884,7 @@ if (matchMedia("(display-mode: standalone)").matches) document.body.classList.ad
 // טיפ התקנה לאייפון (שם אין כפתור התקנה אוטומטי)
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-if (isIOS && !standalone && !LS.get("dt_ios_hint", false)) {
+if (isIOS && !standalone && !window.DateonNative?.native && !LS.get("dt_ios_hint", false)) {
   setTimeout(() => {
     const tip = document.createElement("div");
     tip.className = "ios-hint";

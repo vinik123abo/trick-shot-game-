@@ -1,0 +1,26 @@
+{
+  "name": "dateon-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "דייטון – אפליקציית Native (iOS/Android) מעל תיקיית date-planner",
+  "scripts": {
+    "copy-web": "node scripts/copy-web.mjs",
+    "sync": "npm run copy-web && cap sync",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#0d0612' --iconBackgroundColorDark '#0d0612' --splashBackgroundColor '#0d0612' --splashBackgroundColorDark '#0d0612'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}

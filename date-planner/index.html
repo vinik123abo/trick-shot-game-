@@ -34,13 +34,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=11" />
-  <link rel="stylesheet" href="fx.css?v=11" />
-  <link rel="stylesheet" href="themes.css?v=11" />
-  <link rel="stylesheet" href="games.css?v=11" />
-  <link rel="stylesheet" href="extras.css?v=11" />
-  <link rel="stylesheet" href="scroll.css?v=11" />
-  <link rel="stylesheet" href="mobile.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="fx.css?v=12" />
+  <link rel="stylesheet" href="themes.css?v=12" />
+  <link rel="stylesheet" href="games.css?v=12" />
+  <link rel="stylesheet" href="extras.css?v=12" />
+  <link rel="stylesheet" href="scroll.css?v=12" />
+  <link rel="stylesheet" href="mobile.css?v=12" />
   <script>try { var t = localStorage.getItem("dt_theme") || "sunset"; document.documentElement.dataset.theme = t; if (t === "custom") { var v = JSON.parse(localStorage.getItem("dt_custom_vars") || "{}"); for (var k in v) document.documentElement.style.setProperty(k, v[k]); } } catch (e) {}</script>
   <script>if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); }).catch(function () {});</script>
 </head>
@@ -366,6 +366,8 @@
 
   <footer class="foot">
     נבנה באהבה לכל מי שאי פעם שאל "אז... לאן הולכים?" 💘
+  
+    <br /><a class="foot-link" href="privacy-policy.html">🔒 מדיניות פרטיות</a>
   </footer>
 
   <!-- Settings -->
@@ -382,6 +384,7 @@
         <small>במחשב (כרום/אדג'): אייקון ההתקנה בשורת הכתובת או כפתור "התקן". באנדרואיד: תפריט ⋮ ← "התקן אפליקציה". באייפון: שתף ⬆️ ← "הוסף למסך הבית". אחרי ההתקנה דייטון עובד גם בלי אינטרנט.</small>
         <button type="button" class="btn small primary" id="installNow">📲 התקן עכשיו</button>
       </div>
+      <p class="mode-note"><a href="privacy-policy.html" class="foot-link">🔒 מדיניות פרטיות</a> · הכל נשמר רק במכשיר שלך</p>
       <label class="check">
         <input type="checkbox" id="imagesOn" checked />
         <span>צור תמונות של הדייט (מחולל תמונות AI חינמי)</span>
@@ -404,12 +407,13 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="places.js?v=11"></script>
-  <script src="ideas.js?v=11"></script>
-  <script type="module" src="app.js?v=11"></script>
-  <script type="module" src="fx.js?v=11"></script>
-  <script type="module" src="games.js?v=11"></script>
-  <script type="module" src="extras.js?v=11"></script>
-  <script type="module" src="scrollfx.js?v=11"></script>
+  <script src="places.js?v=12"></script>
+  <script src="ideas.js?v=12"></script>
+  <script type="module" src="native.js?v=12"></script>
+  <script type="module" src="app.js?v=12"></script>
+  <script type="module" src="fx.js?v=12"></script>
+  <script type="module" src="games.js?v=12"></script>
+  <script type="module" src="extras.js?v=12"></script>
+  <script type="module" src="scrollfx.js?v=12"></script>
 </body>
 </html>
