@@ -152,3 +152,46 @@ input[type="range"] { padding: 0; accent-color: var(--accent); background: trans
   .install-btn span { display: none; }
   .qr-bars div { grid-template-columns: 110px 1fr 40px; }
 }
+
+/* ---------- כשרות ---------- */
+.kbadge { display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; justify-self: start; align-self: flex-start; }
+.kbadge.yes { background: rgba(77, 255, 166, .14); color: #5ef0a6; border: 1px solid rgba(77, 255, 166, .4); }
+.kbadge.no { background: rgba(255, 93, 115, .12); color: #ff8595; border: 1px solid rgba(255, 93, 115, .35); }
+.kbadge.check { background: var(--glass); color: var(--muted); border: 1px dashed var(--glass-line); }
+[data-theme="pastel"] .kbadge.yes { color: #138a55; }
+[data-theme="pastel"] .kbadge.no { color: #c92a45; }
+.kosher-bar { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.kosher-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); font-size: 14px; cursor: pointer; }
+.kosher-toggle input { width: auto; accent-color: var(--accent); }
+.kosher-toggle:has(input:checked) { background: var(--grad); color: var(--on-accent); border-color: transparent; font-weight: 700; }
+.kosher-finder { display: grid; gap: 6px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(140deg, rgba(var(--glow-rgb), .18), var(--glass-lo)); border: 1px solid rgba(var(--glow-rgb), .4); }
+.kosher-finder small { color: var(--muted); }
+.kosher-finder .prow { display: flex; gap: 6px; flex-wrap: wrap; }
+.cuisine-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.cuisine-row a { color: var(--text); text-decoration: none; padding: 4px 10px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); transition: transform .2s; }
+.cuisine-row a:hover { transform: translateY(-2px); border-color: var(--accent); }
+.step .meta .kbadge { margin-inline-start: 2px; }
+.food .kbadge { margin-top: 6px; }
+
+/* ---------- פרחים ---------- */
+.bouquet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 14px; }
+.bouquet { position: relative; padding: 14px; border-radius: 20px; background: linear-gradient(160deg, var(--glass-hi), var(--glass-lo)); border: 1px solid var(--glass-line); display: grid; gap: 4px; animation: popIn .5s backwards; transform-style: preserve-3d; }
+.bouquet:nth-child(2) { animation-delay: .06s; } .bouquet:nth-child(3) { animation-delay: .12s; } .bouquet:nth-child(4) { animation-delay: .18s; }
+.bq-e { font-size: 46px; filter: drop-shadow(0 8px 10px var(--shadow)); transform: translateZ(20px); transition: transform .3s cubic-bezier(.5, 1.8, .5, 1); }
+.bouquet:hover .bq-e { transform: translateZ(30px) rotate(-10deg) scale(1.15); }
+.bouquet h5 { margin: 2px 0 0; font-size: 17px; }
+.bouquet p { margin: 0; font-size: 13px; color: var(--text-soft); }
+.bouquet .prow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.bq-m { color: var(--accent2) !important; }
+.bq-tip { font-size: 12.5px !important; }
+.flower-tips { margin-top: 10px; }
+.flower-tips summary { cursor: pointer; font-weight: 700; color: var(--accent); }
+.flower-tips ul { color: var(--text-soft); font-size: 14px; }
+.flower-box p { margin: 0 0 8px; font-size: 14px; color: var(--text-soft); line-height: 1.6; }
+.flower-box small { color: var(--muted); }
+.flower-box .prow { display: flex; gap: 6px; flex-wrap: wrap; }
+@media (min-width: 1100px) { #flowerSection { grid-column: 1 / -1; } }
+
+/* תאי גריד לא מתרחבים בגלל תוכן רחב (למשל סרגל הכפתורים) */
+.tab-panel { grid-template-columns: minmax(0, 1fr); }
+.tab-panel > *, .card, .result-actions { min-width: 0; }

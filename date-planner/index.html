@@ -154,6 +154,15 @@
         </div>
       </div>
 
+      <div class="field">
+        <span>כשרות</span>
+        <div class="chips single" data-name="kosher">
+          <button data-v="any" class="on">לא משנה</button>
+          <button data-v="kosher">✡️ כשר</button>
+          <button data-v="mehadrin">✡️ כשר למהדרין</button>
+        </div>
+      </div>
+
       <div class="actions">
         <button class="btn primary" id="buildBtn">✨ בנה לי את הדייט</button>
         <button class="btn ghost" id="randomBtn">🎲 תפתיע אותי</button>
@@ -179,6 +188,11 @@
           <button class="btn small ghost" id="nearMe">📍 קרוב אליי</button>
         </div>
         <div class="chips single" data-name="pcat" id="pcatChips"></div>
+        <div class="kosher-bar">
+          <label class="kosher-toggle"><input type="checkbox" id="kosherOnly" /> <span>✡️ רק מקומות כשרים</span></label>
+          <label class="kosher-toggle"><input type="checkbox" id="mehadrinOnly" /> <span>למהדרין</span></label>
+        </div>
+        <div id="placesExtra"></div>
         <p class="mode-note" id="placesNote"></p>
         <div class="places-grid" id="placesList"></div>
         <p class="mode-note">💡 המאגר כולל מקומות מוכרים ומבוססים, אבל מקומות נפתחים ונסגרים – תמיד כדאי לבדוק במפה שעות פתיחה ולהזמין מראש.</p>
@@ -244,6 +258,18 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section class="card" id="flowerSection">
+        <h2>💐 זרים ופרחים</h2>
+        <p class="hint">איזה זר להביא, מתי לתת אותו, כמה זה עולה, ואיפה קונים. בחר את סוג הדייט:</p>
+        <div class="chips single" id="flowerOcc"></div>
+        <div class="bouquet-grid" id="bouquetList"></div>
+        <div class="actions">
+          <a class="btn primary" id="flowerNear" target="_blank" rel="noopener">📍 חנות פרחים קרובה אליי</a>
+          <a class="btn ghost" id="flowerDelivery" target="_blank" rel="noopener">🛵 משלוח פרחים</a>
+        </div>
+        <details class="flower-tips"><summary>💡 טיפים לזר מנצח</summary><ul id="flowerTips"></ul></details>
       </section>
 
       <section class="card" id="cdSection">

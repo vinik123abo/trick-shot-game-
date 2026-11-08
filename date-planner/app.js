@@ -54,6 +54,7 @@ function readForm() {
     vibes: chipVal("vibes"),
     budget: Number(chipVal("budget") || 2),
     time: chipVal("time") || "evening",
+    kosher: chipVal("kosher") || "any",
   };
 }
 
@@ -67,7 +68,7 @@ function updateModeNote() {
 const PLAN_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "summary", "vibe_label", "duration", "budget_estimate", "image_prompt", "timeline", "restaurants", "outfit", "tips", "conversation_starters", "backup_plan", "pro_move", "shopping_list"],
+  required: ["title", "summary", "vibe_label", "duration", "budget_estimate", "image_prompt", "timeline", "restaurants", "outfit", "tips", "conversation_starters", "backup_plan", "pro_move", "shopping_list", "flowers"],
   properties: {
     title: { type: "string" },
     summary: { type: "string" },
@@ -98,15 +99,17 @@ const PLAN_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["name", "why", "price", "maps_query"],
+        required: ["name", "why", "price", "maps_query", "kashrut"],
         properties: {
           name: { type: "string" },
           why: { type: "string" },
           price: { type: "string" },
           maps_query: { type: "string" },
+          kashrut: { type: "string" },
         },
       },
     },
+    flowers: { type: "string" },
     outfit: { type: "string" },
     tips: { type: "array", items: { type: "string" } },
     conversation_starters: { type: "array", items: { type: "string" } },
@@ -128,6 +131,8 @@ const SYSTEM_PROMPT = `אתה "דייטון" – מתכנן דייטים מומ�
 - tips: 3–5 טיפים קצרים ומעשיים שמתאימים לשלב הקשר. conversation_starters: 4 שאלות פתיחה טובות. outfit: מה ללבוש. backup_plan: מה עושים אם משהו משתבש (גשם, מקום סגור). pro_move: מחווה קטנה אחת שתעשה רושם.
 - shopping_list: אם הדייט (או חלק ממנו) בבית או כולל פיקניק – רשימת קניות מפורטת של מצרכים ודברים להביא/לקנות. אחרת רשימה ריקה.
 - אם נשלחה רשימת "מקומות מהמאגר" – תעדיף להשתמש בהם כשהם מתאימים, ותשלים מהידע שלך.
+- kashrut בכל מסעדה: "כשר" / "כשר למהדרין" / "לא כשר" רק אם אתה בטוח; אחרת "לבדוק". אם המשתמש ביקש כשר/מהדרין – תמליץ רק על מקומות כשרים שאתה בטוח בהם, ואם אינך בטוח – תכתוב סוג מקום + "כשר" ו-maps_query לחיפוש מקומות כשרים בעיר. אל תמציא תעודות כשרות.
+- flowers: המלצה קצרה על זר או פרח שמתאים לדייט (מה, למה, טווח מחיר ומתי לתת).
 - תתייחס לתקציב ברצינות. בדייט ראשון – מקום ציבורי, קצר יחסית, שמאפשר לדבר.`;
 
 function placesHint(input) {
@@ -170,6 +175,7 @@ async function buildPlanWithClaude(input) {
 אווירה: ${vibes}
 תקציב: ${budget}
 מתי: ${DI.TIME[input.time]?.label || "ערב"}
+כשרות: ${input.kosher === "mehadrin" ? "חייב כשר למהדרין" : input.kosher === "kosher" ? "חייב כשר" : "לא משנה"}
 ${input.variation ? "תן רעיון שונה מהקודם: " + input.variation : ""}
 ${placesHint(input)}`;
 
@@ -277,6 +283,7 @@ function renderPlan(plan, opts = {}) {
         <div class="meta">
           <span>📍 ${esc(s.place_name)}</span>
           ${s.cost ? `<span>· כ-${esc(s.cost)} ₪</span>` : `<span>· חינם</span>`}
+          ${s.kashrut ? kBadge(s.kashrut) : ""}
           ${s.maps_url ? `<a class="map-link" href="${esc(s.maps_url)}" target="_blank" rel="noopener">מצא בגוגל מפות ←</a>` : ""}
         </div>
       </div>
@@ -287,6 +294,7 @@ function renderPlan(plan, opts = {}) {
       <h5>${esc(r.name)}</h5>
       <p>${esc(r.why)}</p>
       <span class="price">${esc(r.price)}</span>
+      ${r.kashrut ? kBadge(r.kashrut) : ""}
       ${r.maps_url ? ` · <a class="map-link" href="${esc(r.maps_url)}" target="_blank" rel="noopener">חפש במפה</a>` : ""}
     </div>`).join("");
 
@@ -331,6 +339,7 @@ function renderPlan(plan, opts = {}) {
         <div class="tip-box"><h5>👕 מה ללבוש</h5><ul><li>${esc(plan.outfit)}</li></ul></div>
         <div class="tip-box"><h5>☔ תוכנית גיבוי</h5><ul><li>${esc(plan.backup_plan)}</li></ul></div>
       </div>
+      ${flowerBox(plan)}
       <div class="tip-box" style="margin-top:12px"><h5>🏆 המהלך שיעשה את ההבדל</h5><ul><li>${esc(plan.pro_move)}</li></ul></div>
 
       <div class="result-actions">
@@ -347,6 +356,28 @@ function renderPlan(plan, opts = {}) {
     </div>`;
   wireImages($("#result"));
   if (!opts.silent) setTimeout(() => { window.FX?.burst(innerWidth / 2, Math.min(innerHeight / 3, 260)); window.FX?.sound("chime"); }, 120);
+}
+
+function kBadge(t) {
+  const cls = /לא כשר/.test(t) ? "no" : /לבדוק/.test(t) ? "check" : /כשר/.test(t) ? "yes" : "check";
+  return `<span class="kbadge ${cls}">${cls === "yes" ? "✡️ " : cls === "no" ? "✖ " : "❔ "}${esc(t)}</span>`;
+}
+
+function flowerBox(plan) {
+  const f = plan.flowers;
+  if (!f) return "";
+  const DPl = window.DatePlaces;
+  const near = typeof f === "object" ? f.maps_url : DPl?.flowerSearch(plan.city);
+  const del = typeof f === "object" ? f.delivery_url : DPl?.flowerSearch(plan.city, true);
+  const body = typeof f === "object"
+    ? `<b>${esc(f.e)} ${esc(f.name)}</b> · <span class="price">${esc(f.price)}</span><br />${esc(f.desc)}<br /><small>💡 ${esc(f.tip)}</small>`
+    : esc(f);
+  return `<div class="tip-box flower-box" style="margin-top:12px"><h5>💐 פרחים לדייט</h5><p>${body}</p>
+    <div class="prow">
+      <a class="btn small ghost" href="${esc(near)}" target="_blank" rel="noopener">📍 חנות פרחים</a>
+      <a class="btn small ghost" href="${esc(del)}" target="_blank" rel="noopener">🛵 משלוח</a>
+      <button class="btn small ghost" data-goflowers>עוד זרים ←</button>
+    </div></div>`;
 }
 
 function shopListHtml(items, key) {
@@ -367,6 +398,7 @@ function planToText(p) {
   lines.push("", "🍽️ אוכל:");
   (p.restaurants || []).forEach((r) => lines.push(`• ${r.name} (${r.price})`));
   if ((p.shopping_list || []).length) lines.push("", "🛒 קניות: " + p.shopping_list.join(", "));
+  if (p.flowers) lines.push("", "💐 " + (typeof p.flowers === "object" ? `${p.flowers.name} (${p.flowers.price})` : p.flowers));
   lines.push("", "👕 " + p.outfit, "🏆 " + p.pro_move);
   return lines.join("\n");
 }
@@ -495,7 +527,7 @@ $$(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.ta
 
 /* ---------- מקומות ---------- */
 const DP = window.DatePlaces;
-const placesState = { city: Object.keys(DP.CITIES)[0], group: "all", near: null };
+const placesState = { city: Object.keys(DP.CITIES)[0], group: "all", near: null, kosher: "" };
 
 $("#placeCity").innerHTML = `<option value="__near" hidden>📍 הכי קרובים אליי</option>` +
   Object.values(DP.CITIES).map((c) => `<option value="${esc(c.name)}">${esc(c.name)} (${c.items.length})</option>`).join("");
@@ -530,6 +562,35 @@ function fmtDist(d) {
   return d < 1 ? " · פחות מקילומטר" : ` · כ-${Math.round(d)} ק"מ`;
 }
 
+$("#kosherOnly").addEventListener("change", (e) => {
+  if (!e.target.checked) $("#mehadrinOnly").checked = false;
+  placesState.kosher = e.target.checked ? ($("#mehadrinOnly").checked ? "mehadrin" : "kosher") : "";
+  renderPlaces();
+});
+$("#mehadrinOnly").addEventListener("change", (e) => {
+  if (e.target.checked) $("#kosherOnly").checked = true;
+  placesState.kosher = $("#kosherOnly").checked ? (e.target.checked ? "mehadrin" : "kosher") : "";
+  renderPlaces();
+});
+
+const CUISINES = ["איטלקי", "סושי", "בשרים", "דגים", "חלבי", "בראנץ'", "המבורגר", "אסייתי", "טבעוני", "מסעדת שף"];
+function renderPlacesExtra(cityName) {
+  const box = $("#placesExtra");
+  const showFood = placesState.group === "all" || placesState.group === "food";
+  if (!showFood) { box.innerHTML = ""; return; }
+  const k = placesState.kosher;
+  const links = k ? DP.kosherLinks(cityName, k === "mehadrin") : [];
+  box.innerHTML = `
+    ${k ? `<div class="kosher-finder">
+      <b>✡️ מסעדות ${k === "mehadrin" ? "כשרות למהדרין" : "כשרות"} ב${esc(cityName)}</b>
+      <small>במאגר מסומנים רק מקומות שיש מקור לכשרות שלהם. לרשימה מלאה ועדכנית:</small>
+      <div class="prow">${links.map((l) => `<a class="btn small ghost" href="${esc(l.u)}" target="_blank" rel="noopener">${l.l}</a>`).join("")}</div>
+    </div>` : ""}
+    <div class="cuisine-row"><span>🔎 חיפוש מהיר במפה${k ? " (כשר)" : ""}:</span>
+      ${CUISINES.map((c) => `<a href="${esc(DP.cuisineSearch(cityName, c, k))}" target="_blank" rel="noopener">${esc(c)}</a>`).join("")}
+    </div>`;
+}
+
 function renderPlaces() {
   let items;
   if (placesState.near) {
@@ -540,6 +601,8 @@ function renderPlaces() {
     $("#placesNote").textContent = "";
   }
   if (placesState.group !== "all") items = items.filter((p) => DP.CATS[p.cat].g === placesState.group);
+  if (placesState.kosher) items = items.filter((p) => p.cat !== "rest" || (p.kosher && p.kosher.k === "yes" && (placesState.kosher !== "mehadrin" || p.kosher.meh)));
+  renderPlacesExtra(placesState.near ? DP.nearestCity(placesState.near).name : placesState.city);
   if (placesState.near) items = items.slice(0, 40);
   $("#placesList").innerHTML = items.length ? items.map((p) => {
     const c = DP.CATS[p.cat];
@@ -547,9 +610,10 @@ function renderPlaces() {
       <div class="ptop"><h5>${c.e} ${esc(p.n)}</h5><span class="badge">${c.l}</span></div>
       <div class="pmeta">📍 ${esc(p.area)}${placesState.near ? " · " + esc(p.city) : ""} · ${p.price === 1 ? "זול / חינם" : "₪".repeat(p.price)}${fmtDist(p.dist)}</div>
       <p>${esc(p.d)}</p>
+      ${p.kosher && (p.kosher.k !== "check" || placesState.kosher || p.cat === "rest") ? kBadge(p.kosher.t) : ""}
       <div class="prow">
-        <a class="btn small ghost" href="${esc(DP.mapsLink(p))}" target="_blank" rel="noopener">🗺️ במפה</a>
-        <button class="btn small primary" data-anchor="${esc(p.id)}">✨ בנה דייט כאן</button>
+        <a class="btn small ghost" href="${esc(DP.mapsLink(p))}" target="_blank" rel="noopener">🗺️ ${p.generic ? "פתח חיפוש" : "במפה"}</a>
+        ${p.generic ? "" : `<button class="btn small primary" data-anchor="${esc(p.id)}">✨ בנה דייט כאן</button>`}
       </div>
     </div>`;
   }).join("") : `<p class="hint">אין מקומות בקטגוריה הזו כאן עדיין – נסה קטגוריה אחרת.</p>`;
@@ -593,6 +657,12 @@ $("#homeList").addEventListener("click", (e) => {
   }
 });
 
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-goflowers]")) {
+    showTab("personal");
+    setTimeout(() => $("#flowerSection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }
+});
 document.addEventListener("click", (e) => {
   const f = e.target.closest(".flip");
   if (f) { f.classList.toggle("flipped"); window.FX?.buzz(8); window.FX?.sound("flip"); }

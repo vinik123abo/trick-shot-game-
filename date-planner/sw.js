@@ -1,5 +1,5 @@
 // דייטון – Service Worker: עבודה בלי אינטרנט והתקנה כאפליקציה
-const VERSION = "dateon-v5";
+const VERSION = "dateon-v6";
 const SHELL = [
   "./", "index.html", "style.css", "fx.css", "themes.css", "games.css", "extras.css",
   "places.js", "ideas.js", "app.js", "fx.js", "games.js", "extras.js",

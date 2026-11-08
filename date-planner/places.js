@@ -17,11 +17,12 @@
     winery: { e: "🍇", l: "יקב", g: "culture", img: "a vineyard winery tasting room with wine glasses at sunset" },
     walk: { e: "🚶", l: "טיילת / שכונה", g: "walk", img: "a charming old stone street with cafes and string lights" },
     market: { e: "🧺", l: "שוק", g: "walk", img: "a colorful bustling food market with stalls" },
+    flowers: { e: "💐", l: "פרחים", g: "flowers", img: "a charming flower shop full of colorful bouquets" },
   };
 
   const GROUPS = [
     ["all", "הכל"], ["food", "🍽️ מסעדות"], ["drinks", "☕ קפה וברים"], ["beach", "🏖️ ים וחופים"],
-    ["nature", "🌿 טבע ופארקים"], ["view", "🌄 תצפיות"], ["culture", "🎭 תרבות ופעילויות"], ["walk", "🚶 טיילות ושווקים"],
+    ["nature", "🌿 טבע ופארקים"], ["view", "🌄 תצפיות"], ["culture", "🎭 תרבות ופעילויות"], ["walk", "🚶 טיילות ושווקים"], ["flowers", "💐 פרחים"],
   ];
 
   // [שם, קטגוריה, אזור, תיאור, מחיר 1-3, lat, lng, תגיות]
@@ -77,6 +78,8 @@
         ["אקליפטוס", "rest", "ליד שער יפו", "מסעדת שף בהשראת המטבח המקומי והתנ\"כי.", 3, 31.7770, 35.2280, ["chef", "romantic"]],
         ["גטסבי", "bar", "מרכז", "בר קוקטיילים בסגנון שנות ה-20 עם כניסה 'סודית'.", 2, 31.7800, 35.2190, ["romantic"]],
         ["קפה קדוש", "cafe", "מרכז", "בית קפה ותיק עם מאפים וקינוחים – דייט בוקר קלאסי.", 2, 31.7810, 35.2190, ["brunch"]],
+        ["JUJU", "rest", "ממילא", "מסעדה אסייתית עם בר מרכזי ושולחנות אינטימיים – מתאימה לדייט.", 3, 31.7775, 35.2235, ["asian", "romantic"]],
+        ["ג'קו סטריט", "rest", "רחוב אגריפס", "מסעדת שף ליד שוק מחנה יהודה – אווירה תוססת ובשרים.", 3, 31.7835, 35.2140, ["chef", "meat"]],
       ],
     },
     "חיפה": {
@@ -227,15 +230,51 @@
     },
   };
 
+  // ---------- כשרות ----------
+  // מסומן רק כשיש לכך מקור. כל השאר: "לבדוק" – כשרות משתנה, ותמיד צריך לראות תעודה בתוקף.
+  const KASHRUT = {
+    "עזורה": { k: "yes", t: "כשר" },
+    "אקליפטוס": { k: "yes", t: "כשר – צהר (לפי מקורות)" },
+    "JUJU": { k: "yes", t: "כשר למהדרין (לפי מקורות)", meh: true },
+    "ג'קו סטריט": { k: "yes", t: "כשר (לפי מקורות)" },
+    "אורי בורי": { k: "no", t: "לא כשר (פירות ים)" },
+    "מנטה ריי": { k: "no", t: "לא כשר (פירות ים)" },
+  };
+  function kosherOf(name, cat) {
+    if (cat !== "rest" && cat !== "cafe" && cat !== "bar") return null;
+    return KASHRUT[name] || { k: "check", t: "כשרות: לבדוק" };
+  }
+  // אזורי דפי זהב (סינון כשרות זמין שם)
+  const DZ = { "תל אביב-יפו": "e3", "ירושלים": "e1", "חיפה": "e2" };
+  function kosherLinks(cityName, meh) {
+    const c = cityName.split(/[ ,]/)[0];
+    const q = meh ? "מסעדה כשרה למהדרין" : "מסעדה כשרה";
+    const out = [{ l: "🗺️ בגוגל מפות", u: "https://www.google.com/maps/search/" + encodeURIComponent(q + " " + c) }];
+    if (DZ[cityName]) out.push({ l: "📒 בדפי זהב (סינון כשרות)", u: `https://www.d.co.il/h-c30420-${DZ[cityName]}-p0-l0/` });
+    out.push({ l: "🔎 בגוגל", u: "https://www.google.com/search?q=" + encodeURIComponent(q + " " + c + " לדייט") });
+    return out;
+  }
+  function cuisineSearch(cityName, cuisine, kosher) {
+    const c = cityName ? cityName.split(/[ ,]/)[0] : "";
+    return "https://www.google.com/maps/search/" + encodeURIComponent([cuisine, kosher ? (kosher === "mehadrin" ? "כשר למהדרין" : "כשר") : "", c].filter(Boolean).join(" "));
+  }
+
   // המרה למבנה נוח
   const CITIES = {};
   for (const [name, c] of Object.entries(RAW)) {
     CITIES[name] = {
       name, alias: c.alias, ll: c.ll,
       items: c.items.map(([n, cat, area, d, price, lat, lng, tags], i) => ({
-        id: name + "#" + i, n, cat, area, d, price, ll: [lat, lng], tags: tags || [], city: name,
+        id: name + "#" + i, n, cat, area, d, price, ll: [lat, lng], tags: tags || [], city: name, kosher: kosherOf(n, cat),
       })),
     };
+    // חנויות פרחים – חיפוש עדכני במפה לכל עיר (במקום שמות שעלולים להיסגר)
+    const short = c.alias[0];
+    CITIES[name].items.push({
+      id: name + "#flowers", n: `חנויות פרחים ב${short}`, cat: "flowers", area: "חיפוש במפה", price: 2, ll: c.ll, tags: ["romantic"], city: name, generic: true,
+      q: "חנות פרחים " + short,
+      d: "כל חנויות הפרחים הפתוחות באזור, עם דירוגים ושעות פתיחה. טיפ: תזמין זר מראש ותאסוף בדרך לדייט.",
+    });
   }
   const ALL = Object.values(CITIES).flatMap((c) => c.items);
 
@@ -262,6 +301,7 @@
   }
 
   function mapsLink(p) {
+    if (p.q) return "https://www.google.com/maps/search/" + encodeURIComponent(p.q);
     return "https://www.google.com/maps/search/" + encodeURIComponent(p.n + " " + (p.area || "") + " " + p.city.split(/[ ,]/)[0]);
   }
 
@@ -305,5 +345,50 @@
       steps: ["מכבים את כל האורות", "שוכבים על השמיכה עם משקה חם", "מחפשים קבוצות כוכבים באפליקציה", "כל אחד מספר משאלה"] },
   ];
 
-  window.DatePlaces = { CATS, GROUPS, CITIES, ALL, HOME_DATES, findCity, distKm, nearest, nearestCity, mapsLink };
+  // ---------- זרים ופרחים ----------
+  const OCCASIONS = [
+    { id: "first", l: "דייט ראשון" }, { id: "early", l: "דייט שני-שלישי" }, { id: "couple", l: "אנחנו זוג" },
+    { id: "anniversary", l: "יום נישואין / יום הולדת" }, { id: "sorry", l: "התנצלות 😅" }, { id: "just", l: "סתם כי בא לי" },
+  ];
+  const BOUQUETS = [
+    { id: "single-rose", e: "🌹", n: "ורד אדום בודד", f: "ורד אדום אחד, עטוף בנייר פשוט", m: "מחווה רומנטית, קטנה ולא מלחיצה", price: "15–35 ₪", occ: ["first", "early", "just"],
+      tip: "בדייט ראשון זה המקסימום – זר ענק יוצר לחץ. ורד אחד נותן את המסר בעדינות." },
+    { id: "sunflowers", e: "🌻", n: "חמניות", f: "3–5 חמניות עם קצת ירק", m: "שמחה, חום ואופטימיות", price: "60–120 ₪", occ: ["first", "early", "just"],
+      tip: "מושלם כשרוצים משהו שמח ולא 'כבד' מדי. מתאים לדייט בוקר או פיקניק." },
+    { id: "tulips", e: "🌷", n: "זר טוליפים", f: "10 טוליפים בצבע אחד", m: "רעננות ואהבה מושלמת", price: "90–180 ₪", occ: ["early", "couple", "just"],
+      tip: "טוליפים ממשיכים לגדול באגרטל – תגיד לה לקצר את הגבעולים. בעונה בחורף-אביב." },
+    { id: "wild", e: "💐", n: "זר פרחי בר", f: "פרחים עונתיים מעורבים, מראה טבעי", m: "ספונטניות וקלילות", price: "80–150 ₪", occ: ["early", "couple", "just"],
+      tip: "נראה כאילו קטפת בדרך (במובן הטוב). מעולה לדייט בטבע." },
+    { id: "pink-roses", e: "🌸", n: "ורדים ורודים", f: "12 ורדים ורודים עם גיבסנית", m: "רומנטיקה והערכה", price: "120–220 ₪", occ: ["couple", "anniversary", "sorry"],
+      tip: "רומנטי אבל עדין יותר מאדום. מתאים לזוג בתחילת הדרך." },
+    { id: "red-dozen", e: "❤️", n: "תריסר ורדים אדומים", f: "12 ורדים אדומים ארוכים", m: "אהבה – בלי לגמגם", price: "180–350 ₪", occ: ["anniversary", "couple"],
+      tip: "הקלאסיקה ליום נישואין. אל תביא לתוך מסעדה – תשלח הביתה או תן בסוף הערב." },
+    { id: "peonies", e: "🩷", n: "אדמוניות", f: "5–7 אדמוניות פתוחות", m: "רומנטיקה, מזל ושגשוג", price: "200–400 ₪", occ: ["anniversary", "sorry"],
+      tip: "הפרח הכי 'וואו' שיש, אבל עונתי ויקר. שווה להזמין מראש." },
+    { id: "lavender", e: "💜", n: "זר לבנדר", f: "צרור לבנדר מיובש או טרי", m: "רוגע וחן – ומריח מדהים", price: "50–100 ₪", occ: ["just", "early", "sorry"],
+      tip: "מחזיק שבועות ומתייבש יפה – מזכרת שנשארת." },
+    { id: "box", e: "🎁", n: "קופסת פרחים מעוצבת", f: "ורדים בקופסה עגולה, לפעמים עם שוקולד", m: "פינוק ומחווה גדולה", price: "250–500 ₪", occ: ["anniversary", "sorry"],
+      tip: "נוח – לא צריך אגרטל. מעולה כמשלוח לעבודה או הביתה ביום הדייט." },
+  ];
+  const FLOWER_TIPS = [
+    "תשאל בעדינות אם יש לה אלרגיה לפרחים או לריחות חזקים (ליליות, למשל).",
+    "בדייט במסעדה – תן את הזר בסוף, או תשלח אותו הביתה מראש. אף אחת לא רוצה להחזיק זר כל הערב.",
+    "פתק קטן בכתב יד שווה יותר מעוד 10 ורדים.",
+    "פרחים עונתיים טריים יותר וזולים יותר – תשאל את המוכר מה הגיע היום.",
+    "הזמנה מראש (יום-יומיים) בימים עמוסים כמו ט\"ו באב, ולנטיין ושישי.",
+  ];
+  function flowerFor(stage) {
+    const occ = stage === "surprise" ? "just" : stage;
+    const list = BOUQUETS.filter((b) => b.occ.includes(occ));
+    return list[Math.floor(Math.random() * list.length)] || BOUQUETS[0];
+  }
+  function flowerSearch(city, delivery) {
+    const c = city ? " " + city.split(/[ ,]/)[0] : "";
+    return delivery
+      ? "https://www.google.com/search?q=" + encodeURIComponent("משלוח פרחים" + c)
+      : "https://www.google.com/maps/search/" + encodeURIComponent("חנות פרחים" + c);
+  }
+
+  window.DatePlaces = { CATS, GROUPS, CITIES, ALL, HOME_DATES, findCity, distKm, nearest, nearestCity, mapsLink,
+    KASHRUT, kosherLinks, cuisineSearch, OCCASIONS, BOUQUETS, FLOWER_TIPS, flowerFor, flowerSearch };
 })();

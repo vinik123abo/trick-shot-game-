@@ -235,7 +235,7 @@
   function realPlace(cats, ctx, wantTag) {
     if (!ctx.cityObj || !cats) return null;
     const req = REQUIRE_TAG[cats.key];
-    const cands = ctx.cityObj.items.filter((p) => cats.includes(p.cat) && (!req || p.tags.includes(req)));
+    const cands = ctx.cityObj.items.filter((p) => cats.includes(p.cat) && (!req || p.tags.includes(req)) && kosherOk(p, ctx));
     if (!cands.length) return null;
     const best = cands.map((p) => [placeScore(p, ctx, wantTag), p]).sort((a, b) => b[0] - a[0])[0];
     if (best[0] < -50) return null;
@@ -243,6 +243,14 @@
     ctx.lastLL = best[1].ll;
     return best[1];
   }
+
+  // בכשרות: רק מסעדות שיש מקור לכשרות שלהן (במהדרין – רק מהדרין)
+  function kosherOk(p, ctx) {
+    if (!ctx.kosher || p.cat !== "rest") return true;
+    return !!(p.kosher && p.kosher.k === "yes" && (ctx.kosher !== "mehadrin" || p.kosher.meh));
+  }
+  function kLabel(p, ctx) { return !p || !p.kosher ? "" : p.kosher.k === "check" && !ctx.kosher ? "" : p.kosher.t; }
+  function kosherWord(ctx) { return ctx.kosher === "mehadrin" ? "כשר למהדרין" : ctx.kosher ? "כשר" : ""; }
 
   function pickHomeDate(ctx) {
     const forced = ctx.homeId && DP.HOME_DATES.find((h) => h.id === ctx.homeId);
@@ -269,6 +277,7 @@
       city: input.city || parsed.city || "",
       exclude: new Set(input.exclude || []),
       words: parsed.words,
+      kosher: input.kosher && input.kosher !== "any" ? input.kosher : /מהדרין/.test((input.freeText || "") + " " + (input.herLikes || "")) ? "mehadrin" : /כשר|כשרות/.test((input.freeText || "") + " " + (input.herLikes || "")) ? "kosher" : "",
     };
     ctx.isHome = ctx.vibes.includes("home") && ctx.vibes.length <= 2 || /בבית|בדירה|לא לצאת|בסלון|במרפסת/.test(ctx.text);
     ctx.usedPlaces = new Set();
@@ -311,7 +320,9 @@
     steps.push({ a: main, dur: main.cost > 300 ? 120 : 90 });
     if (!mainIsMeal) {
       steps.push({
-        a: { e: food.e, t: `ארוחה: ${food.c}`, d: food.d, cost: food.cost, place: `מסעדה – ${food.c}`, q: food.q, img: food.img, home: food.home, food },
+        a: { e: food.e, t: `ארוחה: ${food.c}`, d: food.d, cost: food.cost, img: food.img, home: food.home, food,
+          place: ctx.kosher ? `מסעדה ${kosherWord(ctx)} – ${food.c}` : `מסעדה – ${food.c}`,
+          q: ctx.kosher ? `${food.q} ${kosherWord(ctx)}` : food.q },
         dur: 75,
       });
     }
@@ -335,10 +346,11 @@
         emoji: a.e,
         title: a.t,
         description: a.d,
-        place_name: real ? `${real.n} · ${real.area}` : a.place,
+        place_name: real ? `${real.n} · ${real.area}` : ctx.kosher && a.id === "chef-dinner" ? `מסעדת שף ${kosherWord(ctx)}` : a.place,
         real_name: real ? real.n : "",
-        maps_url: a.home ? "" : real ? DP.mapsLink(real) : mapsUrl(a.q, ctx.city),
+        maps_url: a.home ? "" : real ? DP.mapsLink(real) : mapsUrl(ctx.kosher && a.id === "chef-dinner" ? `מסעדת שף ${kosherWord(ctx)}` : a.q, ctx.city),
         real_tip: real && real !== a.real ? real.d : "",
+        kashrut: real && real.kosher ? kLabel(real, ctx) : a.food && ctx.kosher && !a.home ? `חיפוש מקומות ${kosherWord(ctx)} – לבדוק תעודה` : "",
         cost: a.cost,
         image_prompt: imagePrompt(a.img, ctx),
       };
@@ -351,16 +363,17 @@
 
     let restaurants = [];
     if (ctx.cityObj && !ctx.isHome) {
-      const rs = ctx.cityObj.items.filter((p) => p.cat === "rest")
+      const rs = ctx.cityObj.items.filter((p) => p.cat === "rest" && kosherOk(p, ctx))
         .map((p) => [placeScore(p, Object.assign({}, ctx, { usedPlaces: new Set() }), FOOD_TAG[food.id] || food.id), p])
         .sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]);
-      restaurants = rs.map((p) => ({ name: `🍽️ ${p.n}`, why: `${p.area} – ${p.d}`, price: "₪".repeat(p.price), maps_url: DP.mapsLink(p) }));
+      restaurants = rs.map((p) => ({ name: `🍽️ ${p.n}`, why: `${p.area} – ${p.d}`, price: "₪".repeat(p.price), maps_url: DP.mapsLink(p), kashrut: kLabel(p, ctx) }));
     }
-    restaurants = restaurants.concat(foods.slice(0, Math.max(0, 3 - restaurants.length)).map((f) => ({
-      name: `${f.e} ${f.c}`,
+    restaurants = restaurants.concat(foods.filter((f) => !(ctx.kosher && f.home)).slice(0, Math.max(0, 3 - restaurants.length)).map((f) => ({
+      name: ctx.kosher && !f.home ? `🔎 ${f.e} ${f.c} – ${kosherWord(ctx)}` : `${f.e} ${f.c}`,
       why: f.d,
       price: "₪".repeat(f.b) + ` · כ-${f.cost} ₪ לזוג`,
-      maps_url: f.home ? "" : mapsUrl(f.q + (ctx.vibes.includes("romantic") ? " רומנטית" : ""), ctx.city),
+      maps_url: f.home ? "" : mapsUrl(f.q + (ctx.kosher ? " " + kosherWord(ctx) : "") + (ctx.vibes.includes("romantic") && !ctx.kosher ? " רומנטית" : ""), ctx.city),
+      kashrut: ctx.kosher && !f.home ? "חיפוש עדכני במפה – לבדוק תעודה" : "",
     })));
 
     const vibeText = ctx.vibes.map((v) => VIBE_LABEL[v]).filter(Boolean).join(" · ");
@@ -381,6 +394,7 @@
 
     const starters = [...STARTERS].sort(() => Math.random() - 0.5).slice(0, 4);
     const tips = [...(TIPS_BY_STAGE[ctx.stage] || TIPS_BY_STAGE.first)];
+    if (ctx.kosher) tips.unshift(`חשוב לה ${kosherWord(ctx)}? תבקש לראות תעודת כשרות בתוקף, ותזכור שרוב המקומות הכשרים סגורים בשבת ובחלק מהחגים.`);
     if (input.herLikes) tips.unshift(`שלב משהו ממה שהיא אוהבת (${input.herLikes}) – אפילו פרט קטן יראה לה שהקשבת.`);
 
     return {
@@ -402,6 +416,12 @@
           : "אם המקום מלא או סגור – שמור בטלפון מקום חלופי קרוב באותו סגנון. תבדוק שעות פתיחה ותזמין מראש.",
       pro_move: PRO_MOVES[rnd(PRO_MOVES.length)],
       shopping_list: homeDate ? homeDate.shop : [],
+      kosher: ctx.kosher,
+      flowers: (() => {
+        if (!DP) return null;
+        const b = DP.flowerFor(ctx.stage);
+        return { e: b.e, name: b.n, desc: `${b.f} – ${b.m}`, price: b.price, tip: b.tip, maps_url: DP.flowerSearch(ctx.city), delivery_url: DP.flowerSearch(ctx.city, true) };
+      })(),
       city: ctx.city,
       _source: "offline",
     };

@@ -574,6 +574,55 @@ function showQuizResult() {
 }
 
 /* ===================================================================
+ * 4ב. זרים ופרחים
+ * =================================================================== */
+function initFlowers() {
+  const DP = window.DatePlaces;
+  if (!DP || !$("#flowerSection")) return;
+  let occ = "first";
+  const cityGuess = () => $("#city")?.value.trim() || "";
+  $("#flowerOcc").innerHTML = DP.OCCASIONS.map((o, i) => `<button data-v="${o.id}" class="${i ? "" : "on"}">${o.l}</button>`).join("");
+  const render = () => {
+    const list = DP.BOUQUETS.filter((b) => b.occ.includes(occ));
+    $("#bouquetList").innerHTML = list.map((b) => `
+      <div class="bouquet">
+        <div class="bq-e">${b.e}</div>
+        <h5>${esc(b.n)}</h5>
+        <p class="bq-f">${esc(b.f)}</p>
+        <p class="bq-m">💬 ${esc(b.m)}</p>
+        <span class="price">${esc(b.price)}</span>
+        <p class="bq-tip">💡 ${esc(b.tip)}</p>
+        <div class="prow">
+          <a class="btn small ghost" href="${esc(DP.flowerSearch(cityGuess()))}" target="_blank" rel="noopener">📍 איפה קונים</a>
+          <button class="btn small ghost" data-bqshare="${b.id}">📲 תזכורת לעצמי</button>
+        </div>
+      </div>`).join("");
+  };
+  $("#flowerOcc").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    occ = b.dataset.v;
+    $$("#flowerOcc button").forEach((x) => x.classList.toggle("on", x === b));
+    FX().sound("flip");
+    render();
+  });
+  $("#bouquetList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bqshare]");
+    if (!b) return;
+    const q = DP.BOUQUETS.find((x) => x.id === b.dataset.bqshare);
+    window.open("https://wa.me/?text=" + encodeURIComponent(`💐 תזכורת: לקנות ${q.n} (${q.price})\n${q.f}\n💡 ${q.tip}`), "_blank", "noopener");
+  });
+  const refreshLinks = () => {
+    $("#flowerNear").href = DP.flowerSearch(cityGuess());
+    $("#flowerDelivery").href = DP.flowerSearch(cityGuess(), true);
+  };
+  $("#flowerTips").innerHTML = DP.FLOWER_TIPS.map((t) => `<li>${esc(t)}</li>`).join("");
+  $("#city")?.addEventListener("input", refreshLinks);
+  refreshLinks();
+  render();
+}
+
+/* ===================================================================
  * 5. חיבור לתוכנית הדייט (כפתורי "ספירה" ו"הזמנה")
  * =================================================================== */
 function fromPlan(plan, mode) {
@@ -634,6 +683,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 initCouple();
 initCountdown();
 initInvite();
+initFlowers();
 qi = -1; renderQuiz();
 $("#installBtn").addEventListener("click", doInstall);
 $("#installNow")?.addEventListener("click", doInstall);
