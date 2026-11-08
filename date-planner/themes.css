@@ -1,0 +1,164 @@
+/* ===== ערכות צבעים של דייטון =====
+ * כל ערכה מגדירה את אותם משתנים. ברירת מחדל: "שקיעה ורודה". */
+:root, [data-theme="sunset"] {
+  --bg: #0d0612;
+  --text: #fbefff;
+  --text-soft: #ecd9f1;
+  --muted: #c7aed3;
+  --accent: #ff4f7b;
+  --accent-mid: #ff8a6b;
+  --accent2: #ffb36b;
+  --violet: #c86bff;
+  --on-accent: #2a0b16;
+  --depth: #b02a55;
+  --glow-rgb: 255, 79, 123;
+  --a1: #ff2f6d; --a2: #7a2cff; --a3: #ff9a4d;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-2: rgba(255, 255, 255, 0.1);
+  --glass-hi: rgba(255, 255, 255, 0.085);
+  --glass-lo: rgba(255, 255, 255, 0.02);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --field: rgba(10, 4, 14, 0.55);
+  --bar: rgba(13, 6, 18, 0.6);
+  --dlg: rgba(30, 14, 38, 0.88);
+  --shadow: rgba(0, 0, 0, 0.85);
+  --grain: rgba(255, 255, 255, 0.7);
+  --grad: linear-gradient(120deg, var(--accent) 0%, var(--accent-mid) 45%, var(--accent2) 100%);
+  --grad-violet: linear-gradient(120deg, var(--violet), var(--accent));
+  --line: #4a2d58;
+  --card: #2a1733;
+  --card2: #341d40;
+  --bg2: #22122a;
+  color-scheme: dark;
+}
+
+[data-theme="neon"] {
+  --bg: #05040f;
+  --text: #eefcff;
+  --text-soft: #cfe9f7;
+  --muted: #8fb2c9;
+  --accent: #00e5ff;
+  --accent-mid: #8a7dff;
+  --accent2: #ff3df2;
+  --violet: #7c4dff;
+  --on-accent: #050314;
+  --depth: #0a7f99;
+  --glow-rgb: 0, 229, 255;
+  --a1: #ff00d4; --a2: #00b8ff; --a3: #6a00ff;
+  --field: rgba(2, 4, 16, 0.6);
+  --bar: rgba(5, 4, 15, 0.62);
+  --dlg: rgba(10, 12, 30, 0.9);
+  --line: #23305a; --card: #0f1430; --card2: #161c40; --bg2: #0b0f26;
+}
+
+[data-theme="gold"] {
+  --bg: #0b0906;
+  --text: #fbf3e2;
+  --text-soft: #e9dcc0;
+  --muted: #b8a684;
+  --accent: #d4a24c;
+  --accent-mid: #e8c477;
+  --accent2: #f7e3a1;
+  --violet: #9c7a3c;
+  --on-accent: #1a1204;
+  --depth: #8a6420;
+  --glow-rgb: 212, 162, 76;
+  --a1: #7a5414; --a2: #2b1f0b; --a3: #c28b2c;
+  --field: rgba(12, 9, 4, 0.6);
+  --bar: rgba(11, 9, 6, 0.65);
+  --dlg: rgba(30, 24, 14, 0.9);
+  --line: #4a3c22; --card: #1f1a10; --card2: #2a2316; --bg2: #16120b;
+}
+
+[data-theme="ocean"] {
+  --bg: #03111b;
+  --text: #ecfbff;
+  --text-soft: #cbe8f0;
+  --muted: #86aebb;
+  --accent: #2ee6c5;
+  --accent-mid: #3ac3e8;
+  --accent2: #4da3ff;
+  --violet: #6a7dff;
+  --on-accent: #02201b;
+  --depth: #13866f;
+  --glow-rgb: 46, 230, 197;
+  --a1: #0077ff; --a2: #00c9a7; --a3: #3a3cff;
+  --field: rgba(2, 10, 18, 0.6);
+  --bar: rgba(3, 17, 27, 0.62);
+  --dlg: rgba(8, 26, 40, 0.9);
+  --line: #1f4558; --card: #0b2433; --card2: #10303f; --bg2: #081c28;
+}
+
+[data-theme="wine"] {
+  --bg: #120309;
+  --text: #fff0f2;
+  --text-soft: #f1d4da;
+  --muted: #c49aa5;
+  --accent: #e0284f;
+  --accent-mid: #f0503f;
+  --accent2: #ff8a5c;
+  --violet: #9e2257;
+  --on-accent: #ffffff;
+  --depth: #7e1029;
+  --glow-rgb: 224, 40, 79;
+  --a1: #8a0026; --a2: #4a0030; --a3: #ff4d2e;
+  --field: rgba(16, 2, 8, 0.6);
+  --bar: rgba(18, 3, 9, 0.65);
+  --dlg: rgba(40, 8, 18, 0.9);
+  --line: #5a2030; --card: #2a0a14; --card2: #36101c; --bg2: #1f0710;
+}
+
+[data-theme="pastel"] {
+  --bg: #fff3f6;
+  --text: #3a1730;
+  --text-soft: #5a3a52;
+  --muted: #8f6c88;
+  --accent: #ff6f9c;
+  --accent-mid: #ff8f8f;
+  --accent2: #ffb38a;
+  --violet: #b38cff;
+  --on-accent: #ffffff;
+  --depth: #d14d7a;
+  --glow-rgb: 255, 111, 156;
+  --a1: #ffb3cc; --a2: #c9b3ff; --a3: #ffe0b3;
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-2: rgba(255, 255, 255, 0.8);
+  --glass-hi: rgba(255, 255, 255, 0.75);
+  --glass-lo: rgba(255, 255, 255, 0.4);
+  --glass-line: rgba(140, 60, 110, 0.16);
+  --field: rgba(255, 255, 255, 0.85);
+  --bar: rgba(255, 243, 246, 0.7);
+  --dlg: rgba(255, 248, 250, 0.95);
+  --shadow: rgba(120, 40, 80, 0.25);
+  --grain: rgba(120, 40, 80, 0.4);
+  --line: #f0cfdc; --card: #ffffff; --card2: #fff6f9; --bg2: #fff0f4;
+  color-scheme: light;
+}
+[data-theme="pastel"] .aurora i { opacity: 0.7; }
+[data-theme="pastel"] .hero-title { text-shadow: 0 10px 40px rgba(255, 111, 156, .25); }
+[data-theme="pastel"] .hero-overlay h2, [data-theme="pastel"] .hero-overlay p { color: #fff; }
+[data-theme="pastel"] .step-body p, [data-theme="pastel"] .food p, [data-theme="pastel"] .place p { color: var(--text-soft); }
+[data-theme="pastel"] .stat span, [data-theme="pastel"] .hint { color: var(--muted); }
+
+/* כל המעברים בין ערכות – חלקים */
+body, .card, .topbar, .tabs, .btn, input, textarea, select { transition: background-color .5s, color .5s, border-color .5s; }
+
+/* ---------- בורר הערכות ---------- */
+.theme-panel { position: fixed; z-index: 60; left: 16px; top: calc(var(--hdr, 64px) + 10px); width: min(340px, calc(100% - 32px)); padding: 16px; border-radius: 22px;
+  background: var(--dlg); border: 1px solid var(--glass-line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 30px 60px -20px var(--shadow), 0 0 0 1px var(--glass-lo); transform-origin: top left;
+  transform: perspective(800px) rotateX(-18deg) scale(.85) translateY(-20px); opacity: 0; pointer-events: none; transition: transform .4s cubic-bezier(.3, 1.5, .5, 1), opacity .25s; }
+.theme-panel.open { transform: none; opacity: 1; pointer-events: auto; }
+.theme-panel h4 { margin: 0 0 10px; font-size: 16px; }
+.swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* כל דוגמית מקבלת את משתני הערכה שלה (data-theme) – כך היא תצוגה מקדימה אמיתית */
+.swatch { border: 2px solid var(--glass-line); border-radius: 16px; padding: 8px 6px; background: radial-gradient(circle at 50% 0%, rgba(var(--glow-rgb), .35), transparent 70%), var(--bg); color: var(--text); font-size: 12px; font-weight: 700; display: grid; gap: 6px; justify-items: center; transition: transform .2s cubic-bezier(.5,1.8,.5,1), border-color .2s; }
+.swatch:hover { transform: translateY(-3px) scale(1.04); }
+.swatch.on { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--glow-rgb), .2); }
+.swatch i { width: 46px; height: 46px; border-radius: 50%; display: block; box-shadow: inset 0 -6px 12px rgba(0,0,0,.25), 0 6px 14px -4px rgba(0,0,0,.5); }
+.theme-opts { display: grid; gap: 8px; margin-top: 12px; font-size: 14px; }
+.theme-opts label { display: flex; align-items: center; gap: 8px; }
+.theme-opts input { width: auto; accent-color: var(--accent); }
+/* שובל לבבות */
+.trail { position: fixed; z-index: 99; pointer-events: none; font-size: 14px; transform: translate(-50%, -50%); animation: trail 0.9s ease-out forwards; }
+@keyframes trail { to { opacity: 0; transform: translate(-50%, calc(-50% - 40px)) scale(.4) rotate(30deg); } }

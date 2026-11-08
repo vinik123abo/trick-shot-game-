@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>דייטון – מתכנן הדייטים שלך</title>
+  <meta name="description" content="תאר איזה דייט אתה רוצה, וקבל תוכנית מלאה: לו״ז, אוכל, מקומות, טיפים ותמונה של איך הדייט ייראה." />
+  <meta name="theme-color" content="#0d0612" />
+  <meta name="keywords" content="תכנון דייט, רעיונות לדייט, דייט ראשון, מסעדות לדייט, דייט בבית, מקומות לדייט, דייט רומנטי" />
+  <meta name="robots" content="index, follow" />
+  <meta name="application-name" content="דייטון" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="דייטון" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="he_IL" />
+  <meta property="og:site_name" content="דייטון" />
+  <meta property="og:title" content="דייטון – מתכנן הדייטים שלך 💘" />
+  <meta property="og:description" content="כותבים במילים פשוטות איזה דייט רוצים, ומקבלים תוכנית מלאה: מקומות, אוכל, לו״ז, טיפים, כרטיס הזמנה וספירה לאחור." />
+  <meta property="og:image" content="og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="דייטון – מתכנן הדייטים שלך 💘" />
+  <meta name="twitter:image" content="og.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"דייטון","alternateName":"Dateon","applicationCategory":"LifestyleApplication","operatingSystem":"Any","inLanguage":"he","description":"מתכנן דייטים: תוכנית מלאה עם מקומות, אוכל, לו\"ז, רעיונות לדייט בבית, כרטיס הזמנה וספירה לאחור.","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"}}</script>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="fx.css" />
+  <link rel="stylesheet" href="themes.css" />
+  <link rel="stylesheet" href="games.css" />
+  <link rel="stylesheet" href="extras.css" />
+  <script>try { var t = localStorage.getItem("dt_theme") || "sunset"; document.documentElement.dataset.theme = t; if (t === "custom") { var v = JSON.parse(localStorage.getItem("dt_custom_vars") || "{}"); for (var k in v) document.documentElement.style.setProperty(k, v[k]); } } catch (e) {}</script>
+</head>
+<body>
+  <div class="couple-bg" id="coupleBg" aria-hidden="true"><i></i></div>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">💘</span>
+      <div>
+        <h1>דייטון</h1>
+        <p class="tagline">אתה מספר – אנחנו מתכננים את הדייט</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="savedBtn" title="דייטים שמורים">⭐ <span id="savedCount">0</span></button>
+      <button class="icon-btn cd-chip hidden" id="cdChip" title="ספירה לאחור לדייט"></button>
+      <button class="icon-btn install-btn hidden" id="installBtn" title="התקן כאפליקציה">📲 <span>התקן</span></button>
+      <button class="icon-btn" id="soundBtn" title="צלילים">🔊</button>
+      <button class="icon-btn" id="themeBtn" title="ערכות צבעים">🎨</button>
+      <button class="icon-btn" id="settingsBtn" title="הגדרות">⚙️</button>
+    </div>
+  </header>
+
+  <section class="hero3d">
+    <canvas id="heroCanvas" aria-hidden="true"></canvas>
+    <div class="hero-fallback" aria-hidden="true">💖</div>
+    <div class="hero-copy">
+      <span class="hero-kicker">💘 מתכנן הדייטים שלך</span>
+      <h2 class="hero-title">הדייט המושלם<br /><span>מתוכנן בשבילך</span></h2>
+      <p class="hero-sub">כותבים במילים פשוטות מה בא לך, ומקבלים תוכנית מלאה: מקומות, אוכל, לו"ז, טיפים ותמונה של איך הדייט ייראה.</p>
+      <div class="hero-cta">
+        <button class="btn primary big" data-goto="plan">✨ בוא נתכנן דייט</button>
+        <button class="btn glass" data-goto="places">🗺️ מקומות</button>
+      </div>
+      <div class="hero-stats">
+        <div><b data-count="114">0</b><span>מקומות</span></div>
+        <div><b data-count="17">0</b><span>ערים ואזורים</span></div>
+        <div><b data-count="12">0</b><span>דייטים בבית</span></div>
+      </div>
+    </div>
+    <div class="hero-polaroid hidden" id="heroPolaroid"><img alt="" /><span>אנחנו 💕</span></div>
+    <div class="hero-hint">גרור או לחץ על הלב 💫</div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <span class="tab-ink" aria-hidden="true"></span>
+    <button class="tab on" data-tab="plan">✨ תכנון</button>
+    <button class="tab" data-tab="places">🗺️ מקומות</button>
+    <button class="tab" data-tab="home">🏠 בבית</button>
+    <button class="tab" data-tab="surprise">🎡 הפתעה</button>
+    <button class="tab" data-tab="personal">💌 אישי</button>
+  </nav>
+
+  <main>
+    <div class="tab-panel" data-panel="plan">
+    <section class="card planner" id="planner">
+      <h2>איזה דייט בא לך?</h2>
+      <p class="hint">כתוב במילים פשוטות. לדוגמה: <em>"דייט שני, היא אוהבת ים ואוכל איטלקי, משהו רומנטי אבל לא יקר בתל אביב"</em></p>
+
+      <textarea id="freeText" rows="3" placeholder="תאר את הדייט שאתה רוצה..."></textarea>
+
+      <div class="grid2">
+        <label class="field">
+          <span>עיר / אזור</span>
+          <input id="city" list="cities" placeholder="למשל: תל אביב" />
+          <datalist id="cities"></datalist>
+        </label>
+        <label class="field">
+          <span>מה היא אוהבת? (לא חובה)</span>
+          <input id="herLikes" placeholder="למשל: סושי, כלבים, הופעות" />
+        </label>
+      </div>
+
+      <div class="field">
+        <span>סוג הדייט</span>
+        <div class="chips single" data-name="stage">
+          <button data-v="first" class="on">דייט ראשון</button>
+          <button data-v="early">דייט שני-שלישי</button>
+          <button data-v="couple">אנחנו זוג</button>
+          <button data-v="anniversary">יום נישואין / אירוע</button>
+          <button data-v="surprise">הפתעה</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>אווירה (אפשר כמה)</span>
+        <div class="chips multi" data-name="vibes">
+          <button data-v="romantic">❤️ רומנטי</button>
+          <button data-v="adventure">⚡ הרפתקני</button>
+          <button data-v="chill">☕ רגוע</button>
+          <button data-v="creative">🎨 יצירתי</button>
+          <button data-v="nature">🌿 בטבע</button>
+          <button data-v="foodie">🍝 אוכל</button>
+          <button data-v="culture">🎭 תרבות</button>
+          <button data-v="home">🏠 בבית</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <span>תקציב</span>
+          <div class="chips single" data-name="budget">
+            <button data-v="1">💸 חסכוני</button>
+            <button data-v="2" class="on">💳 בינוני</button>
+            <button data-v="3">💎 מפנק</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>מתי?</span>
+          <div class="chips single" data-name="time">
+            <button data-v="morning">בוקר</button>
+            <button data-v="noon">צהריים</button>
+            <button data-v="evening" class="on">ערב</button>
+            <button data-v="night">לילה</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>כשרות</span>
+        <div class="chips single" data-name="kosher">
+          <button data-v="any" class="on">לא משנה</button>
+          <button data-v="kosher">✡️ כשר</button>
+          <button data-v="mehadrin">✡️ כשר למהדרין</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="buildBtn">✨ בנה לי את הדייט</button>
+        <button class="btn ghost" id="randomBtn">🎲 תפתיע אותי</button>
+      </div>
+      <p class="mode-note" id="modeNote"></p>
+    </section>
+
+    <section id="result" class="hidden"></section>
+
+    <section class="card quick">
+      <h2>רעיונות מהירים 💡</h2>
+      <p class="hint">אין לך כוח לפרט? לחץ על רעיון ונבנה ממנו דייט שלם.</p>
+      <div class="quick-grid" id="quickGrid"></div>
+    </section>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="places">
+      <section class="card">
+        <h2>מקומות לדייט לפי עיר 🗺️</h2>
+        <p class="hint">מסעדות, חופים, טבע, תצפיות, ברים ופעילויות. בחר עיר, או לחץ "קרוב אליי" כדי למיין לפי המרחק ממך.</p>
+        <div class="places-controls">
+          <select id="placeCity"></select>
+          <button class="btn small ghost" id="nearMe">📍 קרוב אליי</button>
+        </div>
+        <div class="chips single" data-name="pcat" id="pcatChips"></div>
+        <div class="kosher-bar">
+          <label class="kosher-toggle"><input type="checkbox" id="kosherOnly" /> <span>✡️ רק מקומות כשרים</span></label>
+          <label class="kosher-toggle"><input type="checkbox" id="mehadrinOnly" /> <span>למהדרין</span></label>
+        </div>
+        <div id="placesExtra"></div>
+        <p class="mode-note" id="placesNote"></p>
+        <div class="places-grid" id="placesList"></div>
+        <p class="mode-note">💡 המאגר כולל מקומות מוכרים ומבוססים, אבל מקומות נפתחים ונסגרים – תמיד כדאי לבדוק במפה שעות פתיחה ולהזמין מראש.</p>
+      </section>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="home">
+      <section class="card">
+        <h2>דייטים בבית 🏠</h2>
+        <p class="hint">לא חייבים לצאת כדי שיהיה מושלם. בחר רעיון, קבל רשימת קניות ושלבים – ותהפוך את הסלון לדייט.</p>
+        <div class="home-grid" id="homeList"></div>
+      </section>
+    </div>
+    <div class="tab-panel hidden" data-panel="surprise">
+      <section class="card wheel-card">
+        <h2>🎡 גלגל הדייטים</h2>
+        <p class="hint">לא מצליח להחליט? תסובב את הגלגל ותן לגורל לבחור בשבילך.</p>
+        <div class="wheel-wrap">
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <svg id="wheel" viewBox="-100 -100 200 200" role="img" aria-label="גלגל רעיונות לדייט"></svg>
+          <button id="spinBtn" class="wheel-center">סובב!</button>
+        </div>
+        <div id="wheelResult" class="wheel-result hidden"></div>
+      </section>
+
+      <section class="card">
+        <h2>🧠 איזה סוג דייט מתאים לכם?</h2>
+        <p class="hint">מבחן קצר וכיפי – בסוף תקבלו את "הטיפוס" שלכם ודייט שמתאים בדיוק.</p>
+        <div id="quizBox" class="quiz"></div>
+      </section>
+
+      <section class="card">
+        <h2>💘 החלק רעיונות</h2>
+        <p class="hint">גרור ימינה = אהבתי ❤️, שמאלה = לא בשבילי ✖. מה שאהבת נשמר למטה, ובלחיצה בונים ממנו דייט.</p>
+        <div class="deck" id="deck"></div>
+        <div class="deck-btns">
+          <button class="round no" id="swNo" title="לא בשבילי">✖</button>
+          <button class="round undo" id="swUndo" title="בטל">↶</button>
+          <button class="round yes" id="swYes" title="אהבתי">❤</button>
+        </div>
+        <h3 class="section-title">❤️ הרעיונות שאהבתי</h3>
+        <div id="likedList" class="liked"></div>
+      </section>
+    </div>
+    <div class="tab-panel hidden" data-panel="personal">
+      <section class="card" id="coupleSection">
+        <h2>👫 אתם</h2>
+        <p class="hint">השמות שלכם והתמונה הזוגית הופכים את האפליקציה, כרטיס ההזמנה והספירה לאחור לאישיים. 🔒 הכל נשמר רק במכשיר שלך.</p>
+        <div class="grid2">
+          <label class="field"><span>השם שלך</span><input id="meName" placeholder="למשל: דני" /></label>
+          <label class="field"><span>השם שלה</span><input id="herName" placeholder="למשל: נועה" /></label>
+        </div>
+        <div class="photo-row">
+          <div id="photoPreview" class="photo-preview"></div>
+          <div class="photo-ctrls">
+            <label class="btn primary file-btn">📷 העלה תמונה שלכם<input type="file" id="photoInput" accept="image/*" hidden /></label>
+            <button class="btn ghost hidden" id="photoRemove">🗑️ הסר תמונה</button>
+            <div id="photoOpts" class="photo-opts">
+              <label class="check"><input type="checkbox" id="photoBgOn" /> <span>תמונה ברקע של האפליקציה</span></label>
+              <label class="check"><input type="checkbox" id="photoHeroOn" /> <span>פולרואיד במסך הפתיחה</span></label>
+              <label class="range"><span>טשטוש</span><input type="range" id="photoBlur" min="0" max="20" /></label>
+              <label class="range"><span>הכהיה</span><input type="range" id="photoDark" min="10" max="90" /></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="flowerSection">
+        <h2>💐 זרים ופרחים</h2>
+        <p class="hint">איזה זר להביא, מתי לתת אותו, כמה זה עולה, ואיפה קונים. בחר את סוג הדייט:</p>
+        <div class="chips single" id="flowerOcc"></div>
+        <div class="bouquet-grid" id="bouquetList"></div>
+        <div class="actions">
+          <a class="btn primary" id="flowerNear" target="_blank" rel="noopener">📍 חנות פרחים קרובה אליי</a>
+          <a class="btn ghost" id="flowerDelivery" target="_blank" rel="noopener">🛵 משלוח פרחים</a>
+        </div>
+        <details class="flower-tips"><summary>💡 טיפים לזר מנצח</summary><ul id="flowerTips"></ul></details>
+      </section>
+
+      <section class="card" id="cdSection">
+        <h2>⏳ ספירה לאחור לדייט</h2>
+        <div class="grid2">
+          <label class="field"><span>מה הדייט?</span><input id="cdTitle" placeholder="הדייט שלנו" /></label>
+          <label class="field"><span>מתי?</span><input id="cdWhen" type="datetime-local" /></label>
+        </div>
+        <label class="field"><span>איפה? (לא חובה)</span><input id="cdPlace" placeholder="למשל: נמל תל אביב" /></label>
+        <div class="actions"><button class="btn primary" id="cdStart">⏳ התחל ספירה</button></div>
+        <div id="cdDisplay" class="cd-display"></div>
+        <div id="cdActions" class="actions hidden">
+          <a class="btn small ghost" id="cdCal" target="_blank" rel="noopener">📅 הוסף ליומן גוגל</a>
+          <button class="btn small ghost" id="cdIcs">🗓️ הורד ליומן (אייפון/אאוטלוק)</button>
+          <button class="btn small ghost" id="cdShare">📲 שלח לה</button>
+          <button class="btn small ghost" id="cdClear">✖ נקה</button>
+        </div>
+      </section>
+
+      <section class="card" id="invSection">
+        <h2>💌 כרטיס הזמנה מעוצב</h2>
+        <p class="hint">בחר סגנון, כתוב כמה מילים – ושלח לה הזמנה אמיתית לדייט.</p>
+        <div class="field"><span>סגנון</span><div class="chips single" id="invStyles"></div></div>
+        <div class="inv-layout">
+          <div class="inv-form">
+            <label class="field"><span>כותרת</span><input id="invTitle" /></label>
+            <label class="field"><span>הודעה</span><select id="invMsgs"></select><textarea id="invMsg" rows="3"></textarea></label>
+            <div class="grid2">
+              <label class="field"><span>מתי</span><input id="invWhen" placeholder="מגיע מהספירה לאחור" /></label>
+              <label class="field"><span>איפה</span><input id="invPlace" placeholder="למשל: חוף מציצים" /></label>
+            </div>
+            <label class="check"><input type="checkbox" id="invUsePhoto" /> <span>שלב את התמונה שלנו בכרטיס</span></label>
+            <p class="mode-note">השמות נלקחים מהחלק "אתם" למעלה.</p>
+          </div>
+          <div class="inv-stage" id="invStage"><canvas id="invCanvas" width="1080" height="1350"></canvas></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="invShare">📲 שלח לה</button>
+          <button class="btn ghost" id="invDownload">⬇️ הורד תמונה</button>
+          <button class="btn ghost" id="invCopy">📋 העתק טקסט</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="theme-panel" id="themePanel" role="dialog" aria-label="ערכות צבעים">
+    <h4>🎨 בחר סגנון</h4>
+    <div class="swatches" id="swatches"></div>
+    <details class="ct-builder">
+      <summary>🛠️ בנה סגנון משלך</summary>
+      <div class="ct-row">
+        <label><input type="color" id="ctA" value="#ff4f7b" /><span>ראשי</span></label>
+        <label><input type="color" id="ctB" value="#ffb36b" /><span>משני</span></label>
+        <label><input type="color" id="ctBg" value="#140818" /><span>רקע</span></label>
+      </div>
+      <div class="ct-presets">
+        <span>השראה:</span>
+        <button data-preset="#ff6b6b,#ffd93d,#1a1033" title="שקיעה טרופית" style="background:linear-gradient(120deg,#ff6b6b,#ffd93d)"></button>
+        <button data-preset="#7ef9a5,#3ad1ff,#06140f" title="מנטה" style="background:linear-gradient(120deg,#7ef9a5,#3ad1ff)"></button>
+        <button data-preset="#ff8fab,#cdb4ff,#fff7fb" title="צמר גפן מתוק" style="background:linear-gradient(120deg,#ff8fab,#cdb4ff)"></button>
+        <button data-preset="#f97316,#facc15,#120a03" title="מדורה" style="background:linear-gradient(120deg,#f97316,#facc15)"></button>
+        <button data-preset="#a3e635,#22d3ee,#0b0f14" title="חשמלי" style="background:linear-gradient(120deg,#a3e635,#22d3ee)"></button>
+        <button data-preset="#9b5de5,#f15bb5,#f8f4ff" title="לבנדר" style="background:linear-gradient(120deg,#9b5de5,#f15bb5)"></button>
+      </div>
+      <p class="mode-note">כל שינוי מוחל מיד, גם על הלב התלת-ממדי.</p>
+    </details>
+    <div class="theme-opts">
+      <label><input type="checkbox" id="trailOn" /> שובל לבבות אחרי העכבר</label>
+      <label><input type="checkbox" id="hapticOn" checked /> רטט בטלפון</label>
+    </div>
+  </div>
+
+  <footer class="foot">
+    נבנה באהבה לכל מי שאי פעם שאל "אז... לאן הולכים?" 💘
+  </footer>
+
+  <!-- Settings -->
+  <dialog id="settingsDlg">
+    <form method="dialog" class="dlg">
+      <h3>הגדרות</h3>
+      <label class="field">
+        <span>מפתח Claude API (לא חובה)</span>
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        <small>עם מפתח – Claude מתכנן לך דייט מותאם אישית לגמרי מכל תיאור חופשי. בלי מפתח – האפליקציה עובדת עם מנוע הרעיונות המובנה. המפתח נשמר רק בדפדפן שלך.</small>
+      </label>
+      <div class="install-row" id="installRow">
+        <b>📲 התקנה כאפליקציה</b>
+        <small>במחשב (כרום/אדג'): אייקון ההתקנה בשורת הכתובת או כפתור "התקן". באנדרואיד: תפריט ⋮ ← "התקן אפליקציה". באייפון: שתף ⬆️ ← "הוסף למסך הבית". אחרי ההתקנה דייטון עובד גם בלי אינטרנט.</small>
+        <button type="button" class="btn small primary" id="installNow">📲 התקן עכשיו</button>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="imagesOn" checked />
+        <span>צור תמונות של הדייט (מחולל תמונות AI חינמי)</span>
+      </label>
+      <div class="actions">
+        <button class="btn primary" value="save" id="saveSettings">שמור</button>
+        <button class="btn ghost" value="cancel">ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Saved -->
+  <dialog id="savedDlg">
+    <div class="dlg">
+      <h3>הדייטים השמורים שלך ⭐</h3>
+      <div id="savedList"></div>
+      <div class="actions"><button class="btn ghost" id="closeSaved">סגור</button></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="places.js"></script>
+  <script src="ideas.js"></script>
+  <script type="module" src="app.js"></script>
+  <script type="module" src="fx.js"></script>
+  <script type="module" src="games.js"></script>
+  <script type="module" src="extras.js"></script>
+</body>
+</html>
