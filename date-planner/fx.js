@@ -67,43 +67,134 @@ function setRootVars(vars) {
   if (vars) Object.entries(vars).forEach(([k, v]) => r.setProperty(k, v));
 }
 
-/* ---------- צלילים (מסונתזים בדפדפן, בלי קבצים) ---------- */
+/* ---------- צלילים: מנוע מוזיקלי עם הדהוד, וכמה סגנונות לבחירה ---------- */
+const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+const SOUND_PACKS = {
+  piano: { e: "🎹", n: "פסנתר רך" },
+  musicbox: { e: "🎶", n: "קופסת נגינה" },
+  harp: { e: "🪕", n: "נבל קסום" },
+  lofi: { e: "🌙", n: "לו-פיי חמים" },
+  strings: { e: "🎻", n: "כינורות" },
+  classic: { e: "🎮", n: "משחקי" },
+};
 const Sound = {
-  ctx: null,
+  ctx: null, out: null, wet: null, noiseBuf: null,
   on: (() => { try { return localStorage.getItem("dt_sound") !== "0"; } catch { return true; } })(),
+  pack: (() => { try { const p = localStorage.getItem("dt_sound_pack"); return SOUND_PACKS[p] ? p : "piano"; } catch { return "piano"; } })(),
   ac() {
-    if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; this.ctx = new C(); }
+    if (!this.ctx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return null;
+      const c = this.ctx = new C();
+      const comp = c.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.ratio.value = 4;
+      comp.connect(c.destination);
+      this.out = c.createGain(); this.out.gain.value = 0.9; this.out.connect(comp);
+      // הדהוד: תגובת אולם שנוצרת מרעש דועך
+      const len = c.sampleRate * 2.8, ir = c.createBuffer(2, len, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.4); }
+      const rev = c.createConvolver(); rev.buffer = ir;
+      this.wet = c.createGain(); this.wet.gain.value = 1;
+      this.wet.connect(rev); rev.connect(comp);
+      const nb = c.createBuffer(1, c.sampleRate, c.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      this.noiseBuf = nb;
+    }
     if (this.ctx.state === "suspended") this.ctx.resume();
     return this.ctx;
   },
-  tone(freq, start, dur, type = "sine", vol = 0.12, slideTo = null) {
-    const c = this.ac(); if (!c) return;
-    const t = c.currentTime + start;
-    const o = c.createOscillator(), g = c.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t);
-    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(c.destination);
-    o.start(t); o.stop(t + dur + 0.02);
+  // צליל אחד עם הרמוניות, מעטפת, מסנן ושליחה להדהוד
+  voice(n, at, o = {}) {
+    const c = this.ctx, t = c.currentTime + at;
+    const { dur = 1.2, vol = 0.08, attack = 0.005, partials = [[1, 1]], type = "sine", lp = 4000, wet = 0.25, vib = 0, detune = 0 } = o;
+    const env = c.createGain(), filt = c.createBiquadFilter();
+    filt.type = "lowpass"; filt.frequency.value = lp; filt.Q.value = 0.5;
+    filt.connect(env); env.connect(this.out);
+    const send = c.createGain(); send.gain.value = wet; env.connect(send); send.connect(this.wet);
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(vol, t + attack);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let lfo = null;
+    if (vib) { lfo = c.createOscillator(); lfo.frequency.value = 5.2; const lg = c.createGain(); lg.gain.value = vib; lfo.connect(lg); lfo.start(t); lfo.stop(t + dur + 0.05); lfo.gain = lg; }
+    for (const [ratio, amp] of partials) {
+      const osc = c.createOscillator(), g = c.createGain();
+      osc.type = type; osc.frequency.value = midi(n) * ratio; osc.detune.value = detune;
+      if (lfo) lfo.gain.connect(osc.detune);
+      g.gain.value = amp;
+      osc.connect(g); g.connect(filt);
+      osc.start(t); osc.stop(t + dur + 0.05);
+    }
+  },
+  // משב רוח רך (רעש מסונן שזז)
+  air(at, dur, f1, f2, vol = 0.04, wet = 0.3) {
+    const c = this.ctx, t = c.currentTime + at;
+    const src = c.createBufferSource(); src.buffer = this.noiseBuf; src.loop = true;
+    const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(f1, t); bp.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(bp); bp.connect(g); g.connect(this.out);
+    const s = c.createGain(); s.gain.value = wet; g.connect(s); s.connect(this.wet);
+    src.start(t); src.stop(t + dur + 0.05);
+  },
+  inst(pack) {
+    const V = (o) => (n, at = 0, vol, dur) => this.voice(n, at, Object.assign({}, o, vol != null ? { vol } : {}, dur != null ? { dur } : {}));
+    switch (pack) {
+      case "piano": return V({ dur: 1.5, vol: 0.07, attack: 0.004, partials: [[1, 1], [2, 0.32], [3, 0.12], [4, 0.05]], lp: 3600, wet: 0.28 });
+      case "musicbox": return V({ dur: 1.9, vol: 0.06, attack: 0.002, partials: [[1, 1], [2.76, 0.28], [5.4, 0.1], [8.93, 0.04]], lp: 9000, wet: 0.4 });
+      case "harp": return V({ dur: 2.3, vol: 0.07, attack: 0.003, partials: [[1, 1], [2, 0.45], [3, 0.2], [4, 0.08], [6, 0.03]], lp: 2800, wet: 0.5 });
+      case "lofi": return V({ dur: 1.6, vol: 0.075, attack: 0.012, partials: [[1, 1], [2, 0.16], [3, 0.05]], lp: 1300, wet: 0.22, vib: 7, detune: -8 });
+      case "strings": return V({ dur: 2.2, vol: 0.05, attack: 0.22, type: "sawtooth", partials: [[1, 1], [1.003, 0.7]], lp: 1700, wet: 0.55, vib: 9 });
+      default: return null;
+    }
   },
   play(name) {
     if (!this.on) return;
     try {
-      const T = (...a) => this.tone(...a);
+      if (!this.ac()) return;
+      if (this.pack === "classic") return this.classic(name);
+      const I = this.inst(this.pack);
+      const P = this.pack;
+      // צלילים קצרים עדינים (גם בכינורות – פיציקטו)
+      const pluck = P === "strings" ? this.inst("harp") : I;
+      const up = P === "musicbox" ? 12 : 0;
+      const chord = P === "lofi" ? [57, 60, 64, 67, 71] : [60, 64, 67, 71, 74];
       switch (name) {
-        case "pop": T(520, 0, 0.09, "sine", 0.1, 900); break;
-        case "tick": T(1400, 0, 0.025, "square", 0.025); break;
-        case "flip": T(260, 0, 0.12, "triangle", 0.08, 760); break;
-        case "like": T(660, 0, 0.12, "sine", 0.12); T(990, 0.09, 0.18, "sine", 0.12); break;
-        case "nope": T(320, 0, 0.18, "sawtooth", 0.05, 120); break;
-        case "chime": [1047, 1319, 1568, 2093].forEach((f, i) => T(f, i * 0.08, 0.45, "triangle", 0.08)); break;
-        case "fanfare": [523, 659, 784, 1047].forEach((f, i) => T(f, i * 0.11, i === 3 ? 0.7 : 0.2, "triangle", 0.12)); T(1568, 0.44, 0.7, "sine", 0.05); break;
-        case "sparkle": for (let i = 0; i < 6; i++) T(1500 + Math.random() * 1500, i * 0.05, 0.15, "sine", 0.05); break;
-        case "whoosh": T(900, 0, 0.25, "sine", 0.05, 180); break;
+        case "pop": pluck(79 + up, 0, 0.025, 0.6); break;
+        case "tick": pluck(91 + up, 0, 0.008, 0.15); break;
+        case "flip": pluck(76 + up, 0, 0.035, 0.7); pluck(83 + up, 0.06, 0.03, 0.8); break;
+        case "like": pluck(72 + up, 0, 0.05); pluck(76 + up, 0.08, 0.05); pluck(79 + up, 0.16, 0.05, 1.8); break;
+        case "nope": pluck(67 + up, 0, 0.035, 0.7); pluck(62 + up, 0.09, 0.03, 0.9); break;
+        case "whoosh": this.air(0, 0.6, 300, 2600, 0.035); pluck(84 + up, 0.25, 0.02, 1); break;
+        case "chime": [0, 4, 7, 11, 12].forEach((s, i) => I(72 + s + up, i * 0.075, 0.05, 2)); break;
+        case "sparkle": [84, 86, 88, 91, 93, 96].forEach((n, i) => pluck(n + up, i * 0.05, 0.022, 1)); break;
+        case "fanfare":
+          chord.forEach((n, i) => I(n + up, i * 0.035, 0.04, 2.8));
+          [76, 79, 84, 88].forEach((n, i) => I(n + up, 0.3 + i * 0.13, 0.05, i === 3 ? 2.4 : 1.2));
+          break;
       }
     } catch { /* ignore */ }
+  },
+  // הצלילים המקוריים ("משחקי")
+  classic(name) {
+    const c = this.ctx;
+    const T = (freq, start, dur, type = "sine", vol = 0.12, slideTo = null) => {
+      const t = c.currentTime + start, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(this.out); o.start(t); o.stop(t + dur + 0.02);
+    };
+    switch (name) {
+      case "pop": T(520, 0, 0.09, "sine", 0.1, 900); break;
+      case "tick": T(1400, 0, 0.025, "square", 0.025); break;
+      case "flip": T(260, 0, 0.12, "triangle", 0.08, 760); break;
+      case "like": T(660, 0, 0.12); T(990, 0.09, 0.18); break;
+      case "nope": T(320, 0, 0.18, "sawtooth", 0.05, 120); break;
+      case "chime": [1047, 1319, 1568, 2093].forEach((f, i) => T(f, i * 0.08, 0.45, "triangle", 0.08)); break;
+      case "fanfare": [523, 659, 784, 1047].forEach((f, i) => T(f, i * 0.11, i === 3 ? 0.7 : 0.2, "triangle", 0.12)); break;
+      case "sparkle": for (let i = 0; i < 6; i++) T(1500 + Math.random() * 1500, i * 0.05, 0.15, "sine", 0.05); break;
+      case "whoosh": T(900, 0, 0.25, "sine", 0.05, 180); break;
+    }
   },
 };
 function sound(name) { Sound.play(name); }
@@ -113,9 +204,25 @@ soundBtn?.addEventListener("click", () => {
   Sound.on = !Sound.on;
   try { localStorage.setItem("dt_sound", Sound.on ? "1" : "0"); } catch { /* ignore */ }
   paintSoundBtn();
-  sound("pop");
+  sound("chime");
 });
 paintSoundBtn();
+
+// בורר סגנון הצלילים
+const packBox = document.getElementById("soundPacks");
+if (packBox) {
+  packBox.innerHTML = Object.entries(SOUND_PACKS).map(([k, p]) => `<button data-pack="${k}" class="${k === Sound.pack ? "on" : ""}">${p.e} ${p.n}</button>`).join("");
+  packBox.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-pack]");
+    if (!b) return;
+    Sound.pack = b.dataset.pack;
+    try { localStorage.setItem("dt_sound_pack", Sound.pack); } catch { /* ignore */ }
+    packBox.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    if (!Sound.on) { Sound.on = true; try { localStorage.setItem("dt_sound", "1"); } catch { /* ignore */ } paintSoundBtn(); }
+    sound("chime");
+    setTimeout(() => sound("like"), 900);
+  });
+}
 let currentTheme = THEMES[store.get("dt_theme", "sunset")] ? store.get("dt_theme", "sunset") : "sunset";
 
 function applyTheme(key, animate = true) {
@@ -254,6 +361,8 @@ function moveInk() {
   const ink = nav && nav.querySelector(".tab-ink");
   const on = nav && nav.querySelector(".tab.on");
   if (!ink || !on) return;
+  const nr = nav.getBoundingClientRect(), or = on.getBoundingClientRect();
+  if (or.left < nr.left + 4 || or.right > nr.right - 4) on.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   ink.style.width = on.offsetWidth + "px";
   ink.style.transform = `translateX(${on.offsetLeft - nav.scrollLeft}px)`;
 }
@@ -482,4 +591,4 @@ async function initHero3D() {
 initHero3D();
 
 applyTheme(currentTheme, false);
-window.FX = { burst, pop, buzz, applyTheme, THEMES, sound };
+window.FX = { burst, pop, buzz, applyTheme, THEMES, sound, Sound, SOUND_PACKS };

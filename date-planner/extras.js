@@ -231,10 +231,6 @@ function initCountdown() {
 /* ===================================================================
  * 3. כרטיס הזמנה מעוצב (Canvas)
  * =================================================================== */
-const INV_STYLES = [
-  { id: "romantic", n: "💗 רומנטי" }, { id: "gold", n: "✨ זהב יוקרתי" }, { id: "neon", n: "🌃 ניאון" },
-  { id: "minimal", n: "🤍 מינימליסטי" }, { id: "vintage", n: "💌 גלויה וינטג'" }, { id: "photo", n: "📸 התמונה שלנו" },
-];
 const MSGS = [
   "יש לי תוכנית מיוחדת בשבילך, ואני לא יכול לחכות לראות אותך 💫",
   "פנה את הערב – אני דואג להכל. את רק צריכה להגיע יפה כמו תמיד 😍",
@@ -315,6 +311,264 @@ function inviteData() {
   };
 }
 
+// מחולל מספרים קבוע (כדי שהתמונה הממוזערת והכרטיס המלא ייראו אותו דבר)
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function lin(ctx, x0, y0, x1, y1, stops) {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  stops.forEach(([o, c]) => g.addColorStop(o, c));
+  return g;
+}
+function rad(ctx, x, y, r0, r1, stops) {
+  const g = ctx.createRadialGradient(x, y, r0, x, y, r1);
+  stops.forEach(([o, c]) => g.addColorStop(o, c));
+  return g;
+}
+function petal(ctx, x, y, w, h, rot, c1, c2) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.fillStyle = lin(ctx, -w, -h, w, h, [[0, c1], [1, c2]]);
+  ctx.beginPath(); ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.ellipse(-w * .25, -h * .3, w * .35, h * .25, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function flower(ctx, x, y, r, col, center = "#ffd36b") {
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    ctx.save(); ctx.translate(x + Math.cos(a) * r * .55, y + Math.sin(a) * r * .55); ctx.rotate(a);
+    ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, r * .6, r * .42, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = center; ctx.beginPath(); ctx.arc(x, y, r * .28, 0, 7); ctx.fill();
+}
+function leaf(ctx, x, y, l, rot, col = "#7fb48a") {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(l / 2, 0, l / 2, l / 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(l, 0); ctx.stroke();
+  ctx.restore();
+}
+
+// כל סגנון: רקע, מיקום התחלה, צבע מסגרת לתמונה, לב עליון, צבעי טקסט ותיבת פרטים
+const STYLES = {
+  romantic: { n: "רומנטי", y: 130, ring: "#fff", heart: "#fff", box: "rgba(255,255,255,.2)",
+    P: { c: "#fff", c2: "rgba(255,255,255,.92)", font: "Secular One" },
+    bg(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, W, H, [[0, "#ff4f7b"], [.55, "#ff8a6b"], [1, "#ffb36b"]]); ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 26; i++) { ctx.globalAlpha = .12 + ((i * 37) % 10) / 50; ctx.fillStyle = "#fff"; heartPath(ctx, (i * 211) % W, (i * 347) % H, 30 + (i * 53) % 80); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } },
+  roses: { n: "עלי ורדים", y: 140, ring: "#ffd1dc", heart: "#ffb3c6", box: "rgba(255,200,215,.12)",
+    P: { c: "#ffe9ee", c2: "#ffd1dc", font: "Secular One", grad: ["#ffc2d1", "#ffffff", "#ff9fb7"] },
+    bg(ctx) {
+      ctx.fillStyle = rad(ctx, W / 2, H * .45, 100, 900, [[0, "#6e0f2a"], [1, "#22030c"]]); ctx.fillRect(0, 0, W, H);
+      const r = rng(7);
+      for (let i = 0; i < 70; i++) {
+        let x = r() * W, y = r() * H;
+        if (x > 200 && x < W - 200 && y > 300 && y < H - 260) { if (r() < .8) continue; ctx.globalAlpha = .35; } else ctx.globalAlpha = .9;
+        petal(ctx, x, y, 22 + r() * 26, 14 + r() * 16, r() * 6.3, "#ff3b6b", "#8a0026");
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = rad(ctx, W / 2, H / 2, 300, 900, [[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,.45)"]]); ctx.fillRect(0, 0, W, H);
+    } },
+  sunset: { n: "שקיעה על הים", y: 110, ring: "#fff1c1", heart: null, box: "rgba(20,8,40,.35)",
+    P: { c: "#fff", c2: "#ffe6f0", font: "Secular One", glow: "rgba(255,120,150,.6)" },
+    bg(ctx) {
+      const hz = H * .6;
+      ctx.fillStyle = lin(ctx, 0, 0, 0, hz, [[0, "#2b1055"], [.45, "#7a2a7e"], [.8, "#e0577a"], [1, "#ffb36b"]]); ctx.fillRect(0, 0, W, hz);
+      ctx.fillStyle = rad(ctx, W / 2, hz, 40, 420, [[0, "rgba(255,230,170,.9)"], [1, "rgba(255,180,120,0)"]]); ctx.fillRect(0, 0, W, hz);
+      ctx.fillStyle = lin(ctx, 0, hz - 170, 0, hz + 170, [[0, "#fff4cf"], [1, "#ff9a5c"]]);
+      ctx.beginPath(); ctx.arc(W / 2, hz, 170, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = lin(ctx, 0, hz, 0, H, [[0, "#4a1f6a"], [1, "#12061f"]]); ctx.fillRect(0, hz, W, H - hz);
+      const r = rng(3);
+      for (let i = 0; i < 60; i++) {
+        const y = hz + 10 + Math.pow(r(), 1.6) * (H - hz), w = (1 - (y - hz) / (H - hz)) * 260 * r() + 20;
+        ctx.fillStyle = `rgba(255,${190 + r() * 50 | 0},140,${.15 + r() * .35})`; ctx.fillRect(W / 2 - w / 2 + (r() - .5) * 120, y, w, 3);
+      }
+      ctx.strokeStyle = "rgba(30,10,40,.6)"; ctx.lineWidth = 4;
+      [[300, 300], [360, 330], [760, 260]].forEach(([x, y]) => { ctx.beginPath(); ctx.moveTo(x - 18, y - 8); ctx.quadraticCurveTo(x - 8, y - 14, x, y); ctx.quadraticCurveTo(x + 8, y - 14, x + 18, y - 8); ctx.stroke(); });
+    } },
+  stars: { n: "לילה מכוכב", y: 430, yImg: 140, ring: "#dfe6ff", heart: null, box: "rgba(160,180,255,.1)",
+    P: { c: "#eef2ff", c2: "#c9d3f5", font: "Secular One", grad: ["#c9d6ff", "#ffffff", "#ffd6f0"], glow: "rgba(170,190,255,.5)" },
+    bg(ctx, img) {
+      ctx.fillStyle = lin(ctx, 0, 0, W, H, [[0, "#050a24"], [.6, "#14103a"], [1, "#2a1145"]]); ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-.5);
+      ctx.fillStyle = rad(ctx, 0, 0, 10, 520, [[0, "rgba(180,160,255,.18)"], [1, "rgba(0,0,0,0)"]]); ctx.scale(2.2, .5); ctx.beginPath(); ctx.arc(0, 0, 520, 0, 7); ctx.fill();
+      ctx.restore();
+      const r = rng(11);
+      for (let i = 0; i < 320; i++) { const s = r() * 2.4 + .4; ctx.fillStyle = `rgba(255,255,255,${.3 + r() * .7})`; ctx.beginPath(); ctx.arc(r() * W, r() * H, s, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "#fff6d5"; ctx.shadowColor = "#fff6d5"; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(170, 170, 70, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = "#08102c"; ctx.beginPath(); ctx.arc(200, 150, 64, 0, 7); ctx.fill();
+      // קבוצת כוכבים בצורת לב
+      const cx = img ? W - 200 : W / 2, cy = img ? 180 : 230, sc = img ? 6 : 11;
+      const pts = [];
+      for (let k = 0; k < 16; k++) { const t = (k / 16) * Math.PI * 2; pts.push([cx + 16 * Math.pow(Math.sin(t), 3) * sc, cy - (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * sc]); }
+      ctx.strokeStyle = "rgba(200,215,255,.5)"; ctx.lineWidth = 2; ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.stroke();
+      pts.forEach(([x, y]) => { ctx.fillStyle = "#fff"; ctx.shadowColor = "#bcd0ff"; ctx.shadowBlur = 16; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); });
+      ctx.shadowBlur = 0;
+    } },
+  watercolor: { n: "צבעי מים", y: 150, ring: "#fff", heart: null, box: "rgba(184,58,107,.07)",
+    P: { c: "#4a2a3a", c2: "#6a4a5a", font: "Secular One", grad: ["#c2185b", "#e0577a", "#a04ec2"] },
+    bg(ctx) {
+      ctx.fillStyle = "#fffaf5"; ctx.fillRect(0, 0, W, H);
+      const r = rng(5), cols = ["255,150,180", "255,190,150", "200,170,255", "150,220,200", "255,170,200"];
+      ctx.globalCompositeOperation = "multiply";
+      for (let i = 0; i < 22; i++) {
+        const edge = i % 4, x = edge === 0 ? r() * 260 : edge === 1 ? W - r() * 260 : r() * W, y = edge === 2 ? r() * 260 : edge === 3 ? H - r() * 260 : r() * H;
+        const rr = 120 + r() * 220, c = cols[i % cols.length];
+        ctx.fillStyle = rad(ctx, x, y, 0, rr, [[0, `rgba(${c},.5)`], [.7, `rgba(${c},.18)`], [1, `rgba(${c},0)`]]);
+        ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+      ctx.lineWidth = 4;
+      [[170, 1120, 70, "#e0577a"], [930, 230, 60, "#a04ec2"], [880, 1150, 46, "#e0577a"]].forEach(([x, y, s, c]) => {
+        ctx.strokeStyle = c; heartPath(ctx, x, y, s); ctx.stroke(); ctx.globalAlpha = .5; heartPath(ctx, x + 4, y + 3, s); ctx.stroke(); ctx.globalAlpha = 1;
+      });
+    } },
+  bokeh: { n: "אורות חמים", y: 230, ring: "#ffd27a", heart: "#ffd27a", box: "rgba(255,210,122,.1)",
+    P: { c: "#fff5e6", c2: "#ffe2bf", font: "Secular One", grad: ["#ffd27a", "#fff5e6", "#ffb36b"], glow: "rgba(255,200,120,.45)" },
+    bg(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, W, H, [[0, "#1c0b14"], [1, "#3a1a0e"]]); ctx.fillRect(0, 0, W, H);
+      const r = rng(9), cols = ["255,200,110", "255,140,160", "255,170,90", "255,230,170"];
+      for (let i = 0; i < 46; i++) {
+        const x = r() * W, y = r() * H, rr = 20 + r() * 110, c = cols[i % cols.length], a = .12 + r() * .35;
+        ctx.fillStyle = rad(ctx, x, y, rr * .6, rr, [[0, `rgba(${c},${a})`], [1, `rgba(${c},0)`]]); ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); ctx.fill();
+      }
+      // שרשרת נורות
+      [[70, 90], [H - 60, -70]].forEach(([base, sag]) => {
+        ctx.strokeStyle = "rgba(40,25,15,.9)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-20, base); ctx.quadraticCurveTo(W / 2, base + sag * 2, W + 20, base); ctx.stroke();
+        for (let i = 0; i <= 16; i++) {
+          const t = i / 16, x = -20 + (W + 40) * t, y = (1 - t) * (1 - t) * base + 2 * (1 - t) * t * (base + sag * 2) + t * t * base;
+          const c = ["#ffd27a", "#ff9fb1", "#fff1c1"][i % 3];
+          ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 24; ctx.beginPath(); ctx.ellipse(x, y + 14, 9, 13, 0, 0, 7); ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      });
+    } },
+  floral: { n: "זר פרחים", y: 210, ring: "#fff", heart: "#e0577a", box: "rgba(176,48,96,.07)",
+    P: { c: "#5a2a3a", c2: "#7a4a5a", font: "Secular One", grad: ["#b03060", "#e0577a", "#b03060"] },
+    bg(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, 0, H, [[0, "#fdeef1"], [1, "#fbe1e7"]]); ctx.fillRect(0, 0, W, H);
+      const r = rng(13), cols = ["#f7a1b8", "#ffc6a8", "#ffffff", "#e889a8", "#fbd3e0"];
+      const cluster = (cx, cy, n) => {
+        for (let i = 0; i < n; i++) leaf(ctx, cx + (r() - .5) * 200, cy + (r() - .5) * 160, 60 + r() * 50, r() * 6.3, r() < .5 ? "#86b893" : "#a7cfa9");
+        for (let i = 0; i < n; i++) flower(ctx, cx + (r() - .5) * 180, cy + (r() - .5) * 140, 26 + r() * 26, cols[(r() * cols.length) | 0]);
+      };
+      cluster(90, 90, 9); cluster(W - 90, 90, 9); cluster(90, H - 90, 9); cluster(W - 90, H - 90, 9);
+      for (let i = 0; i < 7; i++) { flower(ctx, 220 + i * 107, 40 + r() * 30, 16 + r() * 8, cols[i % cols.length]); flower(ctx, 220 + i * 107, H - 40 - r() * 30, 16 + r() * 8, cols[(i + 2) % cols.length]); }
+      ctx.strokeStyle = "rgba(176,48,96,.25)"; ctx.lineWidth = 2; ctx.strokeRect(70, 70, W - 140, H - 140);
+    } },
+  letter: { n: "מכתב אהבה", y: 300, ring: "#fff", heart: null, box: "rgba(138,21,48,.06)",
+    P: { c: "#3a2030", c2: "#5a3a48", font: "Secular One", grad: ["#8a1530", "#c0284f", "#8a1530"] },
+    bg(ctx) {
+      ctx.fillStyle = lin(ctx, 0, 0, W, H, [[0, "#f6d5d5"], [1, "#eeb0bd"]]); ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 2;
+      for (let i = -H; i < W; i += 22) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H, H); ctx.stroke(); }
+      ctx.save(); ctx.shadowColor = "rgba(90,20,40,.35)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+      ctx.fillStyle = "#fffaf1"; ctx.fillRect(80, 90, W - 160, H - 170); ctx.restore();
+      ctx.strokeStyle = "rgba(120,150,200,.22)"; ctx.lineWidth = 2;
+      for (let y = 260; y < H - 120; y += 56) { ctx.beginPath(); ctx.moveTo(130, y); ctx.lineTo(W - 130, y); ctx.stroke(); }
+      ctx.strokeStyle = "rgba(220,90,110,.3)"; ctx.beginPath(); ctx.moveTo(W - 170, 90); ctx.lineTo(W - 170, H - 80); ctx.stroke();
+      // חותם שעווה
+      const sx = W / 2, sy = 160, r = rng(4);
+      ctx.fillStyle = "#a3102c"; ctx.beginPath();
+      for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI * 2, rr = 78 + (r() - .5) * 12; ctx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = rad(ctx, sx - 20, sy - 20, 5, 80, [[0, "#d63a55"], [1, "#8a0c24"]]); ctx.beginPath(); ctx.arc(sx, sy, 60, 0, 7); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.28)"; heartPath(ctx, sx, sy - 28, 56); ctx.fill();
+      ctx.strokeStyle = "rgba(60,0,10,.35)"; ctx.lineWidth = 3; heartPath(ctx, sx, sy - 28, 56); ctx.stroke();
+    } },
+  gold: { n: "זהב יוקרתי", y: 130, ring: "#d4a24c", heart: "#d4a24c", box: "rgba(212,162,76,.12)",
+    P: { c: "#f7e3a1", c2: "#e9dcc0", font: "Secular One", grad: ["#b8862c", "#f7e3a1", "#d4a24c"] },
+    bg(ctx) {
+      ctx.fillStyle = "#0b0906"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = rad(ctx, W / 2, H / 2, 100, 800, [[0, "rgba(212,162,76,.18)"], [1, "rgba(0,0,0,0)"]]); ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#d4a24c"; ctx.lineWidth = 6; ctx.strokeRect(50, 50, W - 100, H - 100);
+      ctx.lineWidth = 2; ctx.strokeRect(74, 74, W - 148, H - 148);
+      [[74, 74], [W - 74, 74], [74, H - 74], [W - 74, H - 74]].forEach(([x, y]) => { ctx.fillStyle = "#f7e3a1"; ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill(); });
+    } },
+  neon: { n: "ניאון", y: 440, ring: null, heart: null, box: "rgba(0,229,255,.1)",
+    P: { c: "#e9fdff", c2: "#cfe9f7", font: "Secular One", glow: "#00e5ff" },
+    bg(ctx) {
+      ctx.fillStyle = "#06040f"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(124,77,255,.18)"; ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      ctx.shadowColor = "#ff3df2"; ctx.shadowBlur = 40; ctx.strokeStyle = "#ff3df2"; ctx.lineWidth = 10;
+      heartPath(ctx, W / 2, 130, 260); ctx.stroke(); ctx.stroke(); ctx.shadowBlur = 0;
+    } },
+  minimal: { n: "מינימליסטי", y: 290, ring: "#2b2b2b", heart: null, box: "rgba(0,0,0,.04)", title: 84,
+    P: { c: "#1f1f1f", c2: "#444", font: "Heebo" },
+    bg(ctx) {
+      ctx.fillStyle = "#fbf6ef"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 2; ctx.strokeRect(90, 90, W - 180, H - 180);
+      ctx.fillStyle = "#e0284f"; heartPath(ctx, W / 2, 200, 70); ctx.fill();
+    } },
+  vintage: { n: "גלויה וינטג'", y: 300, ring: "#fff", heart: null, box: "rgba(181,82,58,.1)", brand: 105,
+    P: { c: "#5a2a1a", c2: "#6a4a3a", font: "Secular One" },
+    bg(ctx) {
+      ctx.fillStyle = "#efe0c2"; ctx.fillRect(0, 0, W, H);
+      const r = rng(2);
+      for (let i = 0; i < 1800; i++) { ctx.fillStyle = `rgba(120,80,40,${r() * .06})`; ctx.fillRect(r() * W, r() * H, 2, 2); }
+      ctx.strokeStyle = "#b5523a"; ctx.lineWidth = 14; ctx.setLineDash([40, 22]); ctx.strokeRect(40, 40, W - 80, H - 80); ctx.setLineDash([]);
+      ctx.fillStyle = "#fff"; ctx.fillRect(W - 300, 110, 180, 220);
+      ctx.fillStyle = "#e0284f"; ctx.fillRect(W - 285, 125, 150, 190);
+      ctx.fillStyle = "#fff"; heartPath(ctx, W - 210, 165, 100); ctx.fill();
+      ctx.strokeStyle = "rgba(60,40,30,.5)"; ctx.lineWidth = 4;
+      for (let rr = 50; rr <= 90; rr += 20) { ctx.beginPath(); ctx.arc(W - 360, 260, rr, 0, 7); ctx.stroke(); }
+    } },
+  photo: { n: "התמונה שלנו", y: H - 640, ring: null, heart: null, box: "rgba(255,255,255,.15)", fullPhoto: true,
+    P: { c: "#fff", c2: "rgba(255,255,255,.92)", font: "Secular One" },
+    bg(ctx, img) {
+      if (img) drawCover(ctx, img, 0, 0, W, H);
+      else { ctx.fillStyle = lin(ctx, 0, 0, W, H, [[0, "#3a1840"], [1, "#ff4f7b"]]); ctx.fillRect(0, 0, W, H); }
+      ctx.fillStyle = lin(ctx, 0, H * .25, 0, H, [[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,.85)"]]); ctx.fillRect(0, 0, W, H);
+    } },
+};
+const INV_STYLES = Object.entries(STYLES).map(([id, s]) => ({ id, n: s.n }));
+
+// ציור כרטיס שלם על ctx בגודל 1080x1350
+function paintInvite(ctx, S, d, img) {
+  const st = STYLES[S] || STYLES.romantic;
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  st.bg(ctx, img);
+  let y = img && st.ring && st.yImg != null ? st.yImg : st.y;
+  if (img && st.ring) {
+    const r = 130, cx = W / 2, cy = y + r;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 10, 0, 7); ctx.fillStyle = st.ring; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+    drawCover(ctx, img, cx - r, cy - r, r * 2, r * 2);
+    ctx.restore();
+    y = cy + r + 40;
+  } else if (st.heart) {
+    ctx.fillStyle = st.heart;
+    heartPath(ctx, W / 2, y + 30, 160); ctx.fill();
+    y += 240;
+  }
+  const P = st.P;
+  if (d.to) y = text(ctx, `${d.to},`, y, { size: 52, weight: 500, color: P.c2, font: "Heebo" }) + 6;
+  y = text(ctx, d.title || "את מוזמנת לדייט", y, { size: st.title || 96, font: P.font, weight: 400, color: P.c, glow: P.glow, grad: P.grad, lh: 1.1 }) + 26;
+  if (d.msg) y = text(ctx, d.msg, y, { size: 40, weight: 400, color: P.c2, maxW: 820, lh: 1.4 }) + 30;
+  const details = [d.when && "📅 " + d.when, d.place && "📍 " + d.place].filter(Boolean);
+  if (details.length) {
+    const boxH = details.length * 66 + 34, bx = 150, bw = W - 300;
+    ctx.fillStyle = st.box;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y, bw, boxH, 30) : ctx.rect(bx, y, bw, boxH); ctx.fill();
+    let yy = y + 22;
+    details.forEach((t) => { text(ctx, t, yy, { size: 40, weight: 700, color: P.c, maxW: bw - 60 }); yy += 66; });
+    y += boxH + 30;
+  }
+  if (d.from) text(ctx, `באהבה, ${d.from} ❤️`, Math.min(Math.max(y, H - 200), H - 170), { size: 46, weight: 400, font: P.font, color: P.c, glow: P.glow });
+  ctx.globalAlpha = .5;
+  text(ctx, "💘 דייטון", H - (st.brand || 88), { size: 24, weight: 500, color: P.c2 });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 let drawPending = false;
 async function drawInvite() {
   if (drawPending) return;
@@ -324,112 +578,28 @@ async function drawInvite() {
   const cv = $("#invCanvas");
   if (!cv) return;
   try { await Promise.all([document.fonts.load('80px "Secular One"'), document.fonts.load('700 40px "Heebo"')]); } catch { /* offline */ }
-  const ctx = cv.getContext("2d");
-  const d = inviteData();
   const img = inv.usePhoto ? await loadPhotoImg() : null;
-  ctx.clearRect(0, 0, W, H);
-  ctx.save();
-  const S = inv.style;
+  paintInvite(cv.getContext("2d"), inv.style, inviteData(), img);
+  scheduleThumbs();
+}
 
-  // ---- רקעים ----
-  if (S === "romantic") {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "#ff4f7b"); g.addColorStop(0.55, "#ff8a6b"); g.addColorStop(1, "#ffb36b");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    for (let i = 0; i < 26; i++) {
-      ctx.globalAlpha = 0.12 + ((i * 37) % 10) / 50;
-      ctx.fillStyle = "#fff";
-      heartPath(ctx, (i * 211) % W, (i * 347) % H, 30 + (i * 53) % 80);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  } else if (S === "gold") {
-    ctx.fillStyle = "#0b0906"; ctx.fillRect(0, 0, W, H);
-    const rg = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, 800);
-    rg.addColorStop(0, "rgba(212,162,76,.18)"); rg.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#d4a24c"; ctx.lineWidth = 6; ctx.strokeRect(50, 50, W - 100, H - 100);
-    ctx.lineWidth = 2; ctx.strokeRect(74, 74, W - 148, H - 148);
-    [[74, 74], [W - 74, 74], [74, H - 74], [W - 74, H - 74]].forEach(([x, y]) => { ctx.fillStyle = "#f7e3a1"; ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill(); });
-  } else if (S === "neon") {
-    ctx.fillStyle = "#06040f"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "rgba(124,77,255,.18)"; ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-    for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-    ctx.shadowColor = "#ff3df2"; ctx.shadowBlur = 40; ctx.strokeStyle = "#ff3df2"; ctx.lineWidth = 10;
-    heartPath(ctx, W / 2, 130, 260); ctx.stroke(); ctx.stroke(); ctx.shadowBlur = 0;
-  } else if (S === "minimal") {
-    ctx.fillStyle = "#fbf6ef"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 2; ctx.strokeRect(90, 90, W - 180, H - 180);
-    ctx.fillStyle = "#e0284f"; heartPath(ctx, W / 2, 200, 70); ctx.fill();
-  } else if (S === "vintage") {
-    ctx.fillStyle = "#efe0c2"; ctx.fillRect(0, 0, W, H);
-    for (let i = 0; i < 1800; i++) { ctx.fillStyle = `rgba(120,80,40,${Math.random() * 0.06})`; ctx.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
-    ctx.strokeStyle = "#b5523a"; ctx.lineWidth = 14; ctx.setLineDash([40, 22]); ctx.strokeRect(40, 40, W - 80, H - 80); ctx.setLineDash([]);
-    // בול
-    ctx.fillStyle = "#fff"; ctx.fillRect(W - 300, 110, 180, 220);
-    ctx.fillStyle = "#e0284f"; ctx.fillRect(W - 285, 125, 150, 190);
-    ctx.fillStyle = "#fff"; heartPath(ctx, W - 210, 165, 100); ctx.fill();
-    ctx.strokeStyle = "rgba(60,40,30,.5)"; ctx.lineWidth = 4;
-    for (let r = 50; r <= 90; r += 20) { ctx.beginPath(); ctx.arc(W - 360, 260, r, 0, 7); ctx.stroke(); }
-  } else if (S === "photo") {
-    if (img) drawCover(ctx, img, 0, 0, W, H);
-    else { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#3a1840"); g.addColorStop(1, "#ff4f7b"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
-    const g2 = ctx.createLinearGradient(0, H * 0.25, 0, H);
-    g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.85)");
-    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+// גלריית סגנונות עם תמונות ממוזערות אמיתיות
+let thumbTimer = null, thumbKey = "";
+function scheduleThumbs() {
+  clearTimeout(thumbTimer);
+  thumbTimer = setTimeout(renderThumbs, 350);
+}
+async function renderThumbs() {
+  const img = inv.usePhoto ? await loadPhotoImg() : null;
+  const d = inviteData();
+  const key = JSON.stringify([d, !!img, img && img.src.length]);
+  if (key === thumbKey) return;
+  thumbKey = key;
+  for (const c of $$("#invStyles canvas")) {
+    const ctx = c.getContext("2d");
+    ctx.setTransform(c.width / W, 0, 0, c.height / H, 0, 0);
+    paintInvite(ctx, c.dataset.s, d, img);
   }
-
-  // ---- תמונה עגולה בסגנונות שאינם "תמונה" ----
-  let y = S === "neon" ? 440 : S === "minimal" ? 290 : S === "vintage" ? 300 : 130;
-  if (img && S !== "photo" && S !== "neon") {
-    const r = 130, cx = W / 2, cy = y + r;
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 30;
-    ctx.beginPath(); ctx.arc(cx, cy, r + 10, 0, 7); ctx.fillStyle = S === "gold" ? "#d4a24c" : S === "minimal" ? "#2b2b2b" : "#fff"; ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
-    drawCover(ctx, img, cx - r, cy - r, r * 2, r * 2);
-    ctx.restore();
-    y = cy + r + 40;
-  } else if (S === "romantic" || S === "gold") {
-    ctx.fillStyle = S === "gold" ? "#d4a24c" : "#fff";
-    heartPath(ctx, W / 2, y + 30, 160); ctx.fill();
-    y += 240;
-  }
-  if (S === "photo") y = H - 640;
-
-  // ---- טקסטים ----
-  const P = {
-    romantic: { c: "#fff", c2: "rgba(255,255,255,.92)", font: "Secular One" },
-    gold: { c: "#f7e3a1", c2: "#e9dcc0", font: "Secular One", grad: ["#b8862c", "#f7e3a1", "#d4a24c"] },
-    neon: { c: "#e9fdff", c2: "#cfe9f7", font: "Secular One", glow: "#00e5ff" },
-    minimal: { c: "#1f1f1f", c2: "#444", font: "Heebo" },
-    vintage: { c: "#5a2a1a", c2: "#6a4a3a", font: "Secular One" },
-    photo: { c: "#fff", c2: "rgba(255,255,255,.92)", font: "Secular One" },
-  }[S];
-
-  if (d.to) y = text(ctx, `${d.to},`, y, { size: 52, weight: 500, color: P.c2, font: "Heebo" }) + 6;
-  y = text(ctx, d.title || "את מוזמנת לדייט", y, { size: S === "minimal" ? 84 : 96, font: P.font, weight: 400, color: P.c, glow: P.glow, grad: P.grad, lh: 1.1 }) + 26;
-  if (d.msg) y = text(ctx, d.msg, y, { size: 40, weight: 400, color: P.c2, maxW: 820, lh: 1.4 }) + 30;
-
-  // פס פרטים
-  const details = [d.when && "📅 " + d.when, d.place && "📍 " + d.place].filter(Boolean);
-  if (details.length) {
-    const boxH = details.length * 66 + 34;
-    ctx.fillStyle = { romantic: "rgba(255,255,255,.2)", gold: "rgba(212,162,76,.12)", neon: "rgba(0,229,255,.1)", minimal: "rgba(0,0,0,.04)", vintage: "rgba(181,82,58,.1)", photo: "rgba(255,255,255,.15)" }[S];
-    const bx = 150, bw = W - 300;
-    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y, bw, boxH, 30) : ctx.rect(bx, y, bw, boxH); ctx.fill();
-    let yy = y + 22;
-    details.forEach((t) => { text(ctx, t, yy, { size: 40, weight: 700, color: P.c, maxW: bw - 60 }); yy += 66; });
-    y += boxH + 30;
-  }
-  if (d.from) text(ctx, `באהבה, ${d.from} ❤️`, Math.min(Math.max(y, H - 200), H - 170), { size: 46, weight: 400, font: P.font, color: P.c, glow: P.glow });
-  // מיתוג קטן
-  ctx.globalAlpha = 0.5;
-  text(ctx, "💘 דייטון", H - (S === "vintage" ? 105 : 88), { size: 24, weight: 500, color: P.c2 });
-  ctx.globalAlpha = 1;
-  ctx.restore();
 }
 
 function invText() {
@@ -460,17 +630,19 @@ function downloadBlob(blob, name) {
 }
 
 function initInvite() {
-  $("#invStyles").innerHTML = INV_STYLES.map((s) => `<button data-v="${s.id}" class="${s.id === inv.style ? "on" : ""}">${s.n}</button>`).join("");
+  if (!STYLES[inv.style]) inv.style = "romantic";
+  $("#invStyles").innerHTML = INV_STYLES.map((s) => `<button data-v="${s.id}" class="inv-style ${s.id === inv.style ? "on" : ""}" title="${esc(s.n)}"><canvas data-s="${s.id}" width="216" height="270"></canvas><span>${esc(s.n)}</span></button>`).join("");
   $("#invMsgs").innerHTML = MSGS.map((m, i) => `<option value="${i}">${esc(m)}</option>`).join("");
   $("#invTitle").value = inv.title;
   $("#invMsg").value = inv.msg;
   $("#invUsePhoto").checked = inv.usePhoto;
   const save = () => { LS.set("dt_invite", inv); drawInvite(); };
   $("#invStyles").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
+    const b = e.target.closest("button.inv-style");
     if (!b) return;
     inv.style = b.dataset.v;
     $$("#invStyles button").forEach((x) => x.classList.toggle("on", x === b));
+    b.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     $("#invCanvas").classList.remove("swap"); void $("#invCanvas").offsetWidth; $("#invCanvas").classList.add("swap");
     FX().sound("flip"); save();
   });
