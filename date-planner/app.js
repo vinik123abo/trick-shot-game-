@@ -261,7 +261,7 @@ function wireImages(root) {
 }
 
 /* ---------- תצוגה ---------- */
-function renderPlan(plan) {
+function renderPlan(plan, opts = {}) {
   const seed = Math.floor(Math.random() * 1e6);
   plan._seed = plan._seed || seed;
   const list = (arr) => (arr || []).map((x) => `<li>${esc(x)}</li>`).join("");
@@ -338,6 +338,7 @@ function renderPlan(plan) {
       <p class="mode-note">${plan._source === "claude" ? "🤖 נבנה על ידי Claude" : "⚡ נבנה במנוע הרעיונות המובנה"} · התמונות נוצרות ב-AI להמחשה בלבד. כדאי לבדוק שעות פתיחה ולהזמין מקום מראש.</p>
     </div>`;
   wireImages($("#result"));
+  if (!opts.silent) setTimeout(() => window.FX?.burst(innerWidth / 2, Math.min(innerHeight / 3, 260)), 120);
 }
 
 function shopListHtml(items, key) {
@@ -377,7 +378,7 @@ $("#result").addEventListener("click", async (e) => {
     build(lastInput || readForm(), { variation: true, exclude });
   } else if (act === "image") {
     currentPlan._seed = Math.floor(Math.random() * 1e6);
-    renderPlan(currentPlan);
+    renderPlan(currentPlan, { silent: true });
   } else if (act === "share") {
     window.open("https://wa.me/?text=" + encodeURIComponent(planToText(currentPlan)), "_blank", "noopener");
   } else if (act === "copy") {
@@ -475,7 +476,10 @@ $("#randomBtn").addEventListener("click", () => {
 function showTab(name) {
   $$(".tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === name));
   $$(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== name));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  // אם גללנו מתחת להירו – חוזרים לראש התוכן, לא לראש הדף
+  const hero = $(".hero3d");
+  const contentTop = hero ? hero.offsetTop + hero.offsetHeight : 0;
+  if (window.scrollY > contentTop) window.scrollTo({ top: contentTop, behavior: "smooth" });
 }
 $$(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
 
