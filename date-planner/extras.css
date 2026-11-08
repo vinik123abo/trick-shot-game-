@@ -195,3 +195,22 @@ input[type="range"] { padding: 0; accent-color: var(--accent); background: trans
 /* תאי גריד לא מתרחבים בגלל תוכן רחב (למשל סרגל הכפתורים) */
 .tab-panel { grid-template-columns: minmax(0, 1fr); }
 .tab-panel > *, .card, .result-actions { min-width: 0; }
+
+/* ---------- גלריית סגנונות להזמנה ---------- */
+.inv-styles { display: grid; grid-auto-flow: column; grid-auto-columns: 92px; gap: 10px; overflow-x: auto; padding: 6px 4px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.inv-style { scroll-snap-align: center; border: 2px solid transparent; background: var(--glass); border-radius: 14px; padding: 5px; display: grid; gap: 4px; color: var(--text); font-size: 11.5px; font-weight: 700;
+  transition: transform .25s cubic-bezier(.5, 1.8, .5, 1), border-color .2s, box-shadow .2s; }
+.inv-style canvas { width: 100%; aspect-ratio: 4 / 5; border-radius: 9px; display: block; background: var(--bg2); box-shadow: 0 6px 14px -6px var(--shadow); }
+.inv-style:hover { transform: translateY(-4px) rotate(-2deg); }
+.inv-style.on { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--glow-rgb), .2), 0 10px 24px -8px rgba(var(--glow-rgb), .6); transform: translateY(-3px); }
+@media (min-width: 1100px) { .inv-styles { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); overflow: visible; } }
+
+/* ---------- סגנונות צלילים ---------- */
+.sound-packs { margin-top: 12px; border-top: 1px solid var(--glass-line); padding-top: 10px; }
+.sound-packs h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
+.sound-packs .chips { gap: 6px; }
+.sound-packs .chips button { font-size: 13px; padding: 6px 10px; }
+
+.field > *, .inv-form, .inv-layout > * { min-width: 0; }
+.inv-styles { max-width: 100%; }
+select { max-width: 100%; width: 100%; text-overflow: ellipsis; }
