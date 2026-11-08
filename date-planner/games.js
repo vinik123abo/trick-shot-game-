@@ -104,15 +104,20 @@ function chase(t) {
 
 function loop(now) {
   if (!running) return;
-  const dt = Math.min(0.05, (now - (lastFrame || now)) / 1000);
+  // זמן אמיתי (עד רבע שנייה), בצעדים קטנים – כך הגלגל מדויק גם במכשיר איטי
+  let dt = Math.min(0.25, (now - (lastFrame || now)) / 1000);
   lastFrame = now;
   if (!dragging) {
-    // חיכוך: חזק יותר במהירות גבוהה, ועדין בסוף – כמו גלגל אמיתי
-    const decel = 55 + Math.abs(vel) * 0.42;
-    const nv = vel - Math.sign(vel) * decel * dt;
-    vel = Math.sign(nv) === Math.sign(vel) ? nv : 0;
-    setAngle(angle + vel * dt);
-    if (vel === 0) return finish();
+    while (dt > 0) {
+      const h = Math.min(dt, 1 / 120);
+      dt -= h;
+      // חיכוך: חזק יותר במהירות גבוהה, ועדין בסוף – כמו גלגל אמיתי
+      const decel = 55 + Math.abs(vel) * 0.42;
+      const nv = vel - Math.sign(vel) * decel * h;
+      vel = Math.sign(nv) === Math.sign(vel) ? nv : 0;
+      setAngle(angle + vel * h);
+      if (vel === 0) return finish();
+    }
   }
   chase(now);
   requestAnimationFrame(loop);
