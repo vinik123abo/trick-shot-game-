@@ -557,10 +557,12 @@ async function initHero3D() {
     const beat = 1 + Math.max(0, Math.sin(t * 3.2)) ** 8 * 0.08;
     heartGroup.scale.setScalar(beat);
     spinBoost *= 0.95;
-    heart.rotation.y += 0.006 + spinBoost * 0.1;
+    const SC = window.DateonScroll || { hero: 0, vel: 0 };
+    heart.rotation.y += 0.006 + spinBoost * 0.1 + Math.min(0.18, Math.abs(SC.vel) * 0.004);
+    world.scale.setScalar(1 - SC.hero * 0.3);
     heartGroup.rotation.x += (target.y * 0.35 - heartGroup.rotation.x) * 0.06;
     heartGroup.rotation.y += (target.x * 0.6 - heartGroup.rotation.y) * 0.06;
-    heartGroup.position.y = Math.sin(t * 1.2) * 0.12;
+    heartGroup.position.y = Math.sin(t * 1.2) * 0.12 + SC.hero * 1.4;
     for (const m of minis) {
       const u = m.userData;
       u.a += u.sp * 0.01;

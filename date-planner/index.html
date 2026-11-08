@@ -36,6 +36,7 @@
   <link rel="stylesheet" href="themes.css" />
   <link rel="stylesheet" href="games.css" />
   <link rel="stylesheet" href="extras.css" />
+  <link rel="stylesheet" href="scroll.css" />
   <script>try { var t = localStorage.getItem("dt_theme") || "sunset"; document.documentElement.dataset.theme = t; if (t === "custom") { var v = JSON.parse(localStorage.getItem("dt_custom_vars") || "{}"); for (var k in v) document.documentElement.style.setProperty(k, v[k]); } } catch (e) {}</script>
 </head>
 <body>
@@ -209,12 +210,22 @@
     <div class="tab-panel hidden" data-panel="surprise">
       <section class="card wheel-card">
         <h2>🎡 גלגל הדייטים</h2>
-        <p class="hint">לא מצליח להחליט? תסובב את הגלגל ותן לגורל לבחור בשבילך.</p>
-        <div class="wheel-wrap">
-          <div class="wheel-pointer" aria-hidden="true"></div>
-          <svg id="wheel" viewBox="-100 -100 200 200" role="img" aria-label="גלגל רעיונות לדייט"></svg>
-          <button id="spinBtn" class="wheel-center">סובב!</button>
+        <p class="hint">לא מצליחים להחליט? תנו לגורל לבחור את הדייט הבא שלכם 💫</p>
+        <div class="wheel-stage">
+          <div class="wheel-wrap" id="wheelWrap">
+            <svg id="wheel" viewBox="-120 -120 240 240" role="img" aria-label="גלגל רעיונות לדייט – אפשר לתפוס ולסובב"></svg>
+            <div class="wheel-flapper" id="wheelFlapper" aria-hidden="true">
+              <svg viewBox="0 0 40 64"><defs><linearGradient id="flG" x1="0" x2="1"><stop offset="0" stop-color="#7a5212"/><stop offset=".45" stop-color="#fff4c8"/><stop offset=".6" stop-color="#e6b84e"/><stop offset="1" stop-color="#7a5212"/></linearGradient>
+              <radialGradient id="flR" cx="35%" cy="30%"><stop offset="0" stop-color="#ffb3c6"/><stop offset=".5" stop-color="#e0284f"/><stop offset="1" stop-color="#6e0f2a"/></radialGradient></defs>
+              <path d="M20 62 C12 44 4 30 4 18 A16 16 0 0 1 36 18 C36 30 28 44 20 62Z" fill="url(#flG)" stroke="#5e3f0c" stroke-width="1.2"/>
+              <circle cx="20" cy="18" r="8.5" fill="url(#flR)" stroke="#5e3f0c" stroke-width="1"/><circle cx="17" cy="15" r="2.4" fill="#fff" opacity=".75"/></svg>
+            </div>
+            <button id="spinBtn" class="wheel-hub" aria-label="סובב את הגלגל"><span>💘</span><small>סובב</small></button>
+          </div>
+          <div class="wheel-spot" aria-hidden="true"></div>
+          <div class="wheel-stand" aria-hidden="true"></div>
         </div>
+        <p class="wheel-tip">💡 אפשר גם לתפוס את הגלגל ולזרוק אותו באצבע</p>
         <div id="wheelResult" class="wheel-result hidden"></div>
       </section>
 
@@ -393,5 +404,6 @@
   <script type="module" src="fx.js"></script>
   <script type="module" src="games.js"></script>
   <script type="module" src="extras.js"></script>
+  <script type="module" src="scrollfx.js"></script>
 </body>
 </html>

@@ -849,6 +849,17 @@ addEventListener("appinstalled", () => { $("#installBtn").classList.add("hidden"
 
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  // כשמגיעה גרסה חדשה – מציעים לרענן (אחרת המשתמש רואה את הישנה עד הביקור הבא)
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) { hadController = true; return; }
+    if (document.querySelector(".update-bar")) return;
+    const bar = document.createElement("div");
+    bar.className = "update-bar";
+    bar.innerHTML = `<span>✨ דייטון עודכן לגרסה חדשה</span><button class="btn small primary">רענן</button>`;
+    bar.querySelector("button").onclick = () => location.reload();
+    document.body.appendChild(bar);
+  });
 }
 
 /* ---------- הפעלה ---------- */

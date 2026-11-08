@@ -214,3 +214,7 @@ input[type="range"] { padding: 0; accent-color: var(--accent); background: trans
 .field > *, .inv-form, .inv-layout > * { min-width: 0; }
 .inv-styles { max-width: 100%; }
 select { max-width: 100%; width: 100%; text-overflow: ellipsis; }
+
+/* ---------- הודעת עדכון ---------- */
+.update-bar { position: fixed; z-index: 70; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px;
+  background: var(--dlg); border: 1px solid rgba(var(--glow-rgb), .5); box-shadow: 0 20px 40px -10px var(--shadow); backdrop-filter: blur(14px); font-weight: 700; animation: popIn .5s cubic-bezier(.3, 1.6, .5, 1); white-space: nowrap; }

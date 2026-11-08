@@ -1,37 +1,78 @@
 html, body { overflow-x: clip; }
 .deck-wrap, .wheel-card { overflow: clip; }
-/* ===== גלגל הדייטים ===== */
-.wheel-wrap { position: relative; width: min(340px, 86vw); aspect-ratio: 1; margin: 18px auto 8px; perspective: 900px; }
-.wheel-wrap::before { /* בסיס תלת-ממדי */
-  content: ""; position: absolute; inset: 6% 6% -7% 6%; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--glow-rgb), .55), transparent);
-  filter: blur(18px); transform: translateY(12%) rotateX(70deg); z-index: 0; }
-#wheel { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 50%; display: block;
-  filter: drop-shadow(0 18px 24px var(--shadow)) drop-shadow(0 0 30px rgba(var(--glow-rgb), .35)); transform-origin: 50% 50%; }
-#wheel text { pointer-events: none; }
-#wheel .bulb { fill: #fff; animation: bulb 0.8s ease-in-out infinite alternate; }
-.spinning #wheel .bulb { animation-duration: .15s; }
-@keyframes bulb { from { opacity: .35; } to { opacity: 1; filter: drop-shadow(0 0 3px #fff); } }
-.wheel-pointer { position: absolute; z-index: 3; top: -14px; left: 50%; width: 34px; height: 44px; transform: translateX(-50%); transform-origin: 50% 20%;
-  background: var(--grad); clip-path: polygon(50% 100%, 0 0, 100% 0); filter: drop-shadow(0 4px 6px var(--shadow)); }
-.wheel-pointer.tick { animation: tick .14s ease-out; }
-@keyframes tick { 40% { transform: translateX(-50%) rotate(-18deg); } }
-.wheel-center { position: absolute; z-index: 2; top: 50%; left: 50%; width: 30%; height: 30%; transform: translate(-50%, -50%); border-radius: 50%; border: 4px solid rgba(255,255,255,.7);
-  background: var(--grad); color: var(--on-accent); font-family: "Secular One", sans-serif; font-size: clamp(16px, 4.5vw, 22px);
-  box-shadow: 0 6px 0 var(--depth), 0 14px 30px -6px rgba(var(--glow-rgb), .9), inset 0 2px 0 rgba(255,255,255,.5); transition: transform .15s; }
-.wheel-center:hover { transform: translate(-50%, -50%) scale(1.06); }
-.wheel-center:active { transform: translate(-50%, -46%) scale(.97); box-shadow: 0 2px 0 var(--depth); }
-.spinning .wheel-center { pointer-events: none; animation: pulse .6s infinite alternate; }
-@keyframes pulse { to { box-shadow: 0 6px 0 var(--depth), 0 0 50px rgba(var(--glow-rgb), 1); } }
+/* ===== גלגל הדייטים – גרסה מציאותית ===== */
+.wheel-stage { position: relative; margin: 14px auto 0; width: min(360px, 88vw); padding-bottom: 46px; }
+.wheel-spot { position: absolute; inset: -10% -20% 10%; pointer-events: none; opacity: 0; transition: opacity .6s;
+  background: radial-gradient(closest-side, rgba(255, 240, 200, .35), rgba(var(--glow-rgb), .15) 55%, transparent 75%); filter: blur(6px); }
+.wheel-wrap { position: relative; width: 100%; aspect-ratio: 1; z-index: 1; perspective: 900px; }
+.wheel-wrap.party ~ .wheel-spot, .wheel-stage:has(.party) .wheel-spot { opacity: 1; animation: spot 1.6s ease-in-out infinite alternate; }
+@keyframes spot { to { transform: scale(1.06); opacity: .8; } }
+#wheel { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none;
+  filter: drop-shadow(0 22px 26px var(--shadow)) drop-shadow(0 0 34px rgba(var(--glow-rgb), .35)); transform: rotateX(8deg); transform-origin: 50% 60%; }
+.grab #wheel { cursor: grabbing; }
+#wheel .w-emoji { font-size: 15px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+#wheel .w-label { font: 700 6px "Heebo", sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: central; pointer-events: none;
+  paint-order: stroke; stroke: rgba(40, 8, 20, .55); stroke-width: 1.6px; letter-spacing: .1px; }
+[data-theme="pastel"] #wheel .w-label, [data-theme="gold"] #wheel .w-label { stroke: rgba(60, 30, 10, .6); }
+#wheel .seg { transition: filter .3s; }
+#wheel .seg.win { animation: segWin .7s ease-in-out infinite alternate; }
+@keyframes segWin { from { filter: brightness(1.15) drop-shadow(0 0 2px #fff); } to { filter: brightness(1.55) drop-shadow(0 0 7px #fff); } }
+#wheel .bulb { fill: #fff3c4; opacity: .45; transition: opacity .08s; }
+#wheel .bulb:nth-child(odd) { animation: bulbIdle 1.2s ease-in-out infinite alternate; }
+#wheel .bulb:nth-child(even) { animation: bulbIdle 1.2s ease-in-out infinite alternate-reverse; }
+@keyframes bulbIdle { from { opacity: .3; } to { opacity: .95; } }
+.spinning #wheel .bulb { animation: none; opacity: .25; }
+.spinning #wheel .bulb.lit { opacity: 1; filter: drop-shadow(0 0 3px #fff3c4) drop-shadow(0 0 6px rgba(var(--glow-rgb), 1)); }
+.party #wheel .bulb { animation: bulbParty .18s steps(2) infinite; }
+@keyframes bulbParty { 50% { opacity: .2; } }
 
+/* לשונית (קלאפר) */
+.wheel-flapper { position: absolute; z-index: 3; top: -7%; left: 50%; width: 15%; transform: translateX(-50%) rotate(0deg); transform-origin: 50% 18%;
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, .55)); pointer-events: none; }
+.wheel-flapper svg { width: 100%; display: block; }
+
+/* מרכז הגלגל */
+.wheel-hub { position: absolute; z-index: 2; top: 50%; left: 50%; width: 27%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: none; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, #fff6d6, #d9a441 50%, #7a5212); box-shadow: 0 6px 0 #6b4710, 0 14px 24px -6px rgba(0, 0, 0, .7), inset 0 2px 3px rgba(255, 255, 255, .7), inset 0 -4px 8px rgba(0, 0, 0, .35);
+  display: grid; place-items: center; align-content: center; gap: 0; transition: transform .15s; }
+.wheel-hub span { font-size: clamp(24px, 7vw, 34px); line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .4)); animation: beat 1.4s infinite; }
+.wheel-hub small { font: 400 clamp(12px, 3.4vw, 15px) "Secular One", sans-serif; color: #3a2408; }
+.wheel-hub:hover { transform: translate(-50%, -50%) scale(1.05); }
+.wheel-hub:active { transform: translate(-50%, -46%) scale(.97); box-shadow: 0 2px 0 #6b4710; }
+.spinning .wheel-hub { pointer-events: none; }
+.spinning .wheel-hub span { animation-duration: .35s; }
+
+/* מעמד */
+.wheel-stand { position: absolute; z-index: 0; left: 50%; bottom: 0; width: 46%; height: 64px; transform: translateX(-50%);
+  background: linear-gradient(90deg, #5e3f0c, #e6b84e 45%, #fff4c8 52%, #a8761f 60%, #5e3f0c); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); border-radius: 0 0 14px 14px; opacity: .95; }
+.wheel-stand::after { content: ""; position: absolute; left: -12%; right: -12%; bottom: -8px; height: 14px; border-radius: 50%; background: rgba(0, 0, 0, .45); filter: blur(6px); z-index: -1; }
+.wheel-tip { text-align: center; font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+
+/* תוצאה */
 .wheel-result { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 12px 14px; align-items: center; padding: 16px; border-radius: 20px;
-  background: linear-gradient(140deg, rgba(var(--glow-rgb), .22), var(--glass-lo)); border: 1px solid rgba(var(--glow-rgb), .45); animation: resultIn .6s cubic-bezier(.3, 1.6, .5, 1); }
-@keyframes resultIn { from { opacity: 0; transform: perspective(700px) rotateX(-60deg) translateY(-20px); } }
+  background: linear-gradient(140deg, rgba(var(--glow-rgb), .22), var(--glass-lo)); border: 1px solid rgba(var(--glow-rgb), .45); animation: resultIn .7s cubic-bezier(.3, 1.6, .5, 1); position: relative; overflow: hidden; }
+.wheel-result::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .25) 50%, transparent 70%); transform: translateX(-120%); animation: shineOnce 1.4s .5s ease-out forwards; pointer-events: none; }
+@keyframes shineOnce { to { transform: translateX(120%); } }
+@keyframes resultIn { from { opacity: 0; transform: perspective(700px) rotateX(-70deg) translateY(-30px) scale(.9); } }
 .wr-emoji { font-size: 54px; filter: drop-shadow(0 8px 12px var(--shadow)); animation: bob2 2s ease-in-out infinite; }
 @keyframes bob2 { 50% { transform: translateY(-6px) rotate(6deg); } }
 .wr-text small { display: block; color: var(--muted); }
 .wr-text b { display: block; font-size: 22px; font-family: "Secular One", sans-serif; }
 .wr-text span { color: var(--text-soft); font-size: 14px; }
 .wr-btns { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* גשם עלי ורדים */
+.petal-rain { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; }
+.petal-rain i { position: absolute; top: -30px; width: 16px; height: 12px; border-radius: 70% 0 70% 0; background: linear-gradient(135deg, #ff7aa2, #c2185b);
+  box-shadow: inset -2px -2px 3px rgba(0, 0, 0, .2); animation: petalFall var(--d) cubic-bezier(.3, .2, .6, 1) forwards; opacity: .95; }
+.petal-rain i.heart { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; font-style: normal; font-size: 16px; }
+.petal-rain i.heart::before { content: "💗"; }
+@keyframes petalFall {
+  0% { translate: 0 0; rotate: 0deg; opacity: 0; }
+  10% { opacity: 1; }
+  50% { translate: calc(var(--x) * -1) 55vh; }
+  100% { translate: var(--x) 110vh; rotate: var(--r); opacity: .8; }
+}
 
 /* ===== חפיסת ההחלקה ===== */
 .deck { position: relative; height: 330px; max-width: 360px; margin: 18px auto 0; perspective: 1000px; }
