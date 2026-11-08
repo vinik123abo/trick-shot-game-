@@ -13,6 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="fx.css" />
+  <link rel="stylesheet" href="themes.css" />
+  <link rel="stylesheet" href="games.css" />
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem("dt_theme") || "sunset"; } catch (e) {}</script>
 </head>
 <body>
   <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -26,6 +29,7 @@
     </div>
     <div class="top-actions">
       <button class="icon-btn" id="savedBtn" title="דייטים שמורים">⭐ <span id="savedCount">0</span></button>
+      <button class="icon-btn" id="themeBtn" title="ערכות צבעים">🎨</button>
       <button class="icon-btn" id="settingsBtn" title="הגדרות">⚙️</button>
     </div>
   </header>
@@ -39,7 +43,7 @@
       <p class="hero-sub">כותבים במילים פשוטות מה בא לך, ומקבלים תוכנית מלאה: מקומות, אוכל, לו"ז, טיפים ותמונה של איך הדייט ייראה.</p>
       <div class="hero-cta">
         <button class="btn primary big" data-goto="plan">✨ בוא נתכנן דייט</button>
-        <button class="btn glass" data-goto="places">🗺️ מקומות לדייט</button>
+        <button class="btn glass" data-goto="places">🗺️ מקומות</button>
       </div>
       <div class="hero-stats">
         <div><b data-count="114">0</b><span>מקומות</span></div>
@@ -52,9 +56,10 @@
 
   <nav class="tabs" role="tablist">
     <span class="tab-ink" aria-hidden="true"></span>
-    <button class="tab on" data-tab="plan">✨ תכנון דייט</button>
+    <button class="tab on" data-tab="plan">✨ תכנון</button>
     <button class="tab" data-tab="places">🗺️ מקומות לדייט</button>
-    <button class="tab" data-tab="home">🏠 דייט בבית</button>
+    <button class="tab" data-tab="home">🏠 בבית</button>
+    <button class="tab" data-tab="surprise">🎡 הפתעה</button>
   </nav>
 
   <main>
@@ -160,7 +165,41 @@
         <div class="home-grid" id="homeList"></div>
       </section>
     </div>
+    <div class="tab-panel hidden" data-panel="surprise">
+      <section class="card wheel-card">
+        <h2>🎡 גלגל הדייטים</h2>
+        <p class="hint">לא מצליח להחליט? תסובב את הגלגל ותן לגורל לבחור בשבילך.</p>
+        <div class="wheel-wrap">
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <svg id="wheel" viewBox="-100 -100 200 200" role="img" aria-label="גלגל רעיונות לדייט"></svg>
+          <button id="spinBtn" class="wheel-center">סובב!</button>
+        </div>
+        <div id="wheelResult" class="wheel-result hidden"></div>
+      </section>
+
+      <section class="card">
+        <h2>💘 החלק רעיונות</h2>
+        <p class="hint">גרור ימינה = אהבתי ❤️, שמאלה = לא בשבילי ✖. מה שאהבת נשמר למטה, ובלחיצה בונים ממנו דייט.</p>
+        <div class="deck" id="deck"></div>
+        <div class="deck-btns">
+          <button class="round no" id="swNo" title="לא בשבילי">✖</button>
+          <button class="round undo" id="swUndo" title="בטל">↶</button>
+          <button class="round yes" id="swYes" title="אהבתי">❤</button>
+        </div>
+        <h3 class="section-title">❤️ הרעיונות שאהבתי</h3>
+        <div id="likedList" class="liked"></div>
+      </section>
+    </div>
   </main>
+
+  <div class="theme-panel" id="themePanel" role="dialog" aria-label="ערכות צבעים">
+    <h4>🎨 בחר סגנון</h4>
+    <div class="swatches" id="swatches"></div>
+    <div class="theme-opts">
+      <label><input type="checkbox" id="trailOn" /> שובל לבבות אחרי העכבר</label>
+      <label><input type="checkbox" id="hapticOn" checked /> רטט בטלפון</label>
+    </div>
+  </div>
 
   <footer class="foot">
     נבנה באהבה לכל מי שאי פעם שאל "אז... לאן הולכים?" 💘
@@ -201,5 +240,6 @@
   <script src="ideas.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module" src="fx.js"></script>
+  <script type="module" src="games.js"></script>
 </body>
 </html>

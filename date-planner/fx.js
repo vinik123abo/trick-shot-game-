@@ -2,6 +2,76 @@
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
 
+/* ---------- ערכות צבעים ---------- */
+const THEMES = {
+  sunset: { name: "שקיעה ורודה", css: ["#ff4f7b", "#ffb36b", "#c86bff"], heart: 0xff3d6e, sheen: 0xffb36b, metal: 0.15, rough: 0.18,
+    lights: [0xff4f7b, 0xffb36b, 0xc86bff], palette: [0xff4f7b, 0xffb36b, 0xff8fb1, 0xc86bff, 0xffffff], spark: 0xffd6e4 },
+  neon: { name: "ניאון לילי", css: ["#00e5ff", "#ff3df2", "#7c4dff"], heart: 0xff2fe6, sheen: 0x00e5ff, metal: 0.2, rough: 0.15,
+    lights: [0x00e5ff, 0xff3df2, 0x7c4dff], palette: [0x00e5ff, 0xff3df2, 0x7c4dff, 0xffffff], spark: 0xaaf6ff },
+  gold: { name: "זהב יוקרתי", css: ["#d4a24c", "#f7e3a1", "#7a5414"], heart: 0xd9a441, sheen: 0xfff1c1, metal: 0.9, rough: 0.22,
+    lights: [0xffd27a, 0xfff1c1, 0xb07a2a], palette: [0xd4a24c, 0xf7e3a1, 0xffffff, 0x9c7a3c], spark: 0xfff1c1 },
+  ocean: { name: "אוקיינוס", css: ["#2ee6c5", "#4da3ff", "#6a7dff"], heart: 0x22d8b8, sheen: 0x4da3ff, metal: 0.2, rough: 0.12,
+    lights: [0x2ee6c5, 0x4da3ff, 0x6a7dff], palette: [0x2ee6c5, 0x4da3ff, 0x6a7dff, 0xffffff], spark: 0xc6fff4 },
+  wine: { name: "יין אדום", css: ["#e0284f", "#ff8a5c", "#9e2257"], heart: 0xc8102e, sheen: 0xff8a5c, metal: 0.25, rough: 0.2,
+    lights: [0xe0284f, 0xff8a5c, 0x9e2257], palette: [0xe0284f, 0xff8a5c, 0x9e2257, 0xffd0c0], spark: 0xffc2b0 },
+  pastel: { name: "פסטל בוקר", css: ["#ff6f9c", "#ffb38a", "#b38cff"], heart: 0xff7fa8, sheen: 0xffd0b3, metal: 0.05, rough: 0.25,
+    lights: [0xff9fbf, 0xffd0a0, 0xc9b3ff], palette: [0xff9fbf, 0xffc4a3, 0xc9b3ff, 0xffffff], spark: 0xff9fbf },
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
+};
+let recolor3D = null;
+let currentTheme = THEMES[store.get("dt_theme", "sunset")] ? store.get("dt_theme", "sunset") : "sunset";
+
+function applyTheme(key, animate = true) {
+  currentTheme = key;
+  document.documentElement.dataset.theme = key;
+  store.set("dt_theme", key);
+  document.querySelectorAll(".swatch").forEach((b) => b.classList.toggle("on", b.dataset.theme === key));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a0f1f";
+  recolor3D?.(THEMES[key]);
+  if (animate) burst(innerWidth / 2, 140, 18);
+}
+
+const panel = document.getElementById("themePanel");
+document.getElementById("swatches").innerHTML = Object.entries(THEMES).map(([k, t]) => `
+  <button class="swatch" data-theme="${k}"><i style="background: conic-gradient(from 210deg, ${t.css[0]}, ${t.css[1]}, ${t.css[2]}, ${t.css[0]})"></i>${t.name}</button>`).join("");
+document.getElementById("swatches").addEventListener("click", (e) => {
+  const b = e.target.closest(".swatch");
+  if (b) { applyTheme(b.dataset.theme); buzz(15); }
+});
+document.getElementById("themeBtn").addEventListener("click", (e) => { e.stopPropagation(); panel.classList.toggle("open"); });
+document.addEventListener("click", (e) => { if (panel.classList.contains("open") && !panel.contains(e.target)) panel.classList.remove("open"); });
+
+/* ---------- רטט ---------- */
+const hapticBox = document.getElementById("hapticOn");
+hapticBox.checked = store.get("dt_haptic", "1") === "1";
+hapticBox.addEventListener("change", () => store.set("dt_haptic", hapticBox.checked ? "1" : "0"));
+function buzz(pattern) {
+  if (hapticBox.checked && navigator.vibrate) { try { navigator.vibrate(pattern); } catch { /* ignore */ } }
+}
+
+/* ---------- שובל לבבות ---------- */
+const trailBox = document.getElementById("trailOn");
+trailBox.checked = store.get("dt_trail", "0") === "1";
+trailBox.addEventListener("change", () => store.set("dt_trail", trailBox.checked ? "1" : "0"));
+let lastTrail = 0;
+document.addEventListener("pointermove", (e) => {
+  if (!trailBox.checked || reduceMotion || e.pointerType !== "mouse") return;
+  const now = performance.now();
+  if (now - lastTrail < 45) return;
+  lastTrail = now;
+  const s = document.createElement("span");
+  s.className = "trail";
+  s.textContent = ["💗", "✨", "💕"][Math.floor(Math.random() * 3)];
+  s.style.left = e.clientX + "px";
+  s.style.top = e.clientY + "px";
+  document.body.appendChild(s);
+  s.addEventListener("animationend", () => s.remove());
+}, { passive: true });
+
 /* ---------- הטיה תלת-ממדית לכרטיסים ---------- */
 const TILT_SEL = ".tilt, .quick-item, .place, .home-card, .step, .food, .stat, .tip-box, .result-hero";
 let tiltEl = null;
@@ -194,6 +264,26 @@ async function initHero3D() {
   const warm = new THREE.PointLight(0xffb36b, 35, 30); warm.position.set(4, 2, 3); scene.add(warm);
   const rim = new THREE.PointLight(0xc86bff, 30, 30); rim.position.set(0, 3, -4); scene.add(rim);
 
+  // צביעה מחדש לפי ערכת הצבעים – במעבר חלק
+  recolor3D = (t) => {
+    const from = { h: heartMat.color.clone(), s: heartMat.sheenColor.clone(), l: [pink.color.clone(), warm.color.clone(), rim.color.clone()] };
+    const to = { h: new THREE.Color(t.heart), s: new THREE.Color(t.sheen), l: t.lights.map((c) => new THREE.Color(c)) };
+    heartMat.metalness = t.metal;
+    heartMat.roughness = t.rough;
+    minis.forEach((m, i) => m.material.color.set(t.palette[i % t.palette.length]));
+    sparkles.material.color.set(t.spark);
+    const t0 = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / 700);
+      heartMat.color.copy(from.h).lerp(to.h, k);
+      heartMat.sheenColor.copy(from.s).lerp(to.s, k);
+      [pink, warm, rim].forEach((L, i) => L.color.copy(from.l[i]).lerp(to.l[i], k));
+      spinBoost += 0.02;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   // אינטראקציה: עכבר / הטיית טלפון / גרירה
   const target = { x: 0, y: 0 };
   let spinBoost = 0, dragging = false, lastX = 0;
@@ -267,8 +357,10 @@ async function initHero3D() {
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loop(); });
   document.body.classList.add("has-3d");
+  recolor3D(THEMES[currentTheme]);
   if (reduceMotion) frame(); else loop();
 }
 initHero3D();
 
-window.FX = { burst, pop };
+applyTheme(currentTheme, false);
+window.FX = { burst, pop, buzz, applyTheme, THEMES };

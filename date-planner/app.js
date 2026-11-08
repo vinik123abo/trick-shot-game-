@@ -321,7 +321,13 @@ function renderPlan(plan, opts = {}) {
       <h3 class="section-title">🧠 שיעורי בית לפני הדייט</h3>
       <div class="tips">
         <div class="tip-box"><h5>💡 טיפים</h5><ul>${list(plan.tips)}</ul></div>
-        <div class="tip-box"><h5>💬 שאלות לפתיחת שיחה</h5><ul>${list(plan.conversation_starters)}</ul></div>
+        <div class="tip-box"><h5>💬 שאלות לפתיחת שיחה <small class="muted-s">(לחץ על קלף)</small></h5>
+          <div class="flip-grid">${(plan.conversation_starters || []).map((q, i) => `
+            <button class="flip" type="button"><span class="flip-in">
+              <span class="flip-front">🃏<b>שאלה ${i + 1}</b></span>
+              <span class="flip-back">${esc(q)}</span>
+            </span></button>`).join("")}</div>
+        </div>
         <div class="tip-box"><h5>👕 מה ללבוש</h5><ul><li>${esc(plan.outfit)}</li></ul></div>
         <div class="tip-box"><h5>☔ תוכנית גיבוי</h5><ul><li>${esc(plan.backup_plan)}</li></ul></div>
       </div>
@@ -582,6 +588,22 @@ $("#homeList").addEventListener("click", (e) => {
     build(Object.assign(readForm(), { homeId: h.id }));
   }
 });
+
+document.addEventListener("click", (e) => {
+  const f = e.target.closest(".flip");
+  if (f) { f.classList.toggle("flipped"); window.FX?.buzz(8); }
+});
+
+// ממשק לקבצים אחרים (משחקים) לבניית דייט
+window.Dateon = {
+  buildFrom(extra) {
+    showTab("plan");
+    if (extra.freeText) $("#freeText").value = extra.freeText;
+    if (extra.vibes) setChips("vibes", extra.vibes.filter((v) => DI.VIBE_LABEL[v]));
+    if (extra.homeId) setChips("stage", "couple");
+    build(Object.assign(readForm(), extra));
+  },
+};
 
 renderPlaces();
 updateModeNote();

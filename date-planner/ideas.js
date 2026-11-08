@@ -129,6 +129,7 @@
     if (ctx.budget === 3 && item.b === 3) s += 2;
     if (ctx.isHome && !item.home && item.role !== "close") s -= 20;
     if (!ctx.isHome && item.home) s -= 20;
+    if (ctx.isHome && item.role === "close" && !item.home && item.id !== "polaroid") s -= 8;
     if (ctx.stage === "first" && item.notFirst) s -= 8;
     if (ctx.stage === "first" && item.b === 3) s -= 2;
     if ((ctx.stage === "anniversary" || ctx.stage === "surprise") && item.v.includes("romantic")) s += 2;
@@ -284,13 +285,13 @@
     const mains = ACTIVITIES.filter((a) => a.role === "main");
     const closes = ACTIVITIES.filter((a) => a.role === "close");
 
-    let main = pick(mains, ctx);
+    let main = (input.mainId && ACTIVITIES.find((a) => a.id === input.mainId && a.role !== "close")) || pick(mains, ctx);
     let homeDate = null;
     if (anchor) {
       const c = DP.CATS[anchor.cat];
       main = { id: "place-" + anchor.id, e: c.e, t: anchor.n, d: anchor.d, v: anchor.tags, cost: PRICE_COST[anchor.price],
         place: anchor.area, real: anchor, img: c.img, meal: anchor.cat === "rest" };
-    } else if (ctx.isHome && DP) {
+    } else if (ctx.isHome && DP && !input.mainId) {
       homeDate = pickHomeDate(ctx);
       main = { id: "home-" + homeDate.id, e: homeDate.e, t: homeDate.t, d: homeDate.s + ". " + homeDate.steps.join(" ← ") + ".",
         v: homeDate.v, cost: homeDate.cost, place: "בבית", home: true, img: HOME_IMG[homeDate.id], meal: MEAL_HOME.has(homeDate.id) };
@@ -419,5 +420,5 @@
     { e: "🎤", t: "סטנדאפ ובר", s: "צחוק משותף", text: "ערב סטנדאפ וקוקטייל", vibes: ["culture", "adventure"], budget: 2, time: "night" },
   ];
 
-  window.DateIdeas = { CITIES, QUICK_IDEAS, TIME, VIBE_LABEL, STAGE_LABEL, buildPlanOffline, mapsUrl };
+  window.DateIdeas = { ACTIVITIES, CITIES, QUICK_IDEAS, TIME, VIBE_LABEL, STAGE_LABEL, buildPlanOffline, mapsUrl };
 })();
