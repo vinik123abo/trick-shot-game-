@@ -339,12 +339,14 @@ function renderPlan(plan, opts = {}) {
         <button class="btn small ghost" data-act="image">🖼️ תמונות חדשות</button>
         <button class="btn small ghost" data-act="share">📲 שלח בוואטסאפ</button>
         <button class="btn small ghost" data-act="copy">📋 העתק</button>
+        <button class="btn small ghost" data-act="countdown">⏳ ספירה לאחור</button>
+        <button class="btn small ghost" data-act="invite">💌 כרטיס הזמנה</button>
         <button class="btn small ghost" data-act="print">🖨️ הדפס</button>
       </div>
       <p class="mode-note">${plan._source === "claude" ? "🤖 נבנה על ידי Claude" : "⚡ נבנה במנוע הרעיונות המובנה"} · התמונות נוצרות ב-AI להמחשה בלבד. כדאי לבדוק שעות פתיחה ולהזמין מקום מראש.</p>
     </div>`;
   wireImages($("#result"));
-  if (!opts.silent) setTimeout(() => window.FX?.burst(innerWidth / 2, Math.min(innerHeight / 3, 260)), 120);
+  if (!opts.silent) setTimeout(() => { window.FX?.burst(innerWidth / 2, Math.min(innerHeight / 3, 260)); window.FX?.sound("chime"); }, 120);
 }
 
 function shopListHtml(items, key) {
@@ -392,6 +394,8 @@ $("#result").addEventListener("click", async (e) => {
     catch { toast("לא הצלחתי להעתיק"); }
   } else if (act === "shop") {
     shareShopping(currentPlan.title, currentPlan.shopping_list);
+  } else if (act === "countdown" || act === "invite") {
+    window.DateonExtras?.fromPlan(currentPlan, act);
   } else if (act === "print") {
     window.print();
   }
@@ -591,7 +595,7 @@ $("#homeList").addEventListener("click", (e) => {
 
 document.addEventListener("click", (e) => {
   const f = e.target.closest(".flip");
-  if (f) { f.classList.toggle("flipped"); window.FX?.buzz(8); }
+  if (f) { f.classList.toggle("flipped"); window.FX?.buzz(8); window.FX?.sound("flip"); }
 });
 
 // ממשק לקבצים אחרים (משחקים) לבניית דייט

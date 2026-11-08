@@ -22,22 +22,141 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
 };
 let recolor3D = null;
+
+/* ---------- ערכה בהתאמה אישית ---------- */
+const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const rgbHex = (r) => "#" + r.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("");
+const mix = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A.map((v, i) => v + (B[i] - v) * t)); };
+const lum = (h) => { const [r, g, b] = hexRgb(h).map((v) => v / 255); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const rgba = (h, a) => `rgba(${hexRgb(h).join(", ")}, ${a})`;
+const CUSTOM_VARS = ["--bg", "--text", "--text-soft", "--muted", "--accent", "--accent-mid", "--accent2", "--violet", "--on-accent", "--depth", "--glow-rgb",
+  "--a1", "--a2", "--a3", "--glass", "--glass-2", "--glass-hi", "--glass-lo", "--glass-line", "--field", "--bar", "--dlg", "--shadow", "--grain",
+  "--line", "--card", "--card2", "--bg2", "color-scheme"];
+
+function customVars({ a, b, bg }) {
+  const dark = lum(bg) < 0.45;
+  const text = dark ? "#fbf5ff" : "#2a1a2a";
+  const mid = mix(a, b, 0.5);
+  return {
+    "--bg": bg, "--text": text, "--text-soft": mix(text, bg, 0.18), "--muted": mix(text, bg, 0.42),
+    "--accent": a, "--accent-mid": mid, "--accent2": b, "--violet": mix(a, dark ? "#7a3cff" : "#b38cff", 0.55),
+    "--on-accent": lum(a) > 0.55 ? "#1a0d14" : "#ffffff", "--depth": mix(a, "#000000", 0.38), "--glow-rgb": hexRgb(a).join(", "),
+    "--a1": a, "--a2": b, "--a3": mid,
+    "--glass": dark ? "rgba(255, 255, 255, 0.06)" : "rgba(255, 255, 255, 0.55)",
+    "--glass-2": dark ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.8)",
+    "--glass-hi": dark ? "rgba(255, 255, 255, 0.085)" : "rgba(255, 255, 255, 0.75)",
+    "--glass-lo": dark ? "rgba(255, 255, 255, 0.02)" : "rgba(255, 255, 255, 0.4)",
+    "--glass-line": dark ? "rgba(255, 255, 255, 0.14)" : "rgba(0, 0, 0, 0.12)",
+    "--field": dark ? "rgba(0, 0, 0, 0.35)" : "rgba(255, 255, 255, 0.85)",
+    "--bar": rgba(bg, 0.65), "--dlg": rgba(mix(bg, text, 0.06), 0.93),
+    "--shadow": dark ? "rgba(0, 0, 0, 0.85)" : "rgba(0, 0, 0, 0.2)", "--grain": dark ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.35)",
+    "--line": mix(bg, text, 0.2), "--card": mix(bg, text, 0.08), "--card2": mix(bg, text, 0.11), "--bg2": mix(bg, text, 0.06),
+    "color-scheme": dark ? "dark" : "light",
+  };
+}
+function customTheme3D({ a, b }) {
+  const mid = mix(a, b, 0.5);
+  return { name: "הסגנון שלי", css: [a, b, mid], heart: a, sheen: b, metal: 0.2, rough: 0.18, lights: [a, b, mid], palette: [a, b, mid, "#ffffff"], spark: mix(b, "#ffffff", 0.6) };
+}
+let customColors = (() => { try { return JSON.parse(localStorage.getItem("dt_custom")) || null; } catch { return null; } })();
+if (customColors) THEMES.custom = customTheme3D(customColors);
+
+function setRootVars(vars) {
+  const r = document.documentElement.style;
+  CUSTOM_VARS.forEach((k) => r.removeProperty(k));
+  if (vars) Object.entries(vars).forEach(([k, v]) => r.setProperty(k, v));
+}
+
+/* ---------- צלילים (מסונתזים בדפדפן, בלי קבצים) ---------- */
+const Sound = {
+  ctx: null,
+  on: (() => { try { return localStorage.getItem("dt_sound") !== "0"; } catch { return true; } })(),
+  ac() {
+    if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; this.ctx = new C(); }
+    if (this.ctx.state === "suspended") this.ctx.resume();
+    return this.ctx;
+  },
+  tone(freq, start, dur, type = "sine", vol = 0.12, slideTo = null) {
+    const c = this.ac(); if (!c) return;
+    const t = c.currentTime + start;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  },
+  play(name) {
+    if (!this.on) return;
+    try {
+      const T = (...a) => this.tone(...a);
+      switch (name) {
+        case "pop": T(520, 0, 0.09, "sine", 0.1, 900); break;
+        case "tick": T(1400, 0, 0.025, "square", 0.025); break;
+        case "flip": T(260, 0, 0.12, "triangle", 0.08, 760); break;
+        case "like": T(660, 0, 0.12, "sine", 0.12); T(990, 0.09, 0.18, "sine", 0.12); break;
+        case "nope": T(320, 0, 0.18, "sawtooth", 0.05, 120); break;
+        case "chime": [1047, 1319, 1568, 2093].forEach((f, i) => T(f, i * 0.08, 0.45, "triangle", 0.08)); break;
+        case "fanfare": [523, 659, 784, 1047].forEach((f, i) => T(f, i * 0.11, i === 3 ? 0.7 : 0.2, "triangle", 0.12)); T(1568, 0.44, 0.7, "sine", 0.05); break;
+        case "sparkle": for (let i = 0; i < 6; i++) T(1500 + Math.random() * 1500, i * 0.05, 0.15, "sine", 0.05); break;
+        case "whoosh": T(900, 0, 0.25, "sine", 0.05, 180); break;
+      }
+    } catch { /* ignore */ }
+  },
+};
+function sound(name) { Sound.play(name); }
+const soundBtn = document.getElementById("soundBtn");
+function paintSoundBtn() { if (soundBtn) { soundBtn.textContent = Sound.on ? "🔊" : "🔇"; soundBtn.title = Sound.on ? "השתק צלילים" : "הפעל צלילים"; } }
+soundBtn?.addEventListener("click", () => {
+  Sound.on = !Sound.on;
+  try { localStorage.setItem("dt_sound", Sound.on ? "1" : "0"); } catch { /* ignore */ }
+  paintSoundBtn();
+  sound("pop");
+});
+paintSoundBtn();
 let currentTheme = THEMES[store.get("dt_theme", "sunset")] ? store.get("dt_theme", "sunset") : "sunset";
 
 function applyTheme(key, animate = true) {
+  if (!THEMES[key]) key = "sunset";
   currentTheme = key;
+  setRootVars(key === "custom" && customColors ? customVars(customColors) : null);
+  try { localStorage.setItem("dt_custom_vars", key === "custom" && customColors ? JSON.stringify(customVars(customColors)) : ""); } catch { /* ignore */ }
   document.documentElement.dataset.theme = key;
   store.set("dt_theme", key);
   document.querySelectorAll(".swatch").forEach((b) => b.classList.toggle("on", b.dataset.theme === key));
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#1a0f1f";
   recolor3D?.(THEMES[key]);
-  if (animate) burst(innerWidth / 2, 140, 18);
+  if (animate) { burst(innerWidth / 2, 140, 18); sound("sparkle"); }
 }
 
 const panel = document.getElementById("themePanel");
-document.getElementById("swatches").innerHTML = Object.entries(THEMES).map(([k, t]) => `
-  <button class="swatch" data-theme="${k}"><i style="background: conic-gradient(from 210deg, ${t.css[0]}, ${t.css[1]}, ${t.css[2]}, ${t.css[0]})"></i>${t.name}</button>`).join("");
+function renderSwatches() {
+  document.getElementById("swatches").innerHTML = Object.entries(THEMES).map(([k, t]) => `
+  <button class="swatch" data-theme="${k}" ${k === "custom" && customColors ? `style="${Object.entries(customVars(customColors)).map(([a, b]) => `${a}:${b}`).join(";")}"` : ""}><i style="background: conic-gradient(from 210deg, ${t.css[0]}, ${t.css[1]}, ${t.css[2]}, ${t.css[0]})"></i>${t.name}</button>`).join("");
+  document.querySelectorAll(".swatch").forEach((b) => b.classList.toggle("on", b.dataset.theme === currentTheme));
+}
+renderSwatches();
+
+// בונה הסגנון
+const ctA = document.getElementById("ctA"), ctB = document.getElementById("ctB"), ctBg = document.getElementById("ctBg");
+if (customColors) { ctA.value = customColors.a; ctB.value = customColors.b; ctBg.value = customColors.bg; }
+let ctTimer = null;
+function applyCustom(anim) {
+  customColors = { a: ctA.value, b: ctB.value, bg: ctBg.value };
+  try { localStorage.setItem("dt_custom", JSON.stringify(customColors)); } catch { /* ignore */ }
+  THEMES.custom = customTheme3D(customColors);
+  renderSwatches();
+  applyTheme("custom", anim);
+}
+[ctA, ctB, ctBg].forEach((el) => el.addEventListener("input", () => { clearTimeout(ctTimer); ctTimer = setTimeout(() => applyCustom(false), 60); }));
+document.querySelectorAll("[data-preset]").forEach((b) => b.addEventListener("click", () => {
+  const [a, c, bg] = b.dataset.preset.split(",");
+  ctA.value = a; ctB.value = c; ctBg.value = bg;
+  applyCustom(true);
+}));
 document.getElementById("swatches").addEventListener("click", (e) => {
   const b = e.target.closest(".swatch");
   if (b) { applyTheme(b.dataset.theme); buzz(15); }
@@ -126,7 +245,7 @@ function pop(x, y) { burst(x, y, 8); }
 // לבבות קטנים בכל לחיצה על כפתור ראשי
 document.addEventListener("pointerdown", (e) => {
   const b = e.target.closest(".btn.primary, .quick-item, .tab");
-  if (b) pop(e.clientX, e.clientY);
+  if (b) { pop(e.clientX, e.clientY); sound("pop"); }
 });
 
 /* ---------- סמן לשוניות נע ---------- */
@@ -363,4 +482,4 @@ async function initHero3D() {
 initHero3D();
 
 applyTheme(currentTheme, false);
-window.FX = { burst, pop, buzz, applyTheme, THEMES };
+window.FX = { burst, pop, buzz, applyTheme, THEMES, sound };

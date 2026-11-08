@@ -1,11 +1,31 @@
 {
   "name": "דייטון – מתכנן הדייטים",
   "short_name": "דייטון",
+  "description": "כותבים איזה דייט רוצים ומקבלים תוכנית מלאה: מקומות, אוכל, לו״ז, טיפים, כרטיס הזמנה וספירה לאחור.",
+  "id": "./",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#140b18",
-  "theme_color": "#1a0f1f",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#0d0612",
+  "theme_color": "#0d0612",
+  "categories": ["lifestyle", "entertainment", "food"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [
+    { "src": "screenshot-wide.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "דייטון במחשב" },
+    { "src": "screenshot-mobile.png", "sizes": "400x860", "type": "image/png", "form_factor": "narrow", "label": "דייטון בנייד" }
+  ],
+  "shortcuts": [
+    { "name": "תכנון דייט", "url": "./index.html#plan", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "גלגל הדייטים", "url": "./index.html#surprise", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "כרטיס הזמנה", "url": "./index.html#personal", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
 }

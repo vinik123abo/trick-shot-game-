@@ -51,6 +51,7 @@ function spin() {
   svg.style.transition = `transform ${dur}ms cubic-bezier(.12, .7, .1, 1)`;
   svg.style.transform = `rotate(${wheelRot}deg)`;
   fx().buzz(20);
+  fx().sound?.("whoosh");
 
   // "תקתוק" רטט כשעוברים בין פלחים
   let lastSeg = -1;
@@ -66,6 +67,7 @@ function spin() {
       void $(".wheel-pointer").offsetWidth;
       $(".wheel-pointer").classList.add("tick");
       if (performance.now() - t0 > 2500) fx().buzz(4);
+      fx().sound?.("tick");
     }
     requestAnimationFrame(tick);
   };
@@ -93,6 +95,7 @@ function showWheelResult(w, idx) {
   const box = $(".wheel-wrap").getBoundingClientRect();
   fx().burst(box.left + box.width / 2, box.top + box.height / 2, 30);
   fx().buzz([40, 60, 40]);
+  fx().sound?.("fanfare");
 }
 
 $("#spinBtn").addEventListener("click", spin);
@@ -195,8 +198,10 @@ function swipe(dir) {
     const r = el.getBoundingClientRect();
     fx().burst(r.left + r.width / 2, r.top + r.height / 3, 12);
     fx().buzz(25);
+    fx().sound?.("like");
   } else {
     fx().buzz(8);
+    fx().sound?.("nope");
   }
   deckIdx++;
   setTimeout(renderDeck, 320);
