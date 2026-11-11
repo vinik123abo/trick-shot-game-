@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מאתר הברגות</title>
+<meta name="description" content="חיפוש, זיהוי ובדיקת הברגות: מטרי, UNC, UNF, BSP (G/R) ו-NPT — מידות, פסיעה, קוטר מקדח הברזה וזיהוי לפי מדידה.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 10 L10 6 L14 10 L18 6 L22 10 L26 6" /><path d="M6 18 L10 14 L14 18 L18 14 L22 18 L26 14" /><path d="M6 26 L10 22 L14 26 L18 22 L22 26 L26 22" /></svg>
+      <div>
+        <h1>מאתר הברגות</h1>
+        <p>חיפוש, זיהוי ובדיקת הברגות סטנדרטיות</p>
+      </div>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="החלפת מצב תצוגה"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+  </div>
+  <nav class="wrap tabs" role="tablist">
+    <button role="tab" class="tab active" data-tab="search" aria-selected="true">🔍 חיפוש</button>
+    <button role="tab" class="tab" data-tab="identify" aria-selected="false">📏 זיהוי לפי מדידה</button>
+    <button role="tab" class="tab" data-tab="calc" aria-selected="false">🧮 מחשבון</button>
+    <button role="tab" class="tab" data-tab="guide" aria-selected="false">📘 מדריך</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- ===== חיפוש ===== -->
+  <section class="panel active" id="tab-search">
+    <div class="search-box">
+      <input id="q" type="search" autocomplete="off" placeholder='חיפוש: M8, 1/4-20, G1/2, NPT…' aria-label="חיפוש הברגה">
+    </div>
+    <div class="chips" id="chips"></div>
+    <p class="count" id="count"></p>
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr>
+            <th>הברגה</th>
+            <th>סוג</th>
+            <th>קוטר חיצוני</th>
+            <th>פסיעה</th>
+            <th>TPI</th>
+            <th>מקדח הברזה</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="hint">לחיצה על שורה מציגה את כל המידות ושרטוט פרופיל.</p>
+  </section>
+
+  <!-- ===== זיהוי ===== -->
+  <section class="panel" id="tab-identify">
+    <div class="card">
+      <h2>זיהוי הברגה לפי מדידה</h2>
+      <p class="muted">מדדו את הקוטר עם קליבר ואת הפסיעה עם מד הברגות (או סרגל: מספר כרכים על אורך ידוע). המערכת תציג את ההברגות המתאימות ביותר.</p>
+
+      <div class="seg" id="partSeg">
+        <button type="button" class="on" data-v="ext">חיצונית (בורג / זכר)</button>
+        <button type="button" data-v="int">פנימית (אום / נקבה)</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          <span id="diaLabel">קוטר חיצוני שנמדד</span>
+          <div class="input-unit">
+            <input id="mDia" type="number" inputmode="decimal" step="any" min="0" placeholder="למשל 7.9">
+            <select id="mDiaUnit"><option value="mm">מ"מ</option><option value="in">אינץ'</option></select>
+          </div>
+        </label>
+        <label class="field">
+          <span>פסיעה</span>
+          <div class="input-unit">
+            <input id="mPitch" type="number" inputmode="decimal" step="any" min="0" placeholder="השאירו ריק אם לא ידוע">
+            <select id="mPitchUnit"><option value="mm">מ"מ</option><option value="tpi">TPI (כרכים לאינץ')</option></select>
+          </div>
+          <small class="conv" id="pitchConv"></small>
+        </label>
+        <label class="field">
+          <span>צורה</span>
+          <select id="mShape">
+            <option value="any">לא ידוע</option>
+            <option value="straight">ישרה (גלילית)</option>
+            <option value="taper">קונית (צנרת)</option>
+          </select>
+        </label>
+      </div>
+
+      <details class="count-helper">
+        <summary>אין מד הברגות? חישוב פסיעה לפי ספירת כרכים</summary>
+        <div class="form-grid small">
+          <label class="field"><span>מספר כרכים (פסגות) שנספרו</span><input id="cTurns" type="number" inputmode="decimal" step="any" min="1" placeholder="10"></label>
+          <label class="field"><span>על אורך (מ"מ)</span><input id="cLen" type="number" inputmode="decimal" step="any" min="0" placeholder="12.5"></label>
+          <div class="field"><span>תוצאה</span><output id="cOut" class="out">—</output></div>
+        </div>
+      </details>
+    </div>
+    <div id="idResults" class="id-results"></div>
+  </section>
+
+  <!-- ===== מחשבון ===== -->
+  <section class="panel" id="tab-calc">
+    <div class="card">
+      <h2>מחשבון מידות הברגה</h2>
+      <p class="muted">חישוב מידות בסיסיות לכל הברגה בפרופיל 60° (ISO מטרי / UN) — גם למידות שאינן בטבלה.</p>
+      <div class="form-grid">
+        <label class="field"><span>קוטר נומינלי</span>
+          <div class="input-unit">
+            <input id="kD" type="number" inputmode="decimal" step="any" min="0" value="10">
+            <select id="kDUnit"><option value="mm">מ"מ</option><option value="in">אינץ'</option></select>
+          </div>
+        </label>
+        <label class="field"><span>פסיעה</span>
+          <div class="input-unit">
+            <input id="kP" type="number" inputmode="decimal" step="any" min="0" value="1.5">
+            <select id="kPUnit"><option value="mm">מ"מ</option><option value="tpi">TPI</option></select>
+          </div>
+        </label>
+        <label class="field"><span>אחוז הברגה רצוי (לקוטר מקדח)</span>
+          <input id="kPct" type="number" inputmode="decimal" step="1" min="50" max="100" value="75">
+        </label>
+      </div>
+    </div>
+    <div class="card" id="calcOut"></div>
+  </section>
+
+  <!-- ===== מדריך ===== -->
+  <section class="panel" id="tab-guide">
+    <div class="card prose">
+      <h2>איך מזהים הברגה?</h2>
+      <ol>
+        <li><b>חיצונית או פנימית?</b> בבורג מודדים את הקוטר החיצוני (על הפסגות). באום מודדים את הקוטר הפנימי (החור) — הוא קטן מהנומינלי בערך בפסיעה אחת.</li>
+        <li><b>קוטר:</b> מדדו בקליבר. בורג משומש נמדד לרוב 0.1–0.3 מ"מ פחות מהנומינלי — זה תקין.</li>
+        <li><b>פסיעה:</b> מד הברגות (מסרק) הוא הכלי הטוב ביותר. בלעדיו: ספרו 10 פסגות ומדדו את האורך ביניהן, וחלקו.</li>
+        <li><b>ישרה או קונית?</b> הברגת צנרת קונית (R, NPT) מתעבה לכיוון בסיס ההברגה. מדדו קוטר בתחילת ההברגה ובסופה.</li>
+        <li><b>זווית:</b> הברגות מטריות, UNC/UNF ו-NPT בזווית 60°. הברגות BSP (G/R) בזווית 55° — הפסגות מעוגלות יותר.</li>
+      </ol>
+
+      <h2>משפחות נפוצות</h2>
+      <div class="table-wrap">
+      <table class="plain">
+        <thead><tr><th>משפחה</th><th>סימון</th><th>זווית</th><th>שימוש עיקרי</th></tr></thead>
+        <tbody>
+          <tr><td>מטרי גס</td><td>M8</td><td>60°</td><td>ברגים ואומים כלליים — הנפוץ בישראל ובאירופה</td></tr>
+          <tr><td>מטרי עדין</td><td>M8×1</td><td>60°</td><td>רכב, כיוון עדין, דפנות דקות</td></tr>
+          <tr><td>UNC / UNF</td><td>1/4"-20 UNC</td><td>60°</td><td>ציוד אמריקאי; ‎-20 = 20 כרכים לאינץ'</td></tr>
+          <tr><td>BSPP</td><td>G1/2</td><td>55°</td><td>צנרת ואינסטלציה, אטימה בשייבה/אורינג</td></tr>
+          <tr><td>BSPT</td><td>R1/2 (זכר), Rc/Rp (נקבה)</td><td>55°</td><td>צנרת עם אטימה בהברגה (טפלון)</td></tr>
+          <tr><td>NPT</td><td>1/2" NPT</td><td>60°</td><td>צנרת אמריקאית, הידראוליקה ופנאומטיקה</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h2>שימו לב</h2>
+      <ul>
+        <li>מידת צנרת ("1/2 אינץ'") <b>אינה</b> הקוטר בפועל: G1/2 הוא כ-20.96 מ"מ.</li>
+        <li>G1/2 ו-1/2" NPT דומים מאוד בקוטר ובפסיעה (14 TPI) אך <b>אינם</b> תואמים — זווית ופרופיל שונים.</li>
+        <li>מקדחי ההברזה בטבלה הם ערכים מקובלים (≈75% הברגה). בחומרים קשים אפשר להגדיל מעט.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<dialog id="detail">
+  <form method="dialog" class="dlg">
+    <div class="dlg-head">
+      <h2 id="dTitle" dir="ltr"></h2>
+      <button class="x" value="close" aria-label="סגירה">✕</button>
+    </div>
+    <div id="dBody"></div>
+  </form>
+</dialog>
+
+<footer class="wrap foot">הנתונים לפי תקני ISO / ASME. מומלץ לאמת מול התקן או היצרן לפני ייצור.</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
