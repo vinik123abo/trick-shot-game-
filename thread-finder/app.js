@@ -163,13 +163,13 @@ function renderWireTable(list) {
       <td class="n max">${f3(mx)}</td><td class="n min">${mn == null ? '<span class="muted">בסיס</span>' : f3(mn)}</td><td class="go">←</td></tr>`;
   }).join('');
 }
-const openRow = (e) => { const tr = e.target.closest('tr[data-i]'); if (!tr) return; if (tr.dataset.wires) S.openWires = true; location.hash = `#t/${tr.dataset.i}`; };
+const openRow = (e) => { const tr = e.target.closest('tr[data-i]'); if (!tr) return; if (tr.dataset.wires) S.openWires = true; location.hash = `#t-${tr.dataset.i}`; };
 $('#rows').addEventListener('click', openRow);
 $('#rows').addEventListener('keydown', (e) => { if (e.key === 'Enter') openRow(e); });
 $('#customForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const d = parseFloat($('#cuD').value), P = parseFloat($('#cuP').value);
-  if (d > 0 && P > 0 && P < d / 2) location.hash = `#c/${d}/${P}`;
+  if (d > 0 && P > 0 && P < d / 2) location.hash = `#c-${String(d).replace('.', 'p')}-${String(P).replace('.', 'p')}`;
 });
 
 /* =========================================================
@@ -403,9 +403,18 @@ function bindWireSelect(id) {
   const el = $('#' + id); if (!el) return;
   el.addEventListener('change', () => {
     let v = el.value;
-    if (v === 'custom') { const r = prompt('קוטר חוט (מ"מ):', D.wire.toFixed(3)); v = r && parseFloat(r.replace(',', '.')); }
+    if (v === 'custom') {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.001'; inp.min = '0.05'; inp.inputMode = 'decimal';
+      inp.id = id + 'Custom'; inp.value = D.wire.toFixed(3); inp.setAttribute('aria-label', 'קוטר חוט במ"מ');
+      el.replaceWith(inp); inp.focus(); inp.select();
+      const done = () => { const x = parseFloat(String(inp.value).replace(',', '.')); if (x > 0) setWire(x); else { renderInfo(); if (D.tab === 'insp') renderInsp(); } };
+      inp.addEventListener('change', done);
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+      return;
+    }
     v = parseFloat(v);
-    if (v > 0) setWire(v); else renderInfo();
+    if (v > 0) setWire(v);
   });
 }
 function setWire(w) {
@@ -1009,7 +1018,7 @@ function identify() {
   }).join('');
 }
 ['#mDia', '#mDiaUnit', '#mPitch', '#mPitchUnit', '#mShape'].forEach((s) => $(s).addEventListener('input', identify));
-const openMatch = (e) => { const m = e.target.closest('.match'); if (m) location.hash = `#t/${m.dataset.i}`; };
+const openMatch = (e) => { const m = e.target.closest('.match'); if (m) location.hash = `#t-${m.dataset.i}`; };
 $('#idResults').addEventListener('click', openMatch);
 $('#idResults').addEventListener('keydown', (e) => { if (e.key === 'Enter') openMatch(e); });
 
@@ -1019,12 +1028,12 @@ $('#idResults').addEventListener('keydown', (e) => { if (e.key === 'Enter') open
 function route() {
   const h = location.hash.slice(1) || 'tables';
   let view = h;
-  if (h.startsWith('t/')) {
+  if (/^t[-/]\d+$/.test(h)) {
     const t = threads[parseInt(h.slice(2), 10)];
     if (t) { view = 'detail'; showView(view); if (D.t !== t) openThread(t); return; }
     view = 'tables';
-  } else if (h.startsWith('c/')) {
-    const [, d, P] = h.split('/');
+  } else if (/^c[-/]/.test(h)) {
+    const [, d, P] = h.replace(/p/g, '.').split(/[-/]/);
     const dd = parseFloat(d), pp = parseFloat(P);
     if (dd > 0 && pp > 0) { showView('detail'); if (!D.t || D.t.d !== dd || D.t.P !== pp) openThread(customThread(dd, pp)); return; }
     view = 'tables';
