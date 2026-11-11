@@ -1,0 +1,11 @@
+{
+  "appId": "io.github.vinik123abo.threads",
+  "appName": "מאתר הברגות",
+  "webDir": "www",
+  "backgroundColor": "#0c0f14",
+  "android": { "backgroundColor": "#0c0f14" },
+  "ios": { "contentInset": "never", "backgroundColor": "#0c0f14" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 700, "launchAutoHide": true, "backgroundColor": "#0c0f14", "showSpinner": false }
+  }
+}

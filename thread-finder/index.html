@@ -2,7 +2,15 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8620c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="הברגות">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>מאתר הברגות</title>
 <meta name="description" content="טבלאות הברגות לחריטה וכרסום: מטרי, UNC, UNF, BSP ו-NPT — מודל תלת-ממדי אינטראקטיבי, סבולות, נתוני חריטה ותוכנית כרסום הברגה.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -221,5 +229,13 @@
 <script src="data.js"></script>
 <script src="thread-math.js"></script>
 <script type="module" src="app.js"></script>
+<script>
+  // התקנה כאפליקציה ועבודה בלי אינטרנט (לא בתוך האפליקציה הנייטיבית ולא בתוך מסגרת)
+  try {
+    if ('serviceWorker' in navigator && !window.Capacitor && window.top === window && /^https?:$/.test(location.protocol)) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  } catch (e) {}
+</script>
 </body>
 </html>

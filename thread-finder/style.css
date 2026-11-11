@@ -52,7 +52,7 @@ a { color: inherit; }
 bdi.ltr, .ltr { direction: ltr; unicode-bidi: isolate; }
 
 /* ---------- header ---------- */
-.top { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top { padding-top: env(safe-area-inset-top); position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
 .top-in { display: flex; align-items: center; gap: 16px; height: 62px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .brand b { display: block; font-size: 1.12rem; font-weight: 900; line-height: 1.1; }
@@ -258,7 +258,7 @@ pre.code .k { color: #ff9b57; }
 .gloss div { background: var(--surface-2); border-radius: 12px; padding: 12px; }
 .gloss b { display: block; margin-bottom: 2px; }
 .gloss span { color: var(--muted); font-size: .9rem; }
-.foot { color: var(--muted); font-size: .78rem; padding: 26px 16px 34px; }
+.foot { color: var(--muted); font-size: .78rem; padding: 26px 16px calc(34px + env(safe-area-inset-bottom)); }
 
 @media (max-width: 980px) {
   .studio { grid-template-columns: minmax(0, 1fr); }

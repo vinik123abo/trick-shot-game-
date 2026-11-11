@@ -1,0 +1,22 @@
+{
+  "name": "thread-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "מאתר הברגות – אפליקציית Android/iOS מעל תיקיית thread-finder",
+  "scripts": {
+    "copy-web": "node scripts/copy-web.mjs",
+    "sync": "npm run copy-web && cap sync",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#e8620c' --iconBackgroundColorDark '#e8620c' --splashBackgroundColor '#0c0f14' --splashBackgroundColorDark '#0c0f14'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0"
+  }
+}

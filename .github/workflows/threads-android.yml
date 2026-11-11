@@ -1,0 +1,102 @@
+# מאתר הברגות – בניית אפליקציית אנדרואיד
+# בכל דחיפה שמשנה את האתר או את האפליקציה נבנה APK, ומתפרסם כ-Release להורדה ישירה:
+# https://github.com/vinik123abo/trick-shot-game-/releases/latest/download/threads-app.apk
+name: Threads Android
+
+on:
+  push:
+    paths: ["thread-finder/**", "thread-app/**", ".github/workflows/threads-android.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: threads-android-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: thread-app
+    env:
+      THREADS_VERSION_CODE: ${{ github.run_number }}
+      THREADS_VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: thread-app/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Install
+        run: npm ci
+
+      - name: Copy web app and sync Android
+        run: npm run sync -- android
+
+      - name: Restore signing key (if configured)
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > android/app/release.keystore
+            echo "Signing: release key found"
+          else
+            echo "::notice::No ANDROID_KEYSTORE_BASE64 secret – release build is unsigned; the debug APK is installable for testing"
+          fi
+
+      - name: Build
+        working-directory: thread-app/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          NET="-Dorg.gradle.internal.http.socketTimeout=180000 -Dorg.gradle.internal.http.connectionTimeout=180000 -Dorg.gradle.internal.repository.max.retries=6"
+          for i in 1 2 3 4; do ./gradlew --no-daemon $NET --version >/dev/null && break || { echo "retry $i"; sleep $((i*10)); }; done
+          for i in 1 2 3; do
+            if ./gradlew --no-daemon $NET assembleDebug assembleRelease bundleRelease; then exit 0; fi
+            echo "::warning::Gradle attempt $i failed – retrying"; sleep $((i*20))
+          done
+          exit 1
+
+      - name: Collect outputs
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/debug/app-debug.apk out/threads-app.apk
+          cp android/app/build/outputs/apk/release/*.apk out/ 2>/dev/null || true
+          cp android/app/build/outputs/bundle/release/*.aab out/ 2>/dev/null || true
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: threads-android-${{ github.run_number }}
+          path: thread-app/out/
+          retention-days: 30
+
+      # קישור הורדה קבוע לגרסה האחרונה
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: threads-android-v1.0.${{ github.run_number }}
+          name: מאתר הברגות – אנדרואיד 1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          body: |
+            אפליקציית "מאתר הברגות" לאנדרואיד.
+            להתקנה: הורידו את threads-app.apk בטלפון, פתחו אותו ואשרו "התקנה ממקורות לא ידועים".
+          files: thread-app/out/threads-app.apk
