@@ -57,6 +57,7 @@
         <div class="seg" id="sideSeg" role="group" aria-label="צד">
           <button type="button" class="on" data-v="ext">בורג (חיצוני)</button>
           <button type="button" data-v="int">אום (פנימי)</button>
+          <button type="button" data-v="wires">חוטים</button>
         </div>
         <select id="clsSel" aria-label="דרגת סבולת"></select>
       </div>
@@ -134,10 +135,12 @@
     <div class="card">
       <div class="tabs" role="tablist" id="dTabs">
         <button role="tab" class="tab on" data-t="dims">מידות וסבולות</button>
+        <button role="tab" class="tab" data-t="insp">בדיקה בחוטים</button>
         <button role="tab" class="tab" data-t="turn">חריטה</button>
         <button role="tab" class="tab" data-t="mill">כרסום</button>
       </div>
       <div class="tabpanel" id="tp-dims"></div>
+      <div class="tabpanel" id="tp-insp" hidden></div>
       <div class="tabpanel" id="tp-turn" hidden></div>
       <div class="tabpanel" id="tp-mill" hidden></div>
     </div>
@@ -191,6 +194,15 @@
         <li>הזנה במעלה צד (29.5° בהברגה של 60°) מפחיתה רעידות ומשפרת את פינוי השבב.</li>
         <li>הזנה פוחתת: המעבר הראשון הוא העמוק ביותר וכל מעבר אחריו רדוד יותר. בסוף כדאי מעבר "ניקוי" אחד או שניים בלי הזנה.</li>
         <li>בדיקה: טבעת או פקק GO/NO-GO, או מדידה של קוטר הצד בשיטת 3 חוטים.</li>
+      </ul>
+      <h2>מדידה על חוטים (3 חוטים)</h2>
+      <ul>
+        <li>מניחים 2 חוטים בחריצים בצד אחד של הבורג וחוט 1 בצד השני, ומודדים מעליהם במיקרומטר עם סדנים שטוחים. המידה M משקפת את <b>קוטר הצד</b>.</li>
+        <li><b>חוט מיטבי</b> w = P / (2·cos β) נוגע בצלע בדיוק בקוטר הצד, ולכן השגיאה בזווית הפרופיל כמעט לא משפיעה על המדידה. בהברגה של 60° הוא 0.57735·P.</li>
+        <li>הנוסחה: M = d2 + w·(1 + 1/sin β) − (P/2)·cot β. מכאן d2 = M − C, כאשר C הוא "קבוע החוט".</li>
+        <li>חוט קטן מדי לא בולט מעל הפסגות, ואז המיקרומטר נוגע בבורג. חוט גדול מדי נוגע בפינת הפסגה במקום בצלע. התחום המותר מחושב לכל הברגה.</li>
+        <li>אום: מודדים בין 2 כדורים בחריצים משני הצדדים, במדיד פנימי או במכונת מדידה (CMM).</li>
+        <li>בלשונית "בדיקה בחוטים" של כל הברגה אפשר להזין את M שנמדד ולקבל את d2 בפועל, תקין/פסול, וכמה להוסיף בהזנה.</li>
       </ul>
       <h2>כרסום הברגה — עקרונות</h2>
       <ul>

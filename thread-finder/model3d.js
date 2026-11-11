@@ -213,6 +213,71 @@ export function createViewer(container, { onPick, onHover }) {
     return pts[pts.length - 1].clone();
   }
 
+  /* ---------- מדידה על חוטים: 3 חוטים + מיקרומטר (בורג) / 2 כדורים (אום) ---------- */
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xf2f4f7, metalness: 1, roughness: 0.12 });
+  const anvilMat = new THREE.MeshStandardMaterial({ color: 0x3a4250, metalness: 0.85, roughness: 0.35, transparent: true, opacity: 0.55, depthWrite: false });
+  function dimLine(a, b) {
+    const g = new THREE.BufferGeometry().setFromPoints([a, b]);
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: acc, depthTest: false, transparent: true }));
+    l.renderOrder = 9; overlay.add(l);
+  }
+  function arrowCone(pos, dir, size) {
+    const c = new THREE.Mesh(new THREE.ConeGeometry(size * 0.35, size, 12), new THREE.MeshBasicMaterial({ color: acc, depthTest: false, transparent: true }));
+    c.position.copy(pos); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+    c.renderOrder = 9; overlay.add(c);
+  }
+  function wireSetup(isNut) {
+    const { prof, Lt, NL, P } = state;
+    const b = prof.basic, W = window.TM.wires(state.opts.thread);
+    const w = state.opts.wire || W.best;
+    const d = b.d;
+    if (!isNut) {
+      const rc = W.centerExt(b.d2, w);
+      const M = W.Mext(b.d2, w);
+      const kA = Math.max(0, Math.round(Lt / (2 * P)) - 1);
+      const zA = P * (0.75 + kA), zB = zA + P / 2, yc = zA + P / 2;
+      const len = d * 0.95;
+      const wire = (y, sgn) => {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 2, len, 32), chrome);
+        m.rotation.z = Math.PI / 2; m.position.set(0, y, sgn * rc); overlay.add(m);
+      };
+      wire(zA, -1); wire(zA + P, -1); wire(zB, 1);
+      // סדני מיקרומטר
+      const ra = P + w * 0.9, th = Math.max(0.2 * d, 2 * P);
+      for (const sgn of [-1, 1]) {
+        const a = new THREE.Mesh(new THREE.CylinderGeometry(ra, ra, th, 48), anvilMat);
+        a.rotation.x = Math.PI / 2; a.position.set(0, yc, sgn * (M / 2 + th / 2)); overlay.add(a);
+      }
+      // קו מידה M
+      const xd = d * 0.85;
+      const A = new THREE.Vector3(xd, yc, -M / 2), B = new THREE.Vector3(xd, yc, M / 2);
+      dimLine(A, B);
+      dimLine(new THREE.Vector3(ra * 0.6, yc, -M / 2), new THREE.Vector3(xd + 0.05 * d, yc, -M / 2));
+      dimLine(new THREE.Vector3(ra * 0.6, yc, M / 2), new THREE.Vector3(xd + 0.05 * d, yc, M / 2));
+      arrowCone(A.clone().add(new THREE.Vector3(0, 0, 0.06 * d)), new THREE.Vector3(0, 0, -1), 0.1 * d);
+      arrowCone(B.clone().add(new THREE.Vector3(0, 0, -0.06 * d)), new THREE.Vector3(0, 0, 1), 0.1 * d);
+      return new THREE.Vector3(xd, yc, 0);
+    }
+    // אום: 2 כדורים בחריץ, מדידה פנימית
+    const rc = W.centerInt(b.d2, w) + state.clr;
+    const Mi = W.Mint(b.d2, w) + 2 * state.clr;
+    const kA = Math.max(0, Math.round(NL / (2 * P)) - 1);
+    const zA = P * (0.25 + kA), zB = P * (0.75 + kA);
+    for (const [z, sgn] of [[zA, -1], [zB, 1]]) {
+      const s = new THREE.Mesh(new THREE.SphereGeometry(w / 2, 32, 24), new THREE.MeshStandardMaterial({ color: 0xf2f4f7, metalness: 1, roughness: 0.12, depthTest: false, transparent: true }));
+      s.renderOrder = 8; s.position.set(0, z, sgn * rc); overlay.add(s);
+      // מוט המדיד
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.18, w * 0.18, NL * 1.4, 12), new THREE.MeshStandardMaterial({ color: 0x3a4250, metalness: 0.8, roughness: 0.4, depthTest: false, transparent: true }));
+      st.renderOrder = 7; st.position.set(0, z + NL * 0.7, sgn * rc); overlay.add(st);
+    }
+    const yc = NL + P;
+    const A = new THREE.Vector3(0, yc, -Mi / 2), B = new THREE.Vector3(0, yc, Mi / 2);
+    dimLine(A, B);
+    arrowCone(A.clone().add(new THREE.Vector3(0, 0, 0.06 * d)), new THREE.Vector3(0, 0, -1), 0.1 * d);
+    arrowCone(B.clone().add(new THREE.Vector3(0, 0, -0.06 * d)), new THREE.Vector3(0, 0, 1), 0.1 * d);
+    return new THREE.Vector3(0, yc, 0);
+  }
+
   let labelAnchor = null;
   function highlight(param) {
     while (overlay.children.length) { const c = overlay.children.pop(); c.geometry?.dispose(); }
@@ -234,6 +299,8 @@ export function createViewer(container, { onPick, onHover }) {
     } else if (param === 'pitch') {
       const rr = isNut ? b.D1 / 2 : b.d / 2;
       labelAnchor = helixTube(rr * (isNut ? 0.99 : 1.01), (isNut ? 0 : Lt * 0.35), 1);
+    } else if (param === 'wires') {
+      labelAnchor = wireSetup(isNut);
     } else if (param === 'depth' || param === 'angle') {
       const rr = isNut ? b.D1 / 2 : b.d3 / 2;
       ghostCyl(rr, z0, z1, true);
@@ -317,6 +384,7 @@ export function createViewer(container, { onPick, onHover }) {
   return {
     build,
     highlight: (p) => { if (state) { state.opts.param = p; highlight(p); } },
+    setWire: (w) => { if (state) { state.opts.wire = w; if (state.opts.param === 'wires') highlight('wires'); } },
     setPlaying: (on) => { if (anim) anim.playing = on; },
     isAnimated: () => !!anim,
     resetView: () => { camera.position.set(4.2, 2.2, 5.2); controls.target.set(0, 0, 0); controls.autoRotate = true; },

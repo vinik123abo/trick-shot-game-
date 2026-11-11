@@ -98,12 +98,13 @@ function renderClsSel() {
   const g = ['unc', 'unf'].includes(S.fam) ? 'un' : ['g', 'r', 'npt'].includes(S.fam) ? null : 'metric';
   if (!g) { sel.hidden = true; return; }
   sel.hidden = false;
-  const opts = g === 'un' ? (S.side === 'ext' ? ['2A', '1A', '3A'] : ['2B', '1B', '3B']) : (S.side === 'ext' ? ['6g', '4h', '6h', '6f', '6e', '8g'] : ['6H', '5H', '7H', '6G']);
-  sel.innerHTML = opts.map((o) => `<option ${S.cls[g][S.side] === o ? 'selected' : ''}>${o}</option>`).join('');
+  const sd = S.side === 'wires' ? 'ext' : S.side;
+  const opts = g === 'un' ? (sd === 'ext' ? ['2A', '1A', '3A'] : ['2B', '1B', '3B']) : (sd === 'ext' ? ['6g', '4h', '6h', '6f', '6e', '8g'] : ['6H', '5H', '7H', '6G']);
+  sel.innerHTML = opts.map((o) => `<option ${S.cls[g][sd] === o ? 'selected' : ''}>${o}</option>`).join('');
   sel.dataset.g = g;
   sel.title = 'דרגת סבולת';
 }
-$('#clsSel').addEventListener('change', (e) => { S.cls[e.target.dataset.g][S.side] = e.target.value; renderTable(); });
+$('#clsSel').addEventListener('change', (e) => { S.cls[e.target.dataset.g][S.side === 'wires' ? 'ext' : S.side] = e.target.value; renderTable(); });
 
 const norm = (s) => s.toLowerCase().replace(/[״"”'׳]/g, '').replace(/[×*]/g, 'x').replace(/\s+/g, '').replace(/,/g, '.');
 function matches(t, q) {
@@ -118,6 +119,7 @@ $('#q').addEventListener('input', (e) => { S.q = norm(e.target.value.trim()); re
 
 function renderTable() {
   const list = threads.filter((t) => (S.fam === 'all' || t.family === S.fam) && matches(t, S.q));
+  if (S.side === 'wires') return renderWireTable(list);
   const ext = S.side === 'ext';
   $('#thead').innerHTML = ext
     ? `<tr class="grp"><th colspan="3"></th><th colspan="2" class="g">d · קוטר חיצוני</th><th colspan="2" class="g">d2 · קוטר צד</th><th class="g">d3</th><th></th></tr>
@@ -142,7 +144,26 @@ function renderTable() {
     return `<tr tabindex="0" data-i="${i}">${name}${tag}${pt}${cells}<td class="go">←</td></tr>`;
   }).join('');
 }
-const openRow = (e) => { const tr = e.target.closest('tr[data-i]'); if (tr) location.hash = `#t/${tr.dataset.i}`; };
+function renderWireTable(list) {
+  $('#thead').innerHTML = `<tr class="grp"><th colspan="3"></th><th colspan="3" class="g">קוטר חוט (מ"מ)</th><th class="g">סט</th><th></th><th colspan="2" class="g">M מעל 3 חוטים (חוט מהסט)</th><th></th></tr>
+    <tr class="sub"><th>הברגה</th><th>סוג</th><th>P · TPI</th><th>מיטבי</th><th>min</th><th>max</th><th>Ø</th><th>קבוע C</th><th>max</th><th>min</th><th></th></tr>`;
+  $('#count').textContent = `${list.length} הברגות · מדידה על 3 חוטים לבורג · M = d2 + C · חוט מהסט הסטנדרטי (DIN 2269) הקרוב ביותר לחוט המיטבי`;
+  if (!list.length) { $('#rows').innerHTML = '<tr><td colspan="11" class="empty">לא נמצאו הברגות.</td></tr>'; return; }
+  $('#rows').innerHTML = list.map((t) => {
+    const f = families[t.family], b = TM.basic(t), W = TM.wires(t), tl = TM.tol(t, clsFor(t, 'ext'));
+    const w = W.std;
+    const mx = tl ? W.Mext(tl.d2Max, w) : W.Mext(b.d2, w), mn = tl ? W.Mext(tl.d2Min, w) : null;
+    const C = W.C(w);
+    return `<tr tabindex="0" data-i="${threads.indexOf(t)}" data-wires="1"><td><span class="tname">${esc(t.name)}</span></td>
+      <td><span class="tag${f.kind === 'taper' ? ' taper' : ''}">${f.label}</span></td>
+      <td class="n">${trim(t.P, 3)}${t.tpi ? ` <span class="muted">· ${t.tpi}</span>` : ''}</td>
+      <td class="n max">${f3(W.best)}</td><td class="n min">${f3(W.ext.min)}</td><td class="n min">${f3(W.ext.max)}</td>
+      <td class="n"><b>${w.toFixed(3)}</b>${W.stdInRange ? '' : ' <span class="muted">!</span>'}</td>
+      <td class="n">${C >= 0 ? '+' : '−'}${f3(Math.abs(C))}</td>
+      <td class="n max">${f3(mx)}</td><td class="n min">${mn == null ? '<span class="muted">בסיס</span>' : f3(mn)}</td><td class="go">←</td></tr>`;
+  }).join('');
+}
+const openRow = (e) => { const tr = e.target.closest('tr[data-i]'); if (!tr) return; if (tr.dataset.wires) S.openWires = true; location.hash = `#t/${tr.dataset.i}`; };
 $('#rows').addEventListener('click', openRow);
 $('#rows').addEventListener('keydown', (e) => { if (e.key === 'Enter') openRow(e); });
 $('#customForm').addEventListener('submit', (e) => {
@@ -154,12 +175,13 @@ $('#customForm').addEventListener('submit', (e) => {
 /* =========================================================
    פרטי הברגה
    ========================================================= */
-const D = { t: null, view: 'bolt', section: true, param: 'major', side: 'ext', tab: 'dims' };
+const D = { t: null, view: 'bolt', section: true, param: 'major', side: 'ext', tab: 'dims', wire: null };
 let viewer = null, viewerFailed = false;
 
 const PARAMS = [
   { id: 'major', ext: 'd', int: 'D', name: 'קוטר חיצוני' },
   { id: 'pitchd', ext: 'd2', int: 'D2', name: 'קוטר צד' },
+  { id: 'wires', ext: 'M', int: 'M', name: 'מדידה על חוטים' },
   { id: 'minor', ext: 'd3', int: 'D1', name: 'קוטר פנימי' },
   { id: 'pitch', ext: 'P', int: 'P', name: 'פסיעה' },
   { id: 'angle', ext: 'α', int: 'α', name: 'זווית' },
@@ -204,6 +226,7 @@ function ensureViewer() {
 function openThread(t) {
   D.t = t;
   D.param = 'major';
+  { const W = TM.wires(t); D.wire = W.stdInRange ? W.std : +W.best.toFixed(3); }
   D.view = 'bolt'; D.side = 'ext';
   $$('#viewSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === 'bolt'));
   const isPipe = ['g', 'r', 'npt'].includes(t.family);
@@ -216,6 +239,7 @@ function openThread(t) {
     ['קוטר', `${trim(b.d, 3)}`], ['פסיעה', `${trim(b.P, 3)}`], ['TPI', trim(b.tpi, 2)], ['מקדח', f2(b.drill)],
   ].map(([k, v]) => `<div class="q"><small>${k}</small><b>${v}</b></div>`).join('');
   document.title = `${t.name} · מאתר הברגות`;
+  if (S.openWires) { D.param = 'wires'; S.openWires = false; D.tab = 'insp'; $$('#dTabs .tab').forEach((x) => x.classList.toggle('on', x.dataset.t === 'insp')); }
   rebuildModel();
   renderParams(); renderInfo(); draw2D(); renderTab();
 }
@@ -223,7 +247,7 @@ function openThread(t) {
 function rebuildModel() {
   const v = ensureViewer(); if (!v) return;
   const pipe = ['g', 'r', 'npt'].includes(D.t.family);
-  v.build(TM.profile(D.t), { view: D.view, section: D.section, param: D.param, pipe });
+  v.build(TM.profile(D.t), { view: D.view, section: D.section, param: D.param, pipe, thread: D.t, wire: D.wire });
   $('#playBtn').hidden = D.view !== 'assembly';
   $('#playBtn').textContent = '❚❚';
   $('#secChk').closest('.toggle').hidden = D.view === 'assembly';
@@ -252,11 +276,6 @@ function setParam(p) {
 }
 
 /* ----- מידע על פרמטר ----- */
-function wires(b) {
-  const P = b.P;
-  if (b.angle === 55) { const w = 0.5637 * P; return { w, M: (d2) => d2 + 3.1657 * w - 0.9605 * P }; }
-  const w = 0.57735 * P; return { w, M: (d2) => d2 + 3 * w - 0.866025 * P };
-}
 
 function paramInfo(param, side) {
   const t = D.t, b = TM.basic(t), cls = clsFor(t, side), tl = TM.tol(t, cls);
@@ -279,13 +298,30 @@ function paramInfo(param, side) {
       o.nom = b.d2;
       if (tl) { if (ext) { o.max = tl.d2Max; o.min = tl.d2Min; o.tol = tl.Td2; } else { o.min = tl.D2Min; o.max = tl.D2Max; o.tol = tl.TD2; } }
       o.text = 'זה הקוטר החשוב ביותר להתאמה בין בורג לאום. מודדים אותו בשיטת 3 חוטים, במיקרומטר לקוטר צד, או בודקים בטבעת או פקק GO/NO-GO.';
-      if (b.profile !== 'npt') {
-        const W = wires(b);
+      {
+        const W = TM.wires(t), w = D.wire;
         o.machine = ext
-          ? `<b>מדידת 3 חוטים:</b> חוט מיטבי Ø${f3(W.w)} · מידה מעל החוטים M = ${tl ? `${f3(W.M(tl.d2Max))} עד ${f3(W.M(tl.d2Min))}` : f3(W.M(b.d2))}`
-          : `<b>בדיקה:</b> פקק הברגה GO/NO-GO ${cls || ''}. חוט מיטבי למדידת אום Ø${f3(W.w)}.`;
+          ? `<b>מדידת 3 חוטים:</b> חוט Ø${f3(w)} · M = ${tl ? `${f3(W.Mext(tl.d2Max, w))} עד ${f3(W.Mext(tl.d2Min, w))}` : f3(W.Mext(b.d2, w))} <a href="#" class="lnk" data-goparam="wires">פרטים ←</a>`
+          : `<b>בדיקה:</b> פקק הברגה GO/NO-GO ${cls || ''}, או 2 כדורים Ø${f3(w)} <a href="#" class="lnk" data-goparam="wires">פרטים ←</a>`;
       }
       o.label = tl ? `${ext ? 'd2' : 'D2'} ${f3(o.max)} / ${f3(o.min)}` : `d2 ${f3(b.d2)}`;
+      break;
+    }
+    case 'wires': {
+      const W = TM.wires(t), w = D.wire;
+      const M = ext ? (x) => W.Mext(x, w) : (x) => W.Mint(x, w);
+      o.title = ext ? 'מדידה על 3 חוטים' : 'מדידה על 2 כדורים (אום)';
+      o.where = ext ? 'מידת המיקרומטר מעל 3 חוטים שמונחים בחריצים: 2 בצד אחד ו-1 בצד השני' : 'המידה בין שני כדורים שמונחים בחריצים משני צידי האום';
+      o.nom = M(b.d2);
+      if (tl) { if (ext) { o.max = M(tl.d2Max); o.min = M(tl.d2Min); o.tol = tl.Td2; } else { o.min = M(tl.D2Min); o.max = M(tl.D2Max); o.tol = tl.TD2; } }
+      const lim = ext ? W.ext : W.int;
+      o.extra = [['חוט נבחר', `Ø${f3(w)}`], ['חוט מיטבי', `Ø${f3(W.best)}`], ['תחום חוט מותר', `${f3(lim.min)}–${f3(lim.max)}`], ['קבוע החוט C', `${W.C(w) >= 0 ? '+' : '−'}${f3(Math.abs(W.C(w)))}`]];
+      o.text = ext
+        ? `החוטים נוגעים בצלעות השן, ולכן המידה מעליהם משקפת את <b>קוטר הצד</b>, ולא את הקוטר החיצוני. הנוסחה: M = d2 + C, כאשר C = w·(1 + 1/sin${b.angle / 2}°) − (P/2)·cot${b.angle / 2}°.`
+        : 'בהברגה פנימית מודדים בין שני כדורים (או חוטים) עם מדיד פנימי או מכונת מדידה. המידה נותנת את קוטר הצד D2.';
+      o.machine = `<b>${ext ? 'קוטר הצד מהמדידה' : 'D2 מהמדידה'}:</b> ${ext ? 'd2 = M − C' : 'D2 = M + C'}${!lim || (w >= lim.min && w <= lim.max) ? '' : ' · <span style="color:var(--warn)">החוט מחוץ לתחום המותר!</span>'}${b.taper ? ' · בהברגה קונית מודדים במישור המדידה (gauge plane).' : ''}`;
+      o.wireSel = true;
+      o.label = tl ? `M ${f3(o.max)} / ${f3(o.min)}` : `M ${f3(o.nom)}`;
       break;
     }
     case 'minor':
@@ -351,6 +387,34 @@ function tolBar(o) {
   </div>`;
 }
 
+function wireSelect(id) {
+  const W = TM.wires(D.t);
+  const lo = Math.max(W.ext.min, W.int.min), hi = Math.min(W.ext.max, W.int.max);
+  const opts = TM.WIRE_SET.filter((w) => w >= lo * 0.9 && w <= hi * 1.1);
+  const best = +W.best.toFixed(4);
+  const all = [...new Set([...opts, best, D.wire])].sort((a, b) => a - b);
+  return `<label class="field wire-field"><span>קוטר חוט / כדור</span><select id="${id}">${all.map((w) => {
+    const ok = w >= lo && w <= hi;
+    const tag = w === best ? ' — מיטבי' : opts.includes(w) ? (ok ? ' — סט סטנדרטי' : ' — מחוץ לתחום') : '';
+    return `<option value="${w}" ${Math.abs(w - D.wire) < 1e-6 ? 'selected' : ''}>Ø${w.toFixed(3)}${tag}</option>`;
+  }).join('')}<option value="custom">אחר…</option></select></label>`;
+}
+function bindWireSelect(id) {
+  const el = $('#' + id); if (!el) return;
+  el.addEventListener('change', () => {
+    let v = el.value;
+    if (v === 'custom') { const r = prompt('קוטר חוט (מ"מ):', D.wire.toFixed(3)); v = r && parseFloat(r.replace(',', '.')); }
+    v = parseFloat(v);
+    if (v > 0) setWire(v); else renderInfo();
+  });
+}
+function setWire(w) {
+  D.wire = w;
+  if (viewer) viewer.setWire(w);
+  renderInfo(); draw2D();
+  if (D.tab === 'insp') renderInsp();
+}
+
 function renderInfo() {
   const o = paramInfo(D.param, D.side);
   const dp = o.dp ?? 3, unit = o.unit ?? 'מ"מ';
@@ -364,6 +428,7 @@ function renderInfo() {
         <div class="lim min"><small>מינימום</small><b>${o.min != null ? o.min.toFixed(3) : `<span class="muted small">${o.minNote || '—'}</span>`}</b></div>
       </div>${tolBar(o)}` : ''}
     ${o.extra ? `<div class="limits">${o.extra.map(([k, v]) => `<div class="lim"><small>${k}</small><b>${v}</b></div>`).join('')}</div>` : ''}
+    ${o.wireSel ? wireSelect('infoWire') : ''}
     <p class="explain">${o.text}</p>
     ${o.machine ? `<div class="machine">${o.machine}</div>` : ''}
     <div class="side-pick seg" id="infoSide">
@@ -377,6 +442,8 @@ function renderInfo() {
     const b = e.target.closest('button'); if (!b) return;
     D.side = b.dataset.v; renderParams(); renderInfo(); draw2D();
   });
+  bindWireSelect('infoWire');
+  $$('#info [data-goparam]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); setParam(a.dataset.goparam); }));
   const cs = $('#infoCls');
   if (cs) cs.addEventListener('change', () => { S.cls[clsGroup(D.t)][D.side] = cs.value; renderInfo(); renderTab(); });
 }
@@ -424,7 +491,7 @@ function draw2D() {
     { id: 'pitchd', r: b.d2 / 2, l: `${ext ? 'd2' : 'D2'} ${trim(b.d2, 3)}` },
     ext ? { id: 'minor', r: b.d3 / 2, l: `d3 ${trim(b.d3, 3)}` } : { id: 'minor', r: b.D1 / 2, l: `D1 ${trim(b.D1, 3)}` },
   ];
-  const refSel = D.param === 'drill' && !ext ? 'minor' : D.param;
+  const refSel = D.param === 'drill' && !ext ? 'minor' : D.param === 'wires' ? 'pitchd' : D.param;
   let dims = '';
   // אמצע פסגת בורג: uAt(x)=n → x = x0 + (n+0.25)kP
   const crestX = (i) => x0 + (i + 0.25) * k * P;
@@ -445,6 +512,18 @@ function draw2D() {
     dims = `<line class="dim" x1="${cx}" y1="${apexY}" x2="${cx - dx}" y2="${yR}"/><line class="dim" x1="${cx}" y1="${apexY}" x2="${cx + dx}" y2="${yR}"/>
       <path class="dim" d="M${cx - R * Math.sin(half)},${apexY + R * Math.cos(half)} A${R},${R} 0 0 0 ${cx + R * Math.sin(half)},${apexY + R * Math.cos(half)}"/>
       <text class="dimtxt" x="${cx}" y="${apexY + R + 18}" text-anchor="middle">${b.angle}°</text>`;
+  } else if (D.param === 'wires') {
+    const W = TM.wires(t), w = D.wire;
+    const M = ext ? W.Mext(b.d2, w) : W.Mint(b.d2, w);
+    const rc = ext ? W.centerExt(b.d2, w) : W.centerInt(b.d2, w);
+    const xc = ext ? rootX(0) : crestX(1);
+    const yc = y(rc) - (ext ? 0 : 2), rr = (w / 2) * k;
+    const yEdge = ext ? y(M / 2) : y(M / 2);
+    dims = `<circle cx="${xc}" cy="${yc}" r="${rr}" fill="url(#gWire)" stroke="var(--text)" stroke-width="1.4"/>
+      <circle cx="${xc}" cy="${yc}" r="2.5" fill="var(--text)"/>
+      <line class="dim" x1="${xc - rr - 30}" x2="${xc + rr + 120}" y1="${yEdge}" y2="${yEdge}"/>
+      <rect x="${xc + rr + 8}" y="${yEdge + (ext ? -30 : 8)}" width="210" height="22" rx="6" fill="var(--surface)"/>
+      <text class="dimtxt" x="${xc + rr + 14}" y="${yEdge + (ext ? -14 : 24)}">M/2 · חוט Ø${trim(w, 3)}</text>`;
   } else if (D.param === 'depth') {
     const xx = rootX(1);
     const ya = y(b.d / 2), yb = y((ext ? b.d3 : b.D1) / 2);
@@ -462,6 +541,7 @@ function draw2D() {
   $('#svg2d').innerHTML = `<svg class="p2d" viewBox="0 0 ${W} ${H}" role="img" aria-label="חתך פרופיל ההברגה">
     <defs>
       <linearGradient id="gBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c7cdd6"/><stop offset="1" stop-color="#8b95a3"/></linearGradient>
+      <radialGradient id="gWire" cx=".35" cy=".35"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#c9d0da"/><stop offset="1" stop-color="#7d8794"/></radialGradient>
       <linearGradient id="gNut" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e2b45c"/><stop offset="1" stop-color="#b98429"/></linearGradient>
       <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-opacity=".12" stroke-width="2"/></pattern>
       <marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="var(--accent)"/></marker>
@@ -493,7 +573,8 @@ $('#dTabs').addEventListener('click', (e) => {
   renderTab();
 });
 function renderTab() {
-  ['dims', 'turn', 'mill'].forEach((k) => { $(`#tp-${k}`).hidden = D.tab !== k; });
+  ['dims', 'insp', 'turn', 'mill'].forEach((k) => { $(`#tp-${k}`).hidden = D.tab !== k; });
+  if (D.tab === 'insp') renderInsp();
   if (D.tab === 'dims') renderDims();
   if (D.tab === 'turn') renderTurn();
   if (D.tab === 'mill') renderMill();
@@ -691,6 +772,193 @@ function renderMill() {
   const bind = (id, key, fn = parseFloat) => $(id).addEventListener('change', (e) => { const v = fn(e.target.value); if (v > 0 || key === 'climb') { MS[key] = v; renderMill(); } });
   bind('#mTool', 'tool'); bind('#mZ', 'z', (v) => parseInt(v, 10)); bind('#mVc', 'vc'); bind('#mFz', 'fz'); bind('#mL', 'L');
   $('#mClimb').addEventListener('change', (e) => { MS.climb = e.target.value === '1'; renderMill(); });
+}
+
+
+/* בדיקה: מדידה על חוטים */
+const IS = { M: '', dMeas: '' };
+function wireSetupSVG(t, side, w) {
+  const pr = TM.profile(t), b = pr.basic, W = TM.wires(t), P = b.P;
+  const ext = side === 'ext';
+  const M = ext ? W.Mext(b.d2, w) : W.Mint(b.d2, w);
+  const rc = ext ? W.centerExt(b.d2, w) : W.centerInt(b.d2, w);
+  const Hh = 330, Wd = 560;
+  const outerR = ext ? M / 2 + Math.max(0.12 * b.d, 2 * P) : b.d / 2 + Math.max(0.25 * b.d, 2.5 * P);
+  const k = (Hh - 40) / (2 * outerR);
+  const nP = Math.min(14, Math.max(2.6, (Wd - 200) / (P * k)));
+  const span = nP * P * k;
+  const x0 = (Wd - span) / 2 - 40, cy = Hh / 2;
+  const uMid = Math.floor(nP / 2) - 0.5;
+  const xs = []; for (let i = 0; i <= 500; i++) xs.push(x0 + span * i / 500);
+  const u = (x) => (x - x0) / (P * k);
+  const pts = (fn, sgn, off) => xs.map((x) => `${x.toFixed(1)},${(cy + sgn * fn(u(x) + off) * k).toFixed(1)}`);
+  let body;
+  if (ext) {
+    const top = pts(pr.rExt, -1, 0), bot = pts(pr.rExt, 1, 0.5).reverse();
+    body = `<polygon points="${top.join(' ')} ${bot.join(' ')}" fill="url(#iB)" stroke="var(--text)" stroke-width="1.2"/>`;
+  } else {
+    const R = outerR * k;
+    const top = pts(pr.rInt, -1, 0), bot = pts(pr.rInt, 1, 0.5);
+    body = `<polygon points="${x0},${cy - R} ${top.join(' ')} ${x0 + span},${cy - R}" fill="url(#iN)" stroke="var(--text)" stroke-width="1.2"/>
+            <polygon points="${x0},${cy + R} ${bot.join(' ')} ${x0 + span},${cy + R}" fill="url(#iN)" stroke="var(--text)" stroke-width="1.2"/>`;
+  }
+  // מיקום חוטים: בורג — חריץ עליון ב-u=n+0.5, חריץ תחתון ב-u=n. אום — חריץ עליון ב-u=n, תחתון ב-u=n+0.5
+  const X = (uu) => x0 + uu * P * k;
+  const rr = (w / 2) * k;
+  const circ = (x, yy) => `<circle cx="${x}" cy="${yy}" r="${rr}" fill="url(#iW)" stroke="var(--text)" stroke-width="1.2"/>`;
+  let wiresSvg, anv = '', dim;
+  const Mk = (M / 2) * k;
+  if (ext) {
+    const uTop = Math.round(uMid) + 0.5;
+    wiresSvg = circ(X(uTop - 1), cy - rc * k) + circ(X(uTop), cy - rc * k) + circ(X(uTop - 0.5), cy + rc * k);
+    const ax0 = X(uTop - 1) - rr - 10, ax1 = X(uTop) + rr + 10, ah = 16;
+    anv = `<rect x="${ax0}" y="${cy - Mk - ah}" width="${ax1 - ax0}" height="${ah}" rx="3" fill="#3a4250"/>
+           <rect x="${ax0}" y="${cy + Mk}" width="${ax1 - ax0}" height="${ah}" rx="3" fill="#3a4250"/>
+           <text x="${(ax0 + ax1) / 2}" y="${cy - Mk - ah - 6}" text-anchor="middle" class="partlbl">סדן מיקרומטר</text>`;
+    const xd = x0 + span + 30;
+    dim = `<line class="dim" x1="${ax1}" x2="${xd + 8}" y1="${cy - Mk}" y2="${cy - Mk}" stroke-dasharray="3 3"/>
+           <line class="dim" x1="${ax1}" x2="${xd + 8}" y1="${cy + Mk}" y2="${cy + Mk}" stroke-dasharray="3 3"/>
+           <line class="dim" x1="${xd}" x2="${xd}" y1="${cy - Mk}" y2="${cy + Mk}" marker-start="url(#iA)" marker-end="url(#iA)"/>
+           <text class="dimtxt" x="${xd + 10}" y="${cy + 5}">M = ${M.toFixed(3)}</text>`;
+  } else {
+    const uTop = Math.round(uMid);
+    wiresSvg = circ(X(uTop), cy - rc * k) + circ(X(uTop + 0.5), cy + rc * k);
+    const xa = X(uTop + 0.25);
+    dim = `<line class="dim" x1="${xa}" x2="${xa}" y1="${cy - Mk}" y2="${cy + Mk}" marker-start="url(#iA)" marker-end="url(#iA)"/>
+           <rect x="${xa + 8}" y="${cy - 12}" width="130" height="24" rx="6" fill="var(--surface)"/>
+           <text class="dimtxt" x="${xa + 14}" y="${cy + 5}">M = ${M.toFixed(3)}</text>`;
+  }
+  return `<svg class="p2d insp-svg" viewBox="0 0 ${Wd} ${Hh}" role="img" aria-label="שרטוט מדידה על חוטים">
+    <defs>
+      <linearGradient id="iB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e7ec"/><stop offset=".5" stop-color="#9aa3af"/><stop offset="1" stop-color="#d0d5dc"/></linearGradient>
+      <linearGradient id="iN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2b45c"/><stop offset="1" stop-color="#b98429"/></linearGradient>
+      <radialGradient id="iW" cx=".35" cy=".35"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#c9d0da"/><stop offset="1" stop-color="#6f7986"/></radialGradient>
+      <marker id="iA" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="var(--accent)"/></marker>
+    </defs>
+    <line class="axisline" x1="${x0 - 10}" x2="${x0 + span + 10}" y1="${cy}" y2="${cy}"/>
+    ${body}${anv}${wiresSvg}${dim}
+  </svg>`;
+}
+
+function renderInsp() {
+  const t = D.t, b = TM.basic(t), W = TM.wires(t), w = D.wire;
+  const ext = D.side === 'ext';
+  const tl = TM.tol(t, clsFor(t, D.side));
+  const lim = ext ? W.ext : W.int;
+  const Mf = ext ? (x) => W.Mext(x, w) : (x) => W.Mint(x, w);
+  const d2max = tl ? (ext ? tl.d2Max : tl.D2Max) : null, d2min = tl ? (ext ? tl.d2Min : tl.D2Min) : null;
+  const okWire = w >= lim.min && w <= lim.max;
+  const C = W.C(w);
+  const sym = ext ? 'd2' : 'D2';
+  // טבלת חוטים מהסט
+  const lo = Math.max(W.ext.min, W.int.min), hi = Math.min(W.ext.max, W.int.max);
+  const setRows = [...new Set([...TM.WIRE_SET.filter((x) => x >= lo && x <= hi), +W.best.toFixed(4)])].sort((a, c) => a - c).map((x) => {
+    const M = ext ? (v) => W.Mext(v, x) : (v) => W.Mint(v, x);
+    return `<tr class="click" data-w="${x}"><td class="n">${x.toFixed(3)}${Math.abs(x - W.best) < 1e-3 ? ' <span class="tag">מיטבי</span>' : ''}${Math.abs(x - w) < 1e-6 ? ' <span class="tag taper">נבחר</span>' : ''}</td>
+      <td class="n">${(W.C(x) >= 0 ? '+' : '−') + f3(Math.abs(W.C(x)))}</td>
+      <td class="n">${d2max != null ? f3(M(d2max)) : '—'}</td><td class="n">${f3(M(b.d2))}</td><td class="n">${d2min != null ? f3(M(d2min)) : '—'}</td></tr>`;
+  }).join('');
+
+  // בדיקת מדידה
+  let verdict = '';
+  const Mm = parseFloat(String(IS.M).replace(',', '.'));
+  if (Mm > 0) {
+    const d2a = ext ? W.d2FromM(Mm, w) : W.D2FromM(Mm, w);
+    const dev = (d2a - b.d2) * 1000;
+    let cls = 'ok', msg;
+    if (d2max != null && d2min != null) {
+      const mid = (d2max + d2min) / 2;
+      if (d2a > d2max + 1e-9) {
+        cls = ext ? 'warn' : 'bad';
+        msg = ext
+          ? `גדול מדי ב-${Math.round((d2a - d2max) * 1000)} µm. אפשר לתקן: הזנה רדיאלית נוספת ≈ <b>${f3((d2a - mid) / 2)}</b> מ"מ (לפי אמצע הסבולת).`
+          : `גדול מדי ב-${Math.round((d2a - d2max) * 1000)} µm. ההברגה רופפת, החלק פסול (לא ניתן להקטין).`;
+      } else if (d2a < d2min - 1e-9) {
+        cls = ext ? 'bad' : 'warn';
+        msg = ext
+          ? `קטן מדי ב-${Math.round((d2min - d2a) * 1000)} µm. ההברגה רופפת, החלק פסול (לא ניתן להגדיל).`
+          : `קטן מדי ב-${Math.round((d2min - d2a) * 1000)} µm. אפשר לתקן: הזנה רדיאלית נוספת ≈ <b>${f3((mid - d2a) / 2)}</b> מ"מ.`;
+      } else {
+        const pos = (d2a - d2min) / (d2max - d2min);
+        msg = `בתוך הסבולת ${tl.cls}, במיקום ${Math.round(pos * 100)}% מהתחום (0% = מינימום).`;
+      }
+    } else msg = 'אין טבלת סבולת להברגה זו, אז מוצגת הסטייה מהנומינלי בלבד.';
+    verdict = `<div class="verdict ${cls}">
+      <div class="vt">${cls === 'ok' ? '✓ תקין' : cls === 'warn' ? '⚠ נדרש תיקון' : '✕ פסול'}</div>
+      <div class="vg">
+        <div><small>${sym} בפועל</small><b>${f3(d2a)}</b></div>
+        <div><small>סטייה מנומינלי</small><b>${dev >= 0 ? '+' : '−'}${Math.abs(Math.round(dev))} µm</b></div>
+        ${d2max != null ? `<div><small>תחום ${sym}</small><b>${f3(d2min)}–${f3(d2max)}</b></div>` : ''}
+      </div>
+      <p>${msg}</p>
+    </div>`;
+  }
+  let majCheck = '';
+  const dm = parseFloat(String(IS.dMeas).replace(',', '.'));
+  if (ext && dm > 0 && tl) {
+    const ok = dm <= tl.dMax + 1e-9 && dm >= tl.dMin - 1e-9;
+    majCheck = `<div class="alert ${ok ? 'ok' : 'warn'}">קוטר חיצוני ${f3(dm)}: ${ok ? 'בתוך התחום' : dm > tl.dMax ? `גדול מ-d max (${f3(tl.dMax)})` : `קטן מ-d min (${f3(tl.dMin)})`}.</div>`;
+  }
+
+  const gauges = clsGroup(t)
+    ? (ext
+      ? [`טבעת הברגה GO / NO-GO: <b>${esc(t.name)} ${tl.cls}</b>`, `קליבר / מיקרומטר על הקוטר החיצוני: ${f3(tl.dMax)} עד ${f3(tl.dMin)}`, `מסרק פסיעה (מד הברגות): ${trim(b.P, 3)} מ"מ${t.tpi ? ` / ${t.tpi} TPI` : ''}`, `מיקרומטר לקוטר צד (עם חודים ${b.angle}°): קריאה ישירה של d2 ${f3(tl.d2Max)}–${f3(tl.d2Min)}`]
+      : [`פקק הברגה GO / NO-GO: <b>${esc(t.name)} ${tl.cls}</b>`, `פקק חלק / מדיד לקוטר הקידוח D1: ${f3(tl.D1Min)}–${f3(tl.D1Max)}`, `מסרק פסיעה: ${trim(b.P, 3)} מ"מ${t.tpi ? ` / ${t.tpi} TPI` : ''}`, `מדידה על 2 כדורים Ø${f3(w)} במדיד פנימי או במכונת מדידה (CMM)`])
+    : [`מד הברגה / טבעת לפי התקן (${families[t.family].std})`, `מסרק פסיעה: ${t.tpi} TPI (${trim(b.P, 3)} מ"מ)`, b.taper ? 'בהברגה קונית בודקים מיקום מישור המדידה בעזרת מד עם מדרגה (L1).' : 'מדידת 3 חוטים לקוטר הצד, לפי הטבלה למעלה'];
+
+  $('#tp-insp').innerHTML = `
+    <div class="insp-top">
+      <div class="seg" id="inspSide"><button type="button" data-v="ext" class="${ext ? 'on' : ''}">בורג · 3 חוטים</button><button type="button" data-v="int" class="${!ext ? 'on' : ''}">אום · 2 כדורים</button></div>
+      ${wireSelect('inspWire')}
+      ${clsGroup(t) ? `<label class="field wire-field"><span>דרגת סבולת</span><select id="inspCls">${TM.classes(t)[D.side].map((c) => `<option ${c === (tl && tl.cls) ? 'selected' : ''}>${c}</option>`).join('')}</select></label>` : ''}
+      <button type="button" class="btn ghost" id="inspShow3d">הצג במודל ↑</button>
+    </div>
+    ${okWire ? '' : `<div class="alert warn">החוט Ø${f3(w)} מחוץ לתחום המותר (${f3(lim.min)}–${f3(lim.max)}). ${w < lim.min ? 'הוא קטן מדי: המיקרומטר ייגע בפסגות השן ולא בחוטים.' : 'הוא גדול מדי: החוט ייגע בפינת הפסגה ולא בצלע.'}</div>`}
+    <div class="grid2">
+      <div>${wireSetupSVG(t, D.side, w)}</div>
+      <div>
+        <div class="kpis two">
+          <div class="kpi"><small>חוט מיטבי (נוגע בקוטר הצד)</small><b>Ø${f3(W.best)}</b></div>
+          <div class="kpi"><small>חוט מהסט הסטנדרטי</small><b>Ø${W.std.toFixed(3)}</b></div>
+          <div class="kpi"><small>חוט מינימלי</small><b>Ø${f3(lim.min)}</b></div>
+          <div class="kpi"><small>חוט מקסימלי</small><b>Ø${f3(lim.max)}</b></div>
+          <div class="kpi"><small>קבוע החוט C (לחוט הנבחר)</small><b>${C >= 0 ? '+' : '−'}${f3(Math.abs(C))}</b></div>
+          <div class="kpi"><small>זווית סליל λ</small><b>${(W.lead * 180 / Math.PI).toFixed(2)}°</b></div>
+          <div class="kpi"><small>תיקון סליל משוער</small><b>${(W.leadCorr(w) * 1000).toFixed(1)} µm</b></div>
+          <div class="kpi"><small>${sym} נומינלי</small><b>${f3(b.d2)}</b></div>
+        </div>
+        <div class="formula">${ext ? `M = d2 + w·(1 + 1/sin β) − (P/2)·cot β` : `M = D2 − w·(1 + 1/sin β) + (P/2)·cot β`}<br><span class="muted">β = ${b.angle / 2}° · w = Ø${f3(w)} · P = ${trim(b.P, 4)}</span></div>
+      </div>
+    </div>
+
+    <h3 class="h3">ערכי M לפי חוט ${tl ? `<span class="tag">${tl.cls}</span>` : ''}</h3>
+    <div class="table-wrap" style="max-height:none"><table class="dt"><thead><tr><th>Ø חוט</th><th>קבוע C</th><th>M ל-${sym} max</th><th>M נומינלי</th><th>M ל-${sym} min</th></tr></thead><tbody>${setRows}</tbody></table></div>
+    <p class="muted small">לחיצה על שורה בוחרת את החוט. חוטים מתוך הסט הסטנדרטי (DIN 2269) שנמצאים בתחום המותר.</p>
+
+    <h3 class="h3">בדיקת מדידה</h3>
+    <div class="form-grid">
+      <label class="field"><span>M שנמדד (מ"מ)</span><input type="number" id="inspM" step="0.001" inputmode="decimal" placeholder="${f3(Mf(b.d2))}" value="${esc(IS.M)}"></label>
+      ${ext ? `<label class="field"><span>קוטר חיצוני שנמדד (לא חובה)</span><input type="number" id="inspD" step="0.001" inputmode="decimal" placeholder="${f3(tl ? tl.dMax : b.d)}" value="${esc(IS.dMeas)}"></label>` : '<div></div>'}
+      <div class="field"><span>&nbsp;</span><button type="button" class="btn" id="inspGo">בדוק</button></div>
+    </div>
+    ${verdict}${majCheck}
+
+    <h3 class="h3">שיטות בדיקה נוספות</h3>
+    <ul class="gauges">${gauges.map((g) => `<li>${g}</li>`).join('')}</ul>
+    <p class="muted small">הנוסחה סימטרית ולא כוללת את תיקון זווית הסליל (בדרך כלל כמה מיקרונים בודדים, מוצג למעלה) ואת כוח המדידה. בעבודה מדויקת יש לקחת בחשבון את קוטר החוט האמיתי מתעודת הכיול ולאמת מול התקן.</p>`;
+
+  $('#inspSide').addEventListener('click', (e) => { const bt = e.target.closest('button'); if (!bt) return; D.side = bt.dataset.v; IS.M = ''; renderInsp(); renderParams(); renderInfo(); draw2D(); });
+  bindWireSelect('inspWire');
+  const ic = $('#inspCls'); if (ic) ic.addEventListener('change', () => { S.cls[clsGroup(t)][D.side] = ic.value; renderInsp(); renderInfo(); });
+  $$('#tp-insp tr[data-w]').forEach((r) => r.addEventListener('click', () => setWire(parseFloat(r.dataset.w))));
+  const go = () => { IS.M = $('#inspM').value; IS.dMeas = $('#inspD') ? $('#inspD').value : ''; renderInsp(); };
+  $('#inspGo').addEventListener('click', go);
+  $('#inspM').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  $('#inspShow3d').addEventListener('click', () => {
+    if (D.view === 'assembly' || (D.view === 'nut') !== !ext) { D.view = ext ? 'bolt' : 'nut'; $$('#viewSeg button').forEach((x) => x.classList.toggle('on', x.dataset.v === D.view)); rebuildModel(); }
+    setParam('wires');
+    $('.studio').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 document.addEventListener('click', (e) => {

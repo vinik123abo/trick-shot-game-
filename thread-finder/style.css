@@ -282,3 +282,26 @@ pre.code .k { color: #ff9b57; }
   .q { min-width: 0; flex: 1 1 40%; }
   .hero-in { padding-top: 28px; padding-bottom: 28px; }
 }
+
+/* ---------- בדיקה בחוטים ---------- */
+.wire-field { margin-top: 12px; max-width: 320px; }
+.lnk { color: var(--accent); font-weight: 700; text-decoration: none; white-space: nowrap; }
+.insp-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; }
+.insp-top .wire-field { margin: 0; min-width: 220px; }
+.insp-svg { width: 100%; height: auto; display: block; direction: ltr; background: var(--surface-2); border-radius: 12px; }
+.kpis.two { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
+.formula { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font: 600 .9rem/1.7 "JetBrains Mono", monospace; direction: ltr; text-align: left; }
+.formula .muted { font-weight: 500; font-size: .8rem; }
+.h3 { margin: 20px 0 8px; font-size: 1.02rem; }
+.verdict { border-radius: 14px; padding: 14px 16px; margin: 6px 0 10px; border: 1.5px solid; }
+.verdict.ok { background: var(--good-soft); border-color: var(--good); }
+.verdict.warn { background: var(--warn-soft); border-color: var(--warn); }
+.verdict.bad { background: color-mix(in srgb, #dc2626 12%, var(--surface)); border-color: #dc2626; }
+.verdict .vt { font-weight: 900; font-size: 1.15rem; }
+.verdict.ok .vt { color: var(--good); } .verdict.warn .vt { color: var(--warn); } .verdict.bad .vt { color: #dc2626; }
+.verdict .vg { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 8px 0 4px; }
+.verdict .vg small { display: block; color: var(--muted); font-size: .75rem; }
+.verdict .vg b { font: 700 1.1rem "JetBrains Mono", monospace; direction: ltr; unicode-bidi: isolate; }
+.verdict p { margin: 4px 0 0; }
+.gauges { margin: 0; padding-inline-start: 20px; }
+.gauges li { margin-bottom: 6px; }

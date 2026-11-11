@@ -235,5 +235,45 @@
     return { ap, passes, rows, flank: b.angle === 55 ? 27 : 29.5 };
   }
 
-  window.TM = { basic, tol, classes, profile, turning, fracToInch };
+  /* ---------- מדידה על חוטים (שיטת 3 חוטים / 2 כדורים) ----------
+   * β = חצי זווית הפרופיל. נוסחה סימטרית (ללא תיקון זווית סליל):
+   *   בורג:  M = d2 + w·(1 + 1/sinβ) − (P/2)·cotβ
+   *   אום:   M = D2 − w·(1 + 1/sinβ) + (P/2)·cotβ   (מידה בין הכדורים/החוטים מבפנים)
+   * חוט מיטבי נוגע בצלע בדיוק בקוטר הצד: w = P / (2·cosβ).
+   * חוט מינימלי: החוט עדיין בולט מעל פסגת השן (כדי שהמיקרומטר ייגע בחוטים).
+   * חוט מקסימלי: נקודת המגע עדיין על הצלע ולא על פינת הפסגה.
+   */
+  const WIRE_SET = [0.17, 0.195, 0.22, 0.25, 0.29, 0.335, 0.39, 0.455, 0.53, 0.62, 0.725, 0.895, 1.1, 1.35, 1.65, 2.05, 2.55, 3.2, 4.0];
+  function wires(t) {
+    const b = basic(t), P = b.P;
+    const beta = (b.angle / 2) * Math.PI / 180;
+    const sb = Math.sin(beta), cb = Math.cos(beta);
+    const k1 = 1 + 1 / sb, k2 = (P / 2) / Math.tan(beta);
+    // קיטום פסגה (מקודקוד המשולש החד)
+    const cExt = b.profile === 'iso' ? b.H / 8 : b.profile === 'whit' ? b.H / 6 : (b.H - 0.8 * P) / 2;
+    const cInt = b.profile === 'iso' ? b.H / 4 : cExt;
+    const lim = (c) => ({ min: 2 * (b.H - c) / (1 / sb + 1), max: 2 * (b.H - c) * sb / (cb * cb) });
+    const best = P / (2 * cb);
+    const ext = lim(cExt), int = lim(cInt);
+    // חוט מתוך סט סטנדרטי: הקרוב ביותר למיטבי בתוך התחום
+    const inRange = WIRE_SET.filter((w) => w >= Math.max(ext.min, int.min) && w <= Math.min(ext.max, int.max));
+    const std = (inRange.length ? inRange : WIRE_SET).reduce((a, w) => (Math.abs(w - best) < Math.abs(a - best) ? w : a));
+    const lead = Math.atan(P / (Math.PI * b.d2)); // זווית סליל
+    return {
+      beta, best, ext, int, std, stdInRange: inRange.length > 0, k1, k2, lead,
+      // קבוע החוט: M = d2 + C
+      C: (w) => w * k1 - k2,
+      Mext: (d2, w) => d2 + w * k1 - k2,
+      Mint: (D2, w) => D2 - w * k1 + k2,
+      d2FromM: (M, w) => M - w * k1 + k2,
+      D2FromM: (M, w) => M + w * k1 - k2,
+      // רדיוס מרכז החוט (לציור)
+      centerExt: (d2, w) => (d2 + w * k1 - k2) / 2 - w / 2,
+      centerInt: (D2, w) => (D2 - w * k1 + k2) / 2 + w / 2,
+      // מקדם תיקון סליל משוער (בורג): ΔM ≈ (w/2)·tan²λ·cosβ·cotβ
+      leadCorr: (w) => (w / 2) * Math.tan(lead) ** 2 * cb / Math.tan(beta),
+    };
+  }
+
+  window.TM = { basic, tol, classes, profile, turning, fracToInch, wires, WIRE_SET };
 })();
