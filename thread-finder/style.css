@@ -305,3 +305,169 @@ pre.code .k { color: #ff9b57; }
 .verdict p { margin: 4px 0 0; }
 .gauges { margin: 0; padding-inline-start: 20px; }
 .gauges li { margin-bottom: 6px; }
+
+/* =====================================================================
+   שכבת עיצוב v3 — "שרטוט הנדסי": פלדה כחלחלה, כתום בטיחות, רשת שרטוט
+   ===================================================================== */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --surface-2: #edf1f5; --surface-3: #dfe5ec;
+  --text: #0e1622; --muted: #526072; --line: #dbe2ea;
+  --accent: #c94f0a; --accent-2: #ff8a3d; --accent-ink: #b0440a; --accent-soft: #fff0e6;
+  --blue: #1f6fb2; --blue-soft: #e6f0fa;
+  --hero-1: #0a1420; --hero-2: #14263a; --grid: rgba(120, 170, 220, .09);
+  --font-display: "Rubik", "Heebo", system-ui, sans-serif;
+  --font-body: "Heebo", system-ui, sans-serif;
+  --radius: 18px; --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(14, 22, 34, .04), 0 6px 20px rgba(14, 22, 34, .06);
+  --shadow-lift: 0 2px 4px rgba(14, 22, 34, .05), 0 14px 34px rgba(14, 22, 34, .12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0f16; --surface: #121a24; --surface-2: #18212d; --surface-3: #222d3a; --text: #e9eef4; --muted: #9aa8b8;
+    --line: #233040; --accent: #ff7a1a; --accent-ink: #ff9a4d; --accent-soft: #2c1a0e; --blue: #6cb0ee; --blue-soft: #122336;
+    --hero-1: #060b12; --hero-2: #0f1d2d; --grid: rgba(120, 170, 220, .07); --shadow: none; --shadow-lift: 0 14px 34px rgba(0,0,0,.45); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0f16; --surface: #121a24; --surface-2: #18212d; --surface-3: #222d3a; --text: #e9eef4; --muted: #9aa8b8;
+  --line: #233040; --accent: #ff7a1a; --accent-ink: #ff9a4d; --accent-soft: #2c1a0e; --blue: #6cb0ee; --blue-soft: #122336;
+  --hero-1: #060b12; --hero-2: #0f1d2d; --grid: rgba(120, 170, 220, .07); --shadow: none; --shadow-lift: 0 14px 34px rgba(0,0,0,.45); color-scheme: dark;
+}
+body { font-family: var(--font-body); }
+h1, h2, h3, .brand b, .title-row h1, .big, .task b, .fam-card h3 { font-family: var(--font-display); }
+h1, h2, h3 { text-wrap: balance; letter-spacing: -.01em; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* תיקון: שדות עם יחידה בזיהוי התכווצו */
+.input-unit select { width: auto !important; flex: 0 0 auto; }
+.input-unit input { min-width: 0; width: 100%; }
+
+/* כותרת עליונה */
+.top { background: color-mix(in srgb, var(--surface) 82%, transparent); }
+.nav a { font-weight: 600; }
+.nav a.on { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* hero עם רשת שרטוט */
+.hero {
+  position: relative; isolation: isolate;
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+    radial-gradient(900px 380px at 18% 20%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 65%),
+    linear-gradient(165deg, var(--hero-1), var(--hero-2));
+}
+.hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,138,61,.5), transparent); }
+.hero-in { padding-top: 52px; padding-bottom: 56px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font: 600 .82rem/1 var(--font-display); letter-spacing: .04em; color: #ffb27d; background: rgba(255,138,61,.12); border: 1px solid rgba(255,138,61,.28); padding: 7px 12px; border-radius: 999px; margin-bottom: 16px; }
+.eyebrow.dark { color: var(--accent-ink); background: var(--accent-soft); border-color: transparent; }
+.hero h1 { font-size: clamp(2.3rem, 5.2vw, 3.8rem); font-weight: 800; line-height: 1.05; }
+.hero p { color: #b9c5d3; font-size: 1.1rem; line-height: 1.65; max-width: 34em; }
+.search input { min-height: 58px; border-radius: 16px; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); font-size: 1.1rem; }
+.search input:focus { outline: 3px solid color-mix(in srgb, var(--accent) 70%, transparent); }
+.picks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.picks > span { color: #8fa0b3; font-size: .9rem; margin-inline-end: 2px; }
+.pick { direction: ltr; text-decoration: none; color: #e9eef4; font: 600 .9rem/1 "JetBrains Mono", monospace; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); transition: background .15s, border-color .15s, transform .15s; }
+.pick:hover { background: rgba(255,138,61,.18); border-color: rgba(255,138,61,.5); transform: translateY(-1px); }
+.hero-art { height: 300px; }
+
+/* בלוקים */
+.block { padding-top: 44px; }
+.block-head { margin-bottom: 18px; }
+.block-head.row { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.block-head h2 { margin: 0 0 4px; font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 700; }
+.block-head p { margin: 0; color: var(--muted); }
+.block:last-child { padding-bottom: 12px; }
+
+/* כרטיסי משימות */
+.tasks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.task { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); text-decoration: none; box-shadow: var(--shadow); transition: transform .18s, box-shadow .18s, border-color .18s; }
+.task:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.task b { font-size: 1.08rem; font-weight: 700; line-height: 1.3; }
+.task > span:not(.task-ico) { color: var(--muted); font-size: .93rem; line-height: 1.55; }
+.task em { margin-top: auto; padding-top: 6px; font-style: normal; font-weight: 700; color: var(--accent-ink); font-size: .92rem; }
+.task-ico { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 4px; }
+.task-ico svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ico-a { background: var(--accent-soft); color: var(--accent-ink); }
+.ico-b { background: var(--blue-soft); color: var(--blue); }
+.ico-c { background: color-mix(in srgb, #8b5cf6 14%, var(--surface)); color: #7c4ddb; }
+.ico-d { background: var(--good-soft); color: var(--good); }
+
+/* כרטיסי משפחות */
+.fams { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.fam-card { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.mini { display: block; width: 100%; height: 70px; background: linear-gradient(180deg, var(--surface-2), var(--surface-3)); }
+.mini-metal { fill: color-mix(in srgb, var(--muted) 55%, var(--surface)); }
+.mini-t { font: 700 12px "JetBrains Mono", monospace; fill: var(--accent-ink); }
+.fam-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.fam-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.fam-card h3 { margin: 0; font-size: 1.12rem; font-weight: 700; }
+.fam-card .tag { direction: ltr; font-family: "JetBrains Mono", monospace; }
+.fam-card p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.55; }
+.fam-card .where { font-size: .85rem; }
+.fam-card .where b { color: var(--text); font-weight: 600; }
+.link-btn { margin-top: auto; align-self: flex-start; border: 0; background: none; padding: 8px 0 0; font: 700 .92rem var(--font-body); color: var(--accent-ink); cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+
+/* טבלה */
+.seg.mode button { min-width: 84px; font-weight: 600; }
+.fam { display: inline-flex; align-items: center; gap: 6px; }
+.fam .c { margin: 0; background: var(--surface-2); padding: 1px 7px; border-radius: 999px; font-size: .74rem; }
+.fam.on .c { background: rgba(255,255,255,.18); }
+.table-card { border-radius: var(--radius); }
+.tt thead th { font-family: var(--font-display); font-weight: 600; }
+.tt th .u { font-family: var(--font-body); font-weight: 400; opacity: .7; }
+.tt td.strong { font-weight: 700; }
+.tag.fam-mc, .tag.fam-mf { background: var(--blue-soft); color: var(--blue); border-color: transparent; }
+.tag.fam-unc, .tag.fam-unf { background: color-mix(in srgb, #8b5cf6 12%, var(--surface)); color: #7c4ddb; border-color: transparent; }
+.tag.fam-g { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.tt td.muted { font-size: .88rem; }
+.empty a { color: var(--accent-ink); font-weight: 700; }
+
+/* פרטי הברגה */
+.plain { margin: 14px 0 0; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); border-inline-start: 4px solid var(--accent); line-height: 1.7; max-width: 62em; box-shadow: var(--shadow); }
+.plain .n { font-family: "JetBrains Mono", monospace; direction: ltr; unicode-bidi: isolate; }
+.q { border-radius: var(--radius-sm); }
+.stage-card, .info-card, .card { border-radius: var(--radius); }
+.tab { font-family: var(--font-display); font-weight: 600; }
+
+/* זיהוי */
+.id-intro { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: center; }
+.id-intro h2 { font-size: 1.5rem; margin: 0 0 6px; }
+.id-art { width: 100%; height: auto; }
+.stepn { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 .78rem/1 var(--font-display); font-style: normal; margin-inline-end: 4px; }
+.stepn.b { background: var(--blue); }
+
+/* סרגל ניווט תחתון בנייד */
+.tabbar { display: none; }
+@media (max-width: 680px) {
+  .nav { display: none; }
+  .tabbar {
+    display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; inset: auto 0 0 0; z-index: 30;
+    background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+  }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; justify-content: center; text-decoration: none; color: var(--muted); font-size: .74rem; font-weight: 600; border-radius: 12px; }
+  .tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .tabbar a.on { color: var(--accent-ink); background: var(--accent-soft); }
+  body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .top-in { justify-content: space-between; }
+  .hero-in { padding-top: 30px; padding-bottom: 34px; }
+  .hero p { font-size: 1rem; }
+  .hero-art { display: none; }
+  .tasks, .fams { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .task { padding: 14px; }
+  .task > span:not(.task-ico) { display: none; }
+  .task b { font-size: .98rem; }
+  .task-ico { width: 44px; height: 44px; }
+  .fams { grid-template-columns: minmax(0, 1fr); }
+  .block { padding-top: 32px; }
+  .hide-sm { display: none; }
+  .id-intro { grid-template-columns: minmax(0, 1fr); }
+  .id-art { max-width: 220px; }
+  .seg button, .fam, .btn, .pchip { min-height: 44px; }
+}
+@media (min-width: 681px) and (max-width: 980px) {
+  .tasks, .fams { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.tt thead tr.sub:first-child th { top: 0; }

@@ -13,6 +13,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
    מצב גלובלי
    ========================================================= */
 const S = {
+  mode: 'simple',
   fam: 'all',
   side: 'ext',
   cls: { metric: { ext: '6g', int: '6H' }, un: { ext: '2A', int: '2B' } },
@@ -119,6 +120,7 @@ $('#q').addEventListener('input', (e) => { S.q = norm(e.target.value.trim()); re
 
 function renderTable() {
   const list = threads.filter((t) => (S.fam === 'all' || t.family === S.fam) && matches(t, S.q));
+  if (S.mode === 'simple') return renderSimpleTable(list);
   if (S.side === 'wires') return renderWireTable(list);
   const ext = S.side === 'ext';
   $('#thead').innerHTML = ext
@@ -144,6 +146,80 @@ function renderTable() {
     return `<tr tabindex="0" data-i="${i}">${name}${tag}${pt}${cells}<td class="go">←</td></tr>`;
   }).join('');
 }
+const USES = {
+  mc: 'ברגים ואומים רגילים', mf: 'רכב, כיוונים עדינים', unc: 'ציוד אמריקאי', unf: 'ציוד אמריקאי, רכב',
+  g: 'צנרת מים וחיבורים', r: 'צנרת עם אטימה בהברגה', npt: 'צנרת והידראוליקה אמריקאית', custom: 'הברגה מיוחדת',
+};
+function renderSimpleTable(list) {
+  $('#thead').innerHTML = `<tr class="sub"><th>הברגה</th><th>סוג</th><th>קוטר <span class="u">מ"מ</span></th><th>פסיעה <span class="u">מ"מ</span></th><th class="hide-sm">שיניים לאינץ'</th><th>מקדח לברז <span class="u">מ"מ</span></th><th class="hide-sm">איפה פוגשים</th><th></th></tr>`;
+  $('#count').textContent = `${list.length} הברגות · לחצו על שורה כדי לראות את ההברגה בתלת-ממד ואת כל הפרטים`;
+  if (!list.length) { $('#rows').innerHTML = `<tr><td colspan="8" class="empty">לא מצאנו הברגה כזו. נסו לכתוב רק את הקוטר (למשל 8), או <a href="#identify">זהו לפי מדידה</a>.</td></tr>`; return; }
+  $('#rows').innerHTML = list.map((t) => {
+    const f = families[t.family], b = TM.basic(t);
+    return `<tr tabindex="0" data-i="${threads.indexOf(t)}"><td><span class="tname">${esc(t.name)}</span></td>
+      <td><span class="tag fam-${t.family}${f.kind === 'taper' ? ' taper' : ''}">${f.label}</span></td>
+      <td class="n strong">${trim(b.d, 2)}</td><td class="n">${trim(b.P, 3)}</td>
+      <td class="n hide-sm">${t.tpi ? t.tpi : '<span class="muted">—</span>'}</td>
+      <td class="n">${f2(b.drill)}</td><td class="hide-sm muted">${USES[t.family] || ''}</td><td class="go">←</td></tr>`;
+  }).join('');
+}
+$('#modeSeg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.mode = b.dataset.v;
+  $$('#modeSeg button').forEach((x) => x.classList.toggle('on', x === b));
+  $('#proTools').hidden = S.mode !== 'pro';
+  $('#modeHint').textContent = S.mode === 'pro' ? 'מצב מקצועי: מקסימום ומינימום לפי דרגת סבולת, לבורג, לאום ולמדידה על חוטים.' : 'מצב פשוט: המידות שצריך כדי לקנות, לקדוח ולהבריג.';
+  renderClsSel(); renderTable();
+});
+function setMode(m) { const b = $(`#modeSeg [data-v=${m}]`); if (b) b.click(); }
+
+/* בחירות מהירות */
+const PICKS = ['M4', 'M5', 'M6', 'M8', 'M10', 'M12', '1/4"-20 UNC', 'G1/2', '1/2" NPT'];
+$('#picks').insertAdjacentHTML('beforeend', PICKS.map((n) => {
+  const i = threads.findIndex((t) => t.name === n);
+  return i < 0 ? '' : `<a class="pick" href="#t-${i}">${esc(n.replace(' UNC', ''))}</a>`;
+}).join(''));
+
+/* כרטיסי משפחות */
+const FAMS = [
+  { key: 'mc', fams: ['mc', 'mf'], title: 'מטרי', tag: 'M8 · M10×1.25', angle: 60, text: 'הנפוץ ביותר בישראל ובאירופה. המספר אחרי M הוא הקוטר במילימטרים.', where: 'רהיטים, מכונות, אופניים, רכב' },
+  { key: 'unc', fams: ['unc', 'unf'], title: 'אינץ\' (UNC / UNF)', tag: '1/4"-20', angle: 60, text: 'התקן האמריקאי. המספר השני הוא כמה שיניים יש באינץ\' אחד.', where: 'ציוד וכלים מארה"ב, חצובות מצלמה' },
+  { key: 'g', fams: ['g', 'r'], title: 'צנרת BSP', tag: 'G1/2 · R3/4', angle: 55, text: 'הברגות של צינורות וברזים. "1/2 אינץ\'" הוא שם, לא הקוטר: G1/2 עבה כמעט 21 מ"מ.', where: 'אינסטלציה, ברזים, מסננים' },
+  { key: 'npt', fams: ['npt'], title: 'צנרת NPT', tag: '1/2" NPT', angle: 60, text: 'צנרת אמריקאית קונית שנאטמת בהברגה עצמה. נראית כמו BSP אבל לא מתחברת אליה.', where: 'הידראוליקה, אוויר דחוס, גז' },
+];
+function miniProfile(angle, taper) {
+  const h = 26, P = 2 * h * Math.tan(angle / 2 * Math.PI / 180) / 0.8, top = 14, pts = [];
+  let x = -P;
+  while (x < 220) { pts.push(`${x},${top + h}`, `${x + P * 0.1},${top + h}`, `${x + P * 0.4},${top}`, `${x + P * 0.6},${top}`, `${x + P * 0.9},${top + h}`); x += P; }
+  const tilt = taper ? 'transform="rotate(-2.5 110 40)"' : '';
+  return `<svg viewBox="0 0 200 70" class="mini" aria-hidden="true"><g ${tilt}><polygon points="${pts.join(' ')} 220,70 -40,70" class="mini-metal"/></g><text x="196" y="66" text-anchor="end" class="mini-t">${angle}°</text></svg>`;
+}
+$('#famCards').innerHTML = FAMS.map((f) => {
+  const n = threads.filter((t) => f.fams.includes(t.family)).length;
+  return `<article class="fam-card">
+    ${miniProfile(f.angle, f.key === 'npt')}
+    <div class="fam-body">
+      <div class="fam-top"><h3>${f.title}</h3><span class="tag">${f.tag}</span></div>
+      <p>${f.text}</p>
+      <p class="where"><b>איפה פוגשים:</b> ${f.where}</p>
+      <button type="button" class="link-btn" data-fam="${f.fams[0]}">הצג ${n} הברגות ←</button>
+    </div>
+  </article>`;
+}).join('');
+$('#famCards').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-fam]'); if (!b) return;
+  S.fam = b.dataset.fam; renderFamTabs(); renderClsSel(); renderTable();
+  $('#all').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* כרטיסי משימות */
+document.querySelectorAll('.task[data-task]').forEach((a) => a.addEventListener('click', (e) => {
+  const k = a.dataset.task;
+  if (k === 'dims') { e.preventDefault(); setMode('simple'); $('#all').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (k === 'check') { e.preventDefault(); setMode('pro'); $('#sideSeg [data-v=wires]').click(); $('#all').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (k === 'turn') { S.openTab = 'turn'; }
+}));
+
 function renderWireTable(list) {
   $('#thead').innerHTML = `<tr class="grp"><th colspan="3"></th><th colspan="3" class="g">קוטר חוט (מ"מ)</th><th class="g">סט</th><th></th><th colspan="2" class="g">M מעל 3 חוטים (חוט מהסט)</th><th></th></tr>
     <tr class="sub"><th>הברגה</th><th>סוג</th><th>P · TPI</th><th>מיטבי</th><th>min</th><th>max</th><th>Ø</th><th>קבוע C</th><th>max</th><th>min</th><th></th></tr>`;
@@ -239,9 +315,23 @@ function openThread(t) {
     ['קוטר', `${trim(b.d, 3)}`], ['פסיעה', `${trim(b.P, 3)}`], ['TPI', trim(b.tpi, 2)], ['מקדח', f2(b.drill)],
   ].map(([k, v]) => `<div class="q"><small>${k}</small><b>${v}</b></div>`).join('');
   document.title = `${t.name} · מאתר הברגות`;
+  $('#dPlain').innerHTML = plainSummary(t, b, f);
+  if (S.openTab) { D.tab = S.openTab; S.openTab = null; $$('#dTabs .tab').forEach((x) => x.classList.toggle('on', x.dataset.t === D.tab)); }
   if (S.openWires) { D.param = 'wires'; S.openWires = false; D.tab = 'insp'; $$('#dTabs .tab').forEach((x) => x.classList.toggle('on', x.dataset.t === 'insp')); }
   rebuildModel();
   renderParams(); renderInfo(); draw2D(); renderTab();
+}
+
+function plainSummary(t, b, f) {
+  const pipe = ['g', 'r', 'npt'].includes(t.family);
+  const what = pipe ? `הברגת צנרת (${f.label})` : t.family === 'custom' ? 'הברגה מיוחדת' : `הברגה ${f.label === 'מטרי גס' ? 'מטרית רגילה' : f.label === 'מטרי עדין' ? 'מטרית עדינה' : 'אמריקאית ' + f.label}`;
+  const parts = [
+    `<b>בקצרה:</b> ${what} בקוטר <b class="n">${trim(b.d, 2)}</b> מ"מ.`,
+    `בכל סיבוב מלא היא מתקדמת <b class="n">${trim(b.P, 3)}</b> מ"מ.`,
+    pipe ? `להברזה מקדחים חור של <b class="n">${f2(b.drill)}</b> מ"מ.` : `כדי להבריג אום או חור, מקדחים קודם חור של <b class="n">${f2(b.drill)}</b> מ"מ.`,
+  ];
+  if (pipe) parts.push(b.taper ? 'היא קונית, ולכן נאטמת בהברגה עצמה עם טפלון או דבק.' : 'היא ישרה, ולכן האטימה נעשית בשייבה או באורינג.');
+  return parts.join(' ');
 }
 
 function rebuildModel() {
@@ -1038,14 +1128,16 @@ function route() {
     if (dd > 0 && pp > 0) { showView('detail'); if (!D.t || D.t.d !== dd || D.t.P !== pp) openThread(customThread(dd, pp)); return; }
     view = 'tables';
   }
+  if (view === 'all') { document.title = 'מאתר הברגות'; showView('tables', 'all'); requestAnimationFrame(() => $('#all').scrollIntoView({ block: 'start' })); return; }
   if (!['tables', 'identify', 'guide'].includes(view)) view = 'tables';
   document.title = 'מאתר הברגות';
   showView(view);
 }
-function showView(v) {
+function showView(v, navKey) {
+  const k = navKey || (v === 'detail' ? 'all' : v);
   $$('.view').forEach((el) => el.classList.toggle('on', el.id === `view-${v}`));
-  $$('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.nav === v || (v === 'detail' && a.dataset.nav === 'tables')));
-  window.scrollTo({ top: 0 });
+  $$('.nav a, .tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.nav === k));
+  if (!navKey) window.scrollTo({ top: 0 });
 }
 window.addEventListener('hashchange', route);
 
