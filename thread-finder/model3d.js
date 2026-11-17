@@ -30,14 +30,45 @@ export function createViewer(container, { onPick, onHover }) {
   const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 5, 4); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffd9b0, 0.6); rim.position.set(-4, 2, -3); scene.add(rim);
 
-  const mats = {
-    steel: new THREE.MeshStandardMaterial({ color: 0xc9ced6, metalness: 0.92, roughness: 0.28, side: THREE.DoubleSide }),
-    steelFlat: new THREE.MeshStandardMaterial({ color: 0xc2c7cf, metalness: 0.9, roughness: 0.32, side: THREE.DoubleSide, flatShading: true }),
-    brass: new THREE.MeshStandardMaterial({ color: 0xd8a54a, metalness: 0.9, roughness: 0.3, side: THREE.DoubleSide }),
-    brassFlat: new THREE.MeshStandardMaterial({ color: 0xcf9c40, metalness: 0.88, roughness: 0.34, side: THREE.DoubleSide, flatShading: true }),
-    cut: new THREE.MeshStandardMaterial({ color: 0x56606e, metalness: 0.2, roughness: 0.55, side: THREE.DoubleSide }),
-    cutNut: new THREE.MeshStandardMaterial({ color: 0x8a6526, metalness: 0.2, roughness: 0.55, side: THREE.DoubleSide }),
+  /* ---------- סגנונות חומר: קלאסי / סדנה / שרטוט / סטודיו ---------- */
+  const STYLES = {
+    classic: { exposure: 1.05 },
+    workshop: { exposure: 0.95 },
+    blueprint: { exposure: 1.0, edges: true, edgeColor: 0xeef6ff, edgeOpacity: 0.8, edgeAngle: 30 },
+    studio: { exposure: 1.15 },
   };
+  let STYLE = STYLES.classic;
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0xeef6ff, transparent: true, opacity: 0.8 });
+  function makeMats(key) {
+    const std = (c, m, r, flat) => new THREE.MeshStandardMaterial({ color: c, metalness: m, roughness: r, side: THREE.DoubleSide, flatShading: !!flat });
+    const m = {
+      steel: std(0xc9ced6, 0.92, 0.28), steelFlat: std(0xc2c7cf, 0.9, 0.32, true),
+      brass: std(0xd8a54a, 0.9, 0.3), brassFlat: std(0xcf9c40, 0.88, 0.34, true),
+      cut: std(0x56606e, 0.2, 0.55), cutNut: std(0x8a6526, 0.2, 0.55),
+    };
+    if (key === 'workshop') {
+      m.steel = std(0x9097a1, 0.92, 0.38); m.steelFlat = std(0x7f8690, 0.9, 0.4, true);
+      m.cut = std(0xffc400, 0, 0.6); m.cutNut = std(0x1b1d21, 0.2, 0.55);
+    } else if (key === 'blueprint') {
+      const fill = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, side: THREE.DoubleSide });
+      m.steel = fill(0x0f3a66, 0.92); m.steelFlat = fill(0x0f3a66, 0.92);
+      m.brass = fill(0x0b2f55, 0.92); m.brassFlat = fill(0x0b2f55, 0.92);
+      m.cut = fill(0x2a6cb3, 1); m.cutNut = fill(0x1f5a99, 1);
+    } else if (key === 'studio') {
+      m.steel = std(0xeef0f4, 0, 0.55); m.steelFlat = std(0xe7eaf0, 0, 0.6, true);
+      m.brass = std(0x8fa2ff, 0, 0.5); m.brassFlat = std(0x8299ff, 0, 0.55, true);
+      m.cut = std(0x3b5bff, 0, 0.7); m.cutNut = std(0x22c3a6, 0, 0.7);
+    }
+    return m;
+  }
+  let mats = makeMats('classic');
+  function setStyle(key) {
+    STYLE = STYLES[key] || STYLES.classic;
+    Object.values(mats).forEach((x) => x.dispose());
+    mats = makeMats(key in STYLES ? key : 'classic');
+    renderer.toneMappingExposure = STYLE.exposure;
+    if (STYLE.edges) { edgeMat.color.set(STYLE.edgeColor); edgeMat.opacity = STYLE.edgeOpacity; }
+  }
 
   const world = new THREE.Group(); scene.add(world);
   const overlay = new THREE.Group(); scene.add(overlay);
@@ -64,6 +95,11 @@ export function createViewer(container, { onPick, onHover }) {
     g.computeVertexNormals();
     const m = new THREE.Mesh(g, mat);
     m.userData = userData || {};
+    if (STYLE.edges) {
+      const ls = new THREE.LineSegments(new THREE.EdgesGeometry(g, STYLE.edgeAngle), edgeMat);
+      ls.raycast = () => {};
+      m.add(ls);
+    }
     return m;
   }
 
@@ -389,6 +425,8 @@ export function createViewer(container, { onPick, onHover }) {
     isAnimated: () => !!anim,
     resetView: () => { camera.position.set(4.2, 2.2, 5.2); controls.target.set(0, 0, 0); controls.autoRotate = true; },
     onLabel: (cb) => { labelCb = cb; },
-    setTheme: (dark) => { renderer.toneMappingExposure = dark ? 1.0 : 1.1; }
+    setTheme: (dark) => { renderer.toneMappingExposure = dark ? 1.0 : 1.1; },
+    setStyle,
+    setAccent: (css) => { try { acc.set(css); } catch (e) {} },
   };
 }

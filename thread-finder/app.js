@@ -34,6 +34,69 @@ $('#themeBtn').addEventListener('click', () => {
 });
 
 /* =========================================================
+   עיצוב: סגנון + צבע + מצב תצוגה (נשמר בדפדפן ובאפליקציה)
+   ========================================================= */
+const STYLE_LIST = [
+  { k: 'classic', n: 'קלאסי', d: 'כחול-פלדה עם רשת שרטוט' },
+  { k: 'workshop', n: 'סדנה', d: 'פלדה מוברשת ולוחות מרותקים', dark: true },
+  { k: 'blueprint', n: 'שרטוט', d: 'גיליון כחול וקווים לבנים', dark: true },
+  { k: 'studio', n: 'סטודיו', d: 'זכוכית חלבית ותלת-ממד בחימר' },
+];
+const PAL_LIST = [
+  { k: '', n: 'של הסגנון', f: 'הצבע המקורי של כל סגנון', c1: '#9aa3ad', c2: '#e6e9ee' },
+  { k: 'orange', n: 'כתום', f: 'חם ותעשייתי', c1: '#c94f0a', c2: '#ff8a3d' },
+  { k: 'emerald', n: 'אמרלד', f: 'רענן ואמין. מתאים ללמידה ולעסקים', c1: '#047857', c2: '#34d399' },
+  { k: 'green', n: 'ליים', f: 'אנרגטי ומושך עין, בלי להעייף', c1: '#15803d', c2: '#a3e635' },
+  { k: 'teal', n: 'טורקיז', f: 'רגוע ומרוכז, מתאים לקריאה ארוכה', c1: '#0f766e', c2: '#2dd4bf' },
+  { k: 'blue', n: 'כחול', f: 'אמין, מקצועי ועסקי', c1: '#1d4ed8', c2: '#60a5fa' },
+  { k: 'violet', n: 'סגול', f: 'יצירתי וחינוכי', c1: '#6d28d9', c2: '#a78bfa' },
+  { k: 'coral', n: 'קורל', f: 'דחוף ואנרגטי, במינון קטן', c1: '#be123c', c2: '#fb7185' },
+  { k: 'amber', n: 'ענבר', f: 'יוקרתי ומעורר, כמו לוח מחוונים', c1: '#b45309', c2: '#fbbf24' },
+];
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} };
+const AP = { style: lsGet('tf-style') || 'classic', pal: lsGet('tf-pal') || '', theme: lsGet('tf-theme') || '' };
+const accentNow = () => getComputedStyle(root).getPropertyValue('--accent').trim();
+
+function applyAppearance(rebuild = true) {
+  if (AP.style === 'classic') delete root.dataset.variant; else root.dataset.variant = AP.style;
+  if (AP.pal) root.dataset.pal = AP.pal; else delete root.dataset.pal;
+  if (AP.theme) root.dataset.theme = AP.theme; else delete root.dataset.theme;
+  lsSet('tf-style', AP.style === 'classic' ? '' : AP.style); lsSet('tf-pal', AP.pal); lsSet('tf-theme', AP.theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', accentNow() || '#e8620c');
+  if (viewer) {
+    viewer.setStyle(AP.style); viewer.setAccent(accentNow());
+    if (rebuild && D.t) rebuildModel();
+  }
+  if (D.t) draw2D();
+  renderAppear();
+}
+function renderAppear() {
+  const st = STYLE_LIST.find((x) => x.k === AP.style) || STYLE_LIST[0];
+  $('#stGrid').innerHTML = STYLE_LIST.map((x) => `<button type="button" class="st-card" data-k="${x.k}" aria-pressed="${x.k === AP.style}"><span class="pv pv-${x.k}"></span><b>${x.n}</b><small>${x.d}</small></button>`).join('');
+  $('#palGrid').innerHTML = PAL_LIST.map((x) => `<button type="button" class="psw" data-k="${x.k}" aria-pressed="${x.k === AP.pal}"><i style="background:linear-gradient(135deg,${x.c1} 50%,${x.c2} 50%)"></i>${x.n}</button>`).join('');
+  const p = PAL_LIST.find((x) => x.k === AP.pal) || PAL_LIST[0];
+  $('#palFeel').innerHTML = `<b>${p.n}:</b> ${p.f}`;
+  $$('#thSeg button').forEach((b) => { b.classList.toggle('on', b.dataset.v === AP.theme); b.disabled = !!st.dark; });
+  $('#thNote').hidden = !st.dark;
+}
+function openAppear(open) {
+  $('#appear').hidden = !open; $('#appearScrim').hidden = !open;
+  $('#appearBtn').setAttribute('aria-expanded', String(open));
+  if (open) { renderAppear(); $('#appear .st-card[aria-pressed="true"]')?.focus(); }
+}
+$('#appearBtn').addEventListener('click', () => openAppear($('#appear').hidden));
+$('#appearClose').addEventListener('click', () => openAppear(false));
+$('#appearScrim').addEventListener('click', () => openAppear(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#appear').hidden) openAppear(false); });
+$('#stGrid').addEventListener('click', (e) => { const b = e.target.closest('.st-card'); if (b) { AP.style = b.dataset.k; applyAppearance(); } });
+$('#palGrid').addEventListener('click', (e) => { const b = e.target.closest('.psw'); if (b) { AP.pal = b.dataset.k; applyAppearance(false); if (viewer && D.t) viewer.highlight(D.param); } });
+$('#thSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && !b.disabled) { AP.theme = b.dataset.v; applyAppearance(false); } });
+$('#appearReset').addEventListener('click', () => { AP.style = 'classic'; AP.pal = ''; AP.theme = ''; applyAppearance(); });
+$('#themeBtn').addEventListener('click', () => { AP.theme = root.dataset.theme || ''; renderAppear(); });
+
+/* =========================================================
    איור ראשי (בורג מסוגנן)
    ========================================================= */
 (function heroArt() {
@@ -287,6 +350,7 @@ function ensureViewer() {
         tip.hidden = false;
       },
     });
+    viewer.setStyle(AP.style); viewer.setAccent(accentNow());
     viewer.onLabel((pos) => {
       const el = $('#stageLabel');
       if (!pos || !pos.visible) { el.hidden = true; return; }
@@ -336,6 +400,7 @@ function plainSummary(t, b, f) {
 
 function rebuildModel() {
   const v = ensureViewer(); if (!v) return;
+  v.setAccent(accentNow());
   const pipe = ['g', 'r', 'npt'].includes(D.t.family);
   v.build(TM.profile(D.t), { view: D.view, section: D.section, param: D.param, pipe, thread: D.t, wire: D.wire });
   $('#playBtn').hidden = D.view !== 'assembly';
@@ -1142,4 +1207,5 @@ function showView(v, navKey) {
 window.addEventListener('hashchange', route);
 
 renderFamTabs(); renderClsSel(); renderTable(); identify();
+applyAppearance(false);
 route();
