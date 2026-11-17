@@ -12,7 +12,7 @@ Word indices refer to `words.json` / the `[first-last]` ranges in `transcript.tx
 | `emphasis` | list of word indices | [] | Words drawn in the emphasis colour. |
 | `zoom` | list of word indices | [] | A punch-in zoom starts on each of these words and lasts until the next cut. |
 | `cta_text` | string | none | Box shown for the last 2.2 seconds. |
-| `word_fixes` | {index: "text"} | {} | Correct transcription errors. The fix replaces that word on screen. |
+| `word_fixes` | {index: "text"} | {} | Correct transcription errors. The fix replaces that word on screen; "" hides a word (use it to merge a split word into its neighbour). |
 | `fit` | "crop" / "blur" | "crop" | How non-vertical footage becomes 9:16. |
 | `style` | object | {} | Visual options below. Defaults also come from `assets/brand/brand.json` (`{"style": {...}}`); the plan's values override the brand's. |
 
@@ -30,7 +30,7 @@ Word indices refer to `words.json` / the `[first-last]` ranges in `transcript.tx
 | `hook_bg` / `hook_fg` | `#FFD400` / `#111111` | Hook and CTA box colours |
 | `hook_size` | 110 | Hook title font size |
 | `hook_y` | 300 | Top of the hook box |
-| `cta_y` | 520 | Top of the CTA box |
+| `cta_y` | 300 | Top of the CTA box |
 | `logo_width` | 170 | Logo width in px |
 | `logo_corner` | `top-left` | `top-left`, `top-right`, `bottom-left`, `bottom-right` (bottom stays above the Instagram caption area) |
 | `jump_zoom` | 1.08 | Zoom used on every other jump cut |

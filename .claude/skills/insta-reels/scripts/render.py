@@ -122,7 +122,7 @@ class Measurer:
         return self.cache[key]
 
 
-def layout(words, size, m, gap_factor=0.30):
+def layout(words, size, m, gap_factor=0.42):
     """Return ([(word, x_center, width)], total_width) for one line, centred on W/2.
     Words are given in reading order; RTL lines are laid out right-to-left."""
     ws = [m.width(w, size) for w in words]
@@ -207,7 +207,8 @@ def cut_clip(src, clip, idx, tmp, fit, zoom, has_audio):
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{clip['s']:.3f}", "-t", f"{dur:.3f}", "-i", src]
     if not has_audio:
         cmd += ["-f", "lavfi", "-t", f"{dur:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
-    cmd += ["-vf", vf]
+    # explicit maps: phone footage often carries extra audio/data tracks (e.g. iPhone spatial audio)
+    cmd += ["-map", "0:v:0", "-map", "0:a:0" if has_audio else "1:a:0", "-vf", vf]
     fo = max(0.0, dur - 0.015)
     cmd += ["-af", f"afade=t=in:d=0.015,afade=t=out:st={fo:.3f}:d=0.015,aresample=48000",
             "-c:a", "aac", "-b:a", "192k", "-ac", "2"]
@@ -263,6 +264,10 @@ def titled_box(ev, text, s, e, y_top, size, fg, bg, m, anim):
     if not words:
         return
     lines = wrap(words, size, m, MAX_TEXT_W - 60)
+    if len(lines) == 2:  # balance two lines so no single word is left hanging
+        flat = lines[0] + lines[1]
+        best = min(range(1, len(flat)), key=lambda k: max(layout(flat[:k], size, m)[1], layout(flat[k:], size, m)[1]))
+        lines = [flat[:best], flat[best:]]
     line_h = size * m.k * 1.32
     pad_x, pad_y = 34, 22
     widest = max(layout(l, size, m)[1] for l in lines)
@@ -332,7 +337,7 @@ def build_ass(tl, plan, total, out_path, m):
         titled_box(ev, plan["hook_text"], 0, hs, int(st.get("hook_y", 300)), int(st.get("hook_size", 110)),
                    fg, bg, m, "\\fad(0,120)")
     if plan.get("cta_text"):
-        titled_box(ev, plan["cta_text"], max(0, total - 2.2), total, int(st.get("cta_y", 520)), 88,
+        titled_box(ev, plan["cta_text"], max(0, total - 2.2), total, int(st.get("cta_y", 300)), 88,
                    fg, bg, m, "\\fad(150,0)")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(ass_header(st) + "\n".join(ev) + "\n")
@@ -398,7 +403,8 @@ def main():
 
         m = Measurer()
         ass = os.path.join(a.out, "subs.ass")
-        build_ass(tl, plan, total, ass, m)
+        # a word fixed to "" keeps its audio but gets no caption (e.g. merge "ב" + "-500" into one "ב-500")
+        build_ass([w for w in tl if clean(w["w"])], plan, total, ass, m)
         json.dump(tl, open(os.path.join(a.out, "timeline.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
 
         def fesc(p):
