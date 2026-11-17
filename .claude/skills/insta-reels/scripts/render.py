@@ -408,11 +408,18 @@ def main():
         if a.logo and os.path.exists(a.logo):
             lw = int(st.get("logo_width", 170))
             corner = st.get("logo_corner", "top-left")
-            x = "50" if "left" in corner else "W-w-50"
-            y = "90" if "top" in corner else "H-h-330"
+            x = "50" if "left" in corner else f"{W - lw - 50}"
+            from PIL import Image
+            lim = Image.open(a.logo)
+            lh = int(round(lw * lim.height / lim.width))
+            y = "90" if "top" in corner else f"{H - lh - 330}"
             inputs += ["-loop", "1", "-i", a.logo]
-            fc = (f"[1:v]scale={lw}:-1,format=rgba,colorchannelmixer=aa=0.92[lg];"
-                  f"[0:v]{sub}[v1];[v1][lg]overlay={x}:{y}:shortest=1,format=yuv420p[v]")
+            # soft dark glow behind the logo keeps a light/gold logo readable on bright footage
+            fc = (f"[1:v]scale={lw}:-1,format=rgba,split[lg0][sh0];"
+                  f"[sh0]colorchannelmixer=rr=0:gg=0:bb=0:aa=0.55,pad=iw+40:ih+40:20:20:color=black@0,"
+                  f"boxblur=10:2[sh];"
+                  f"[0:v]{sub}[v1];[v1][sh]overlay={x}-20+3:{y}-20+4:shortest=1[v2];"
+                  f"[v2][lg0]overlay={x}:{y}:shortest=1,format=yuv420p[v]")
         else:
             fc = f"[0:v]{sub},format=yuv420p[v]"
         out_mp4 = os.path.join(a.out, "reel.mp4")

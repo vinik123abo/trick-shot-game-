@@ -1,0 +1,12 @@
+{
+  "name": "אביגיל ויניק - רואת חשבון",
+  "notes": "Gold-on-cream brand. logo.png = AW emblem (used in the corner of every Reel); logo_full.png = emblem + name, for covers/end cards.",
+  "style": {
+    "highlight_color": "#F2C46D",
+    "emphasis_color": "#FF6B5B",
+    "hook_bg": "#C9A15B",
+    "hook_fg": "#1E1A14",
+    "logo_width": 150,
+    "logo_corner": "top-left"
+  }
+}
